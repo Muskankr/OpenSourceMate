@@ -25,6 +25,8 @@ type SkillsData = {
 };
 
 export default function Home() {
+  const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -49,8 +51,8 @@ export default function Home() {
     try {
       // Fetch GitHub profile
       const profileResponse = await fetch(
-        `http://127.0.0.1:8000/api/github/users/${cleanUsername}`
-      );
+  `${API_URL}/api/github/users/${cleanUsername}`
+);
 
       if (!profileResponse.ok) {
         const errorData = await profileResponse.json().catch(() => null);
@@ -66,9 +68,8 @@ export default function Home() {
 
       // Fetch technical skills
       const skillsResponse = await fetch(
-        `http://127.0.0.1:8000/api/github/users/${cleanUsername}/skills`
-      );
-
+  `${API_URL}/api/github/users/${cleanUsername}/skills`
+);
       if (!skillsResponse.ok) {
         const errorData = await skillsResponse.json().catch(() => null);
 
