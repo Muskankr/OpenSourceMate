@@ -250,53 +250,6 @@ Personalized Opportunities
 
 ---
 
-## 🗺️ Roadmap
-
-### Phase 1 — Foundation
-
-* [x] GitHub profile analysis
-* [x] Public repository analysis
-* [x] Technical skill detection
-* [x] Initial Next.js interface
-* [x] Backend API foundation
-
-### Phase 2 — Contribution Discovery
-
-* [ ] GitHub issue discovery
-* [ ] Skill-to-issue matching
-* [ ] Issue recommendation engine
-* [ ] Beginner-friendly issue filtering
-* [ ] Repository context
-
-### Phase 3 — AI-Powered Assistance
-
-* [ ] AI-powered issue explanations
-* [ ] Contribution difficulty estimation
-* [ ] Personalized contribution recommendations
-* [ ] Repository/codebase context
-* [ ] Suggested contribution approach
-
-### Phase 4 — Developer Experience
-
-* [ ] User profiles
-* [ ] Saved opportunities
-* [ ] Contribution history
-* [ ] Improved search and filtering
-* [ ] Accessibility improvements
-* [ ] Mobile responsiveness
-
-### Phase 5 — Open-Source Community
-
-* [ ] Contributor dashboard
-* [ ] Contributor onboarding
-* [ ] Comprehensive documentation
-* [ ] Automated testing
-* [ ] CI/CD
-* [ ] Contributor analytics
-* [ ] Community feedback system
-
----
-
 ## 🤝 Contributing
 
 OpenSourceMate is being built as an open-source project, and contributions are welcome.
