@@ -1,12 +1,13 @@
 import json
+from typing import Optional
 
 from openai import AsyncOpenAI
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class AISettings(BaseSettings):
-    ai_api_key: str
-    ai_model: str
+    ai_api_key: Optional[str] = None
+    ai_model: Optional[str] = None
 
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -16,8 +17,10 @@ class AISettings(BaseSettings):
 
 settings = AISettings()
 
-client = AsyncOpenAI(
-    api_key=settings.ai_api_key,
+client = (
+    AsyncOpenAI(api_key=settings.ai_api_key)
+    if settings.ai_api_key
+    else None
 )
 
 
@@ -25,6 +28,28 @@ async def analyze_issue(
     issue: dict,
     user_skills: list[str],
 ) -> dict:
+
+    # AI is optional.
+    # The rest of OpenSourceMate can work without an AI API key.
+    if not client or not settings.ai_model:
+        return {
+            "difficulty": "unknown",
+            "required_skills": [],
+            "skill_matches": [],
+            "why_it_matches": (
+                "AI analysis is not configured yet. "
+                "Configure an AI API key and model to enable "
+                "AI-powered issue analysis."
+            ),
+            "recommended_steps": [
+                "Review the GitHub issue description",
+                "Check the repository contribution guidelines",
+                "Compare the issue requirements with your skills",
+            ],
+            "potential_challenges": [
+                "AI analysis is currently unavailable"
+            ],
+        }
 
     prompt = f"""
 You are an open-source contribution assistant.
@@ -71,5 +96,8 @@ in the provided issue data.
     )
 
     content = response.choices[0].message.content
+
+    if not content:
+        raise ValueError("AI returned an empty response.")
 
     return json.loads(content)
