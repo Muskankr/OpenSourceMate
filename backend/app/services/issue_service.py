@@ -1,7 +1,4 @@
-import httpx
-
-
-GITHUB_API_URL = "https://api.github.com"
+from app.services.github_service import GITHUB_API_URL, github_get
 
 
 async def search_github_issues(
@@ -33,14 +30,7 @@ async def search_github_issues(
         "per_page": min(per_page, 100),
     }
 
-    async with httpx.AsyncClient() as client:
-        response = await client.get(
-            url,
-            params=params,
-            headers={
-                "Accept": "application/vnd.github+json"
-            },
-        )
+    response = await github_get(url, params=params)
 
     response.raise_for_status()
 

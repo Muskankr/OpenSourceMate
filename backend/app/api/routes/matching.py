@@ -1,6 +1,9 @@
 from fastapi import APIRouter, HTTPException
 
-from app.services.github_service import get_user_repositories
+from app.services.github_service import (
+    GitHubRateLimitError,
+    get_user_repositories,
+)
 from app.services.skill_service import analyze_skills
 from app.services.issue_service import search_github_issues
 from app.services.matching_service import calculate_issue_score
@@ -60,6 +63,10 @@ async def get_matched_issues(username: str):
                         "match_reasons": match["reasons"],
                     }
                 )
+
+        except GitHubRateLimitError:
+            # Every remaining search would fail too, so tell the caller.
+            raise
 
         except Exception:
             # One failed language search should not

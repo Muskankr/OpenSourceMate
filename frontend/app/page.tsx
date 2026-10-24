@@ -25,6 +25,27 @@ type SkillsData = {
   total_repositories_analyzed: number;
 };
 
+async function rateLimitMessage(response: Response): Promise<string> {
+  let resetAt: Date | null = null;
+
+  try {
+    const data = await response.json();
+    if (data.reset_at) resetAt = new Date(data.reset_at);
+  } catch {
+    // Body was not JSON, use the generic text below.
+  }
+
+  if (resetAt && !Number.isNaN(resetAt.getTime())) {
+    const time = resetAt.toLocaleTimeString([], {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return `GitHub rate limit reached, try again at ${time}.`;
+  }
+
+  return "GitHub rate limit reached, try again in a few minutes.";
+}
+
 export default function Home() {
   const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
@@ -71,6 +92,10 @@ export default function Home() {
         `${API_URL}/api/github/users/${encodeURIComponent(cleanUsername)}`
       );
 
+      if (profileResponse.status === 429) {
+        throw new Error(await rateLimitMessage(profileResponse));
+      }
+
       if (profileResponse.status === 404) {
         setError("GitHub user not found. Check the username and try again.");
         return;
@@ -85,6 +110,10 @@ export default function Home() {
       const skillsResponse = await fetch(
         `${API_URL}/api/github/users/${encodeURIComponent(cleanUsername)}/skills`
       );
+
+      if (skillsResponse.status === 429) {
+        throw new Error(await rateLimitMessage(skillsResponse));
+      }
 
       if (!skillsResponse.ok) {
         throw new Error("Unable to analyze this profile's skills. Please try again.");
