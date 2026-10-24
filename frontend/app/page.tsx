@@ -35,9 +35,11 @@ export default function Home() {
   const [skills, setSkills] = useState<SkillsData | null>(null);
 
   const [error, setError] = useState("");
+  const [lastAnalyzed, setLastAnalyzed] = useState("");
+  const [canRetry, setCanRetry] = useState(false);
 
-  const analyzeProfile = async () => {
-    const cleanUsername = username.trim().replace(/^@/, "");
+  const analyzeProfile = async (override?: string) => {
+    const cleanUsername = (override ?? username).trim().replace(/^@/, "");
 
     if (!cleanUsername) {
       setError("Please enter a GitHub username.");
@@ -57,6 +59,8 @@ export default function Home() {
     if (loading) return;
 
     setUsername(cleanUsername);
+    setLastAnalyzed(cleanUsername);
+    setCanRetry(false);
     setLoading(true);
     setError("");
     setProfile(null);
@@ -95,6 +99,7 @@ export default function Home() {
       setProfile(profileData);
       setSkills(skillsData);
     } catch (err) {
+      setCanRetry(true);
       if (err instanceof TypeError) {
         setError("Unable to connect. Check your internet connection and try again.");
       } else if (err instanceof Error) {
@@ -209,7 +214,7 @@ export default function Home() {
               </div>
 
               <button
-                onClick={analyzeProfile}
+                onClick={() => analyzeProfile()}
                 disabled={loading}
                 className="rounded-2xl bg-white px-7 py-4 text-sm font-semibold text-black transition hover:bg-gray-200 disabled:cursor-not-allowed disabled:opacity-50 sm:text-base"
               >
@@ -221,8 +226,19 @@ export default function Home() {
           </div>
 
           {error && (
-            <div className="mt-4 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-center text-sm text-red-400">
-              {error}
+            <div
+              role="alert"
+              className="mt-4 flex flex-col items-center justify-center gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3 text-center text-sm text-red-400 sm:flex-row"
+            >
+              <span>{error}</span>
+              {canRetry && lastAnalyzed && !loading && (
+                <button
+                  onClick={() => analyzeProfile(lastAnalyzed)}
+                  className="rounded-lg border border-red-400/30 px-3 py-1 text-xs font-medium text-red-300 transition hover:bg-red-500/10"
+                >
+                  Retry
+                </button>
+              )}
             </div>
           )}
 
@@ -232,6 +248,16 @@ export default function Home() {
 
         </div>
       </section>
+
+      {/* Loading skeleton */}
+      {loading && (
+        <section className="px-6 pb-24" aria-busy="true" aria-label="Analyzing profile">
+          <div className="mx-auto max-w-5xl">
+            <ProfileSkeleton />
+            <SkillsSkeleton />
+          </div>
+        </section>
+      )}
 
       {/* Results */}
       {(profile || skills) && (
@@ -351,7 +377,8 @@ export default function Home() {
                 {skills.skills.length === 0 ? (
                   <div className="mt-8 rounded-2xl border border-dashed border-white/10 p-8 text-center">
                     <p className="text-gray-400">
-                      We couldn&apos;t detect programming languages from this profile.
+                      No public repositories with a language were found for this
+                      profile, so there are no skills to show yet.
                     </p>
                   </div>
                 ) : (
@@ -613,6 +640,58 @@ function StepCard({
         {description}
       </p>
 
+    </div>
+  );
+}
+
+function Bar({ className }: { className: string }) {
+  return <div className={`animate-pulse rounded-lg bg-white/10 ${className}`} />;
+}
+
+
+function ProfileSkeleton() {
+  return (
+    <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.035] p-6 sm:p-8">
+      <div className="flex items-center gap-5">
+        <div className="h-20 w-20 animate-pulse rounded-2xl bg-white/10 sm:h-24 sm:w-24" />
+        <div className="flex-1 space-y-3">
+          <Bar className="h-6 w-48" />
+          <Bar className="h-4 w-28" />
+          <Bar className="h-4 w-full max-w-xl" />
+        </div>
+      </div>
+      <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="rounded-2xl border border-white/5 bg-black/20 p-5">
+            <Bar className="h-7 w-16" />
+            <Bar className="mt-2 h-3 w-20" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+
+function SkillsSkeleton() {
+  return (
+    <div className="mt-6 rounded-3xl border border-white/10 bg-white/[0.035] p-6 sm:p-8">
+      <Bar className="h-4 w-32" />
+      <Bar className="mt-3 h-7 w-56" />
+      <div className="mt-8 grid gap-5 sm:grid-cols-2">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="rounded-2xl border border-white/5 bg-black/20 p-5">
+            <div className="flex items-center justify-between">
+              <div className="space-y-2">
+                <Bar className="h-4 w-24" />
+                <Bar className="h-3 w-16" />
+              </div>
+              <Bar className="h-6 w-12" />
+            </div>
+            <Bar className="mt-5 h-1.5 w-full" />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
