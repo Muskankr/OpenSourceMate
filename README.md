@@ -189,6 +189,15 @@ pip install -r requirements.txt
 
 Then start the backend using the project's configured Django development entry point.
 
+### Run the backend tests
+
+The tests mock the GitHub API, so no network or token is needed.
+
+```bash
+pip install -r requirements-dev.txt
+pytest --cov=app
+```
+
 > Backend setup is currently evolving. More detailed setup instructions and environment configuration will be documented as the project develops.
 
 ---
