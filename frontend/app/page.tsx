@@ -2,6 +2,7 @@
 import { useEffect, useState } from "react";
 
 import GitHubLink from "../components/GitHubLink";
+import StarterCommentModal from "../components/StarterCommentModal";
 import FAQ from "../components/FAQ";
 import {
   downloadFile,
@@ -102,6 +103,7 @@ useEffect(() => {
   const [error, setError] = useState("");
   const [lastAnalyzed, setLastAnalyzed] = useState("");
   const [canRetry, setCanRetry] = useState(false);
+  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const fetchMatchedIssues = async (targetUsername: string) => {
@@ -317,6 +319,12 @@ useEffect(() => {
               FAQ
             </a>
 
+            <button
+              onClick={() => setIsCommentModalOpen(true)}
+              className="flex items-center gap-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-300 transition hover:bg-blue-500/20 hover:text-white"
+            >
+              <span>💬</span> Starter Comments
+            </button>
             <GitHubLink className="transition hover:text-white"/>
             <button
   type="button"
@@ -898,6 +906,11 @@ useEffect(() => {
         </div>
       </footer>
 
+    <StarterCommentModal
+        isOpen={isCommentModalOpen}
+        onClose={() => setIsCommentModalOpen(false)}
+        defaultTech={skills?.skills?.[0]?.name || "Python"}
+      />
     </main>
   );
 }
