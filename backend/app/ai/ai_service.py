@@ -14,6 +14,9 @@ class AISettings(BaseSettings):
         env_file_encoding="utf-8",
     )
 
+    github_token: str | None = None
+    github_cache_ttl: int = 300
+
 
 settings = AISettings()
 

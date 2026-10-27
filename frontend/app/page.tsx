@@ -752,6 +752,26 @@ useEffect(() => {
               )}
             </div>
 
+            <div className="flex flex-wrap items-center gap-4">
+              <a
+                href="https://github.com/Muskankr/OpenSourceMate/issues/new?template=bug_report.yml"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition hover:text-red-500 text-sm underline underline-offset-4 hover:opacity-80"
+              >
+                Report a problem ↗
+              </a>
+
+              <a
+                href="https://github.com/Muskankr/OpenSourceMate/issues/new?template=feature_request.yml"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition hover:text-green-300 text-sm underline underline-offset-4 hover:opacity-80"
+              >
+                Suggest a feature ↗
+              </a>
+            </div>
+
           </div>
         </section>
       )}
@@ -852,9 +872,29 @@ useEffect(() => {
             Built for the open-source community.
           </p>
 
-          <GitHubLink className="transition hover:text-white">
-            View Repository ↗
-          </GitHubLink>
+          <div className="flex flex-wrap items-center gap-4">
+            <a
+              href="https://github.com/Muskankr/OpenSourceMate/issues/new?template=bug_report.yml"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition hover:text-white text-sm underline underline-offset-4 hover:opacity-80"
+            >
+              Report a problem ↗
+            </a>
+
+            <a
+              href="https://github.com/Muskankr/OpenSourceMate/issues/new?template=feature_request.yml"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition hover:text-white text-sm underline underline-offset-4 hover:opacity-80"
+            >
+              Suggest a feature ↗
+            </a>
+
+            <GitHubLink className="transition hover:text-white text-sm underline underline-offset-4 hover:opacity-80">
+              View Repository ↗
+            </GitHubLink>
+          </div>
 
         </div>
       </footer>
