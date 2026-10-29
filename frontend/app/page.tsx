@@ -866,7 +866,7 @@ export default function Home() {
                         Opportunities matching your skills and experience, ranked by compatibility score.
                       </p>
                     </div>
-
+                    
                     {recommendations.length > 0 && (
                       <div
                         className={`text-xs ${
@@ -936,6 +936,27 @@ export default function Home() {
                       ))}
                     </div>
                   )}
+                </div>
+                
+                {/* Feedback Links */}
+                <div className="flex flex-wrap items-center gap-4">
+                  <a
+                    href="https://github.com/Muskankr/OpenSourceMate/issues/new?template=bug_report.yml"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="transition hover:text-red-500 text-sm underline underline-offset-4 hover:opacity-80"
+                  >
+                    Report a problem ↗
+                  </a>
+
+                  <a
+                    href="https://github.com/Muskankr/OpenSourceMate/issues/new?template=feature_request.yml"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="transition hover:text-green-300 text-sm underline underline-offset-4 hover:opacity-80"
+                  >
+                    Suggest a feature ↗
+                  </a>
                 </div>
               </div>
             </section>
@@ -1061,9 +1082,31 @@ export default function Home() {
           >
             <p>© {new Date().getFullYear()} OpenSourceMate</p>
             <p>Built for the open-source community.</p>
-            <GitHubLink className="transition hover:text-purple-400">
-              View Repository ↗
-            </GitHubLink>
+            
+            {/* Feedback Links */}
+            <div className="flex flex-wrap items-center gap-4">
+              <a
+                href="https://github.com/Muskankr/OpenSourceMate/issues/new?template=bug_report.yml"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition hover:text-white text-sm underline underline-offset-4 hover:opacity-80"
+              >
+                Report a problem ↗
+              </a>
+
+              <a
+                href="https://github.com/Muskankr/OpenSourceMate/issues/new?template=feature_request.yml"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="transition hover:text-white text-sm underline underline-offset-4 hover:opacity-80"
+              >
+                Suggest a feature ↗
+              </a>
+
+              <GitHubLink className="transition hover:text-white text-sm underline underline-offset-4 hover:opacity-80">
+                View Repository ↗
+              </GitHubLink>
+            </div>
           </div>
         </footer>
       </div>
