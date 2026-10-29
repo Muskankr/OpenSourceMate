@@ -355,6 +355,8 @@ Personalized Opportunities
 
 ## 🤝 Contributing
 
+* See the [Label Guide](docs/LABELS.md) to find an issue that fits your skills.
+
 OpenSourceMate is being built as an open-source project, and contributions are welcome.
 
 Before contributing:

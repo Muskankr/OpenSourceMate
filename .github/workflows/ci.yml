@@ -38,6 +38,9 @@ jobs:
       - name: Type-Check
         run: npx tsc --noEmit
 
+      - name: Run unit & integration tests
+        run: npm test -- --ci
+
       - name: Production build
         run: npm run build
   

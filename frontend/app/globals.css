@@ -1,20 +1,37 @@
-
 @import "tailwindcss";
 
 :root {
   --background: #05070d;
   --foreground: #ededed;
+  --focus-ring: #a855f7;
+  --focus-offset: #05070d;
+  --card-bg: rgba(255, 255, 255, 0.035);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --text-muted: #94a3b8;
+  --text-primary: #f8fafc;
 }
 
 :root[data-theme="dark"] {
   --background: #05070d;
   --foreground: #ededed;
+  --focus-ring: #c084fc;
+  --focus-offset: #05070d;
+  --card-bg: rgba(255, 255, 255, 0.035);
+  --card-border: rgba(255, 255, 255, 0.1);
+  --text-muted: #9ca3af;
+  --text-primary: #f9fafb;
   color-scheme: dark;
 }
 
 :root[data-theme="light"] {
   --background: #f8fafc;
-  --foreground: #111827;
+  --foreground: #0f172a;
+  --focus-ring: #7c3aed;
+  --focus-offset: #ffffff;
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
+  --text-muted: #475569;
+  --text-primary: #0f172a;
   color-scheme: light;
 }
 
@@ -28,14 +45,66 @@
 html,
 body {
   min-height: 100%;
+  overflow-x: hidden;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 button {
   cursor: pointer;
+}
+
+/* Accessibility: Universal Visible Focus Rings */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+/* Skip link styling for keyboard navigation */
+.skip-link {
+  position: absolute;
+  top: -9999px;
+  left: 1rem;
+  z-index: 100;
+  padding: 0.75rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border-radius: 0.75rem;
+  background-color: #7c3aed;
+  color: #ffffff;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+  transition: top 0.2s ease-in-out;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  top: 1rem;
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/* Respect user's motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* High contrast mode improvements */
+@media (forced-colors: active) {
+  :focus-visible {
+    outline: 3px solid Highlight;
+    outline-offset: 2px;
+  }
 }
