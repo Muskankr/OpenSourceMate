@@ -4,9 +4,9 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from app.api.routes.ai import router as ai_router
 from app.api.routes.github import router as github_router
 from app.api.routes.issues import router as issues_router
-from app.api.routes.ai import router as ai_router
 from app.api.routes.matching import router as matching_router
 from app.services.github_service import (
     GitHubRateLimitError,

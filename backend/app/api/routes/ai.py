@@ -3,7 +3,6 @@ from pydantic import BaseModel
 
 from app.ai.ai_service import analyze_issue
 
-
 router = APIRouter(
     prefix="/api/ai",
     tags=["AI"],

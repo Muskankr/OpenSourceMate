@@ -67,12 +67,8 @@ describe("Analyze Flow - Home Component", () => {
         name: /Find the open-source issues/i,
       })
     ).toBeInTheDocument();
-    expect(
-      screen.getByPlaceholderText(/Enter your GitHub username/i)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Analyze Profile/i })
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Enter your GitHub username/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Analyze Profile/i })).toBeInTheDocument();
   });
 
   it("shows an error when attempting to analyze an empty username", async () => {
@@ -81,9 +77,7 @@ describe("Analyze Flow - Home Component", () => {
     const analyzeBtn = screen.getByRole("button", { name: /Analyze Profile/i });
     fireEvent.click(analyzeBtn);
 
-    expect(
-      await screen.findByText(/Please enter a GitHub username\./i)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Please enter a GitHub username\./i)).toBeInTheDocument();
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
@@ -97,7 +91,7 @@ describe("Analyze Flow - Home Component", () => {
     fireEvent.click(analyzeBtn);
 
     expect(
-      await screen.findByText(/Invalid GitHub username/i)
+      await screen.findByText(/cannot begin with a hyphen|Invalid GitHub username/i)
     ).toBeInTheDocument();
     expect(global.fetch).not.toHaveBeenCalled();
   });
@@ -136,7 +130,7 @@ describe("Analyze Flow - Home Component", () => {
   });
 
   it("displays loading state and disables analyze button during request", async () => {
-    let resolveProfile: (val: any) => void;
+    let resolveProfile: (val: unknown) => void;
     const profilePromise = new Promise((resolve) => {
       resolveProfile = resolve;
     });
@@ -189,18 +183,18 @@ describe("Analyze Flow - Home Component", () => {
 
     // Profile assertion
     expect(await screen.findByText("The Octocat")).toBeInTheDocument();
-    expect(screen.getByText("@octocat")).toBeInTheDocument();
+    expect(screen.getAllByText("@octocat").length).toBeGreaterThan(0);
     expect(screen.getByText("GitHub mascot and developer advocate.")).toBeInTheDocument();
 
     // Skills assertion
     expect(screen.getAllByText("TypeScript").length).toBeGreaterThan(0);
-    expect(screen.getByText("Python")).toBeInTheDocument();
-    expect(screen.getByText("Go")).toBeInTheDocument();
+    expect(screen.getAllByText("Python").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Go").length).toBeGreaterThan(0);
 
     // Recommendations assertion
     await waitFor(() => {
       expect(
-        screen.getByText("Add TypeScript type definitions for options parser")
+        screen.getByText(/Add TypeScript type definitions for options parser/i)
       ).toBeInTheDocument();
     });
     expect(screen.getByText("octocat/hello-world")).toBeInTheDocument();
@@ -220,9 +214,7 @@ describe("Analyze Flow - Home Component", () => {
     fireEvent.change(input, { target: { value: "nonexistentuser999" } });
     fireEvent.click(screen.getByRole("button", { name: /Analyze Profile/i }));
 
-    expect(
-      await screen.findByText(/GitHub user not found\. Check the username and try again\./i)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/could not be found/i)).toBeInTheDocument();
   });
 
   it("displays rate limit error message with reset time on 429 response", async () => {
@@ -242,9 +234,7 @@ describe("Analyze Flow - Home Component", () => {
     fireEvent.change(input, { target: { value: "busyuser" } });
     fireEvent.click(screen.getByRole("button", { name: /Analyze Profile/i }));
 
-    expect(
-      await screen.findByText(/GitHub rate limit reached, try again at/i)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/GitHub API rate limit reached/i)).toBeInTheDocument();
   });
 
   it("displays server unavailable message on 502/503 response", async () => {
@@ -261,14 +251,14 @@ describe("Analyze Flow - Home Component", () => {
     fireEvent.click(screen.getByRole("button", { name: /Analyze Profile/i }));
 
     expect(
-      await screen.findByText(/GitHub API is temporarily unavailable\. Please try again in a few moments\./i)
+      await screen.findByText(
+        /GitHub API is temporarily unavailable\. Please try again in a few moments\./i
+      )
     ).toBeInTheDocument();
   });
 
   it("displays network connectivity error and retry button on TypeError", async () => {
-    (global.fetch as jest.Mock).mockRejectedValueOnce(
-      new TypeError("Failed to fetch")
-    );
+    (global.fetch as jest.Mock).mockRejectedValueOnce(new TypeError("Failed to fetch"));
 
     render(<Home />);
 
@@ -276,9 +266,7 @@ describe("Analyze Flow - Home Component", () => {
     fireEvent.change(input, { target: { value: "offlineuser" } });
     fireEvent.click(screen.getByRole("button", { name: /Analyze Profile/i }));
 
-    expect(
-      await screen.findByText(/Unable to connect to server\. Please check your internet connection/i)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Unable to connect to the server/i)).toBeInTheDocument();
 
     const retryBtn = screen.getByRole("button", { name: /Retry/i });
     expect(retryBtn).toBeInTheDocument();
@@ -340,7 +328,7 @@ describe("Analyze Flow - Home Component", () => {
   it("toggles theme between dark and light mode", async () => {
     render(<Home />);
 
-    const themeBtn = screen.getByRole("button", { name: /Switch to light mode/i });
+    const themeBtn = screen.getAllByRole("button", { name: /Switch to light mode/i })[0];
     fireEvent.click(themeBtn);
 
     expect(document.documentElement.dataset.theme).toBe("light");

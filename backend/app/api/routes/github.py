@@ -7,7 +7,6 @@ from app.services.github_service import (
 )
 from app.services.skill_service import analyze_skills
 
-
 router = APIRouter(
     prefix="/api/github",
     tags=["GitHub"],

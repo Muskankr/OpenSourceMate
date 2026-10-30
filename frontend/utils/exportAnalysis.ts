@@ -18,17 +18,14 @@ export function generateMarkdownReport(data: ExportPayload): string {
   const skillsTable =
     data.skills.length > 0
       ? data.skills
-          .map(
-            (s) =>
-              `| ${s.name} | ${s.repository_count} | ${s.percentage}% |`
-          )
+          .map((s) => `| ${s.name} | ${s.repository_count} | ${s.percentage}% |`)
           .join("\n")
       : "| No technical skills detected | - | - |";
 
   return `# OpenSourceMate Developer Profile Analysis
 
-**User**: [${nameDisplay}](${data.profileUrl || `https://github.com/${data.username}`})  
-**Export Date**: ${exportDate}  
+**User**: [${nameDisplay}](${data.profileUrl || `https://github.com/${data.username}`})
+**Export Date**: ${exportDate}
 ${data.bio ? `**Bio**: ${data.bio}\n` : ""}
 ## Overview & Activity
 - **Public Repositories**: ${data.repositoriesCount ?? 0}
@@ -59,11 +56,7 @@ export function generateJsonReport(data: ExportPayload): string {
   );
 }
 
-export function downloadFile(
-  content: string,
-  filename: string,
-  mimeType: string
-): void {
+export function downloadFile(content: string, filename: string, mimeType: string): void {
   if (typeof window === "undefined") return;
 
   const blob = new Blob([content], { type: mimeType });
