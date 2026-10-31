@@ -4,6 +4,7 @@ import ExportMenu from "../components/ExportMenu";
 import GitHubLink from "../components/GitHubLink";
 import ProfileCard from "../components/ProfileCard";
 import RecentSearches from "../components/RecentSearches";
+import ServiceUnavailableBanner from "../components/ServiceUnavailableBanner";
 import SkillChart from "../components/SkillChart";
 import {
   type GitHubUserProfile as Profile,
@@ -21,9 +22,14 @@ import {
   ApiClientError,
 } from "../utils/apiClient";
 import {
-  downloadFile,
-  generateJsonReport,
-  generateMarkdownReport,
+  isNetworkOrServerError,
+  resolveServiceErrorDetails,
+  sanitizeErrorMessage,
+  type ServiceErrorDetails,
+} from "../utils/errorHandling";
+import {
+  exportAnalysisData,
+  type ExportFormat,
   type ExportPayload,
 } from "../utils/exportAnalysis";
 import {
@@ -86,6 +92,7 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const [error, setError] = useState("");
+  const [serviceError, setServiceError] = useState<ServiceErrorDetails | null>(null);
   const [lastAnalyzed, setLastAnalyzed] = useState("");
   const [canRetry, setCanRetry] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
@@ -224,6 +231,7 @@ export default function Home() {
     const validation = validateGitHubUsername(raw);
 
     if (!validation.isValid) {
+      setServiceError(null);
       setError(validation.error || "Please enter a valid GitHub username.");
       return;
     }
@@ -237,6 +245,7 @@ export default function Home() {
     setCanRetry(false);
     setLoading(true);
     setError("");
+    setServiceError(null);
 
     // Only clear previous analysis if analyzing a different username
     if (cleanUsername.toLowerCase() !== profile?.username?.toLowerCase()) {
@@ -264,6 +273,18 @@ export default function Home() {
         return; // Prior in-flight search was aborted by a new search
       }
       setCanRetry(true);
+
+      // Detect network failure or 5xx server-side response (Issue #128)
+      if (isNetworkOrServerError(err)) {
+        const details = resolveServiceErrorDetails(err, {
+          username: cleanUsername,
+          endpoint: `/api/github/users/${cleanUsername}`,
+        });
+        setServiceError(details);
+        setError(details.message);
+        return;
+      }
+
       if (err instanceof ApiClientError) {
         if (err.status === 404) {
           setError(resolveAnalyzerErrorMessage(404, { username: cleanUsername }));
@@ -273,16 +294,8 @@ export default function Home() {
           setError(resolveAnalyzerErrorMessage(429, { resetAt: err.resetAt }));
           return;
         }
-        if (err.status === 502 || err.status === 503 || err.status === 504) {
-          setError(resolveAnalyzerErrorMessage(err.status));
-          return;
-        }
-        if (err.code === "NETWORK_ERROR" || err.status === 0) {
-          setError(resolveAnalyzerErrorMessage(new TypeError(err.message)));
-          return;
-        }
       }
-      setError(resolveAnalyzerErrorMessage(err));
+      setError(sanitizeErrorMessage(resolveAnalyzerErrorMessage(err)));
     } finally {
       setLoading(false);
     }
@@ -558,6 +571,7 @@ export default function Home() {
                       onChange={(e) => {
                         setUsername(e.target.value);
                         if (error) setError("");
+                        if (serviceError) setServiceError(null);
                       }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !loading) {
@@ -604,8 +618,24 @@ export default function Home() {
                 </span>
               </div>
 
-              {/* Accessible Error Alert (WCAG 2.1 AA: Assertive live region) */}
-              {error && (
+              {/* Service Unavailable Banner (Issue #128) */}
+              {serviceError && (
+                <div className="mt-5">
+                  <ServiceUnavailableBanner
+                    title={serviceError.title}
+                    message={serviceError.message}
+                    statusCode={serviceError.statusCode}
+                    onRetry={() => analyzeProfile(lastAnalyzed || username)}
+                    onDismiss={() => setServiceError(null)}
+                    reportUrl={serviceError.reportUrl}
+                    theme={theme}
+                    isRetrying={loading}
+                  />
+                </div>
+              )}
+
+              {/* Accessible Error Alert (WCAG 2.1 AA: Assertive live region for validation/404/429) */}
+              {error && !serviceError && (
                 <div
                   id="analyzer-error"
                   role="alert"

@@ -144,7 +144,18 @@ export function resolveAnalyzerErrorMessage(
   }
 
   if (statusOrError instanceof Error) {
-    return statusOrError.message || "Something went wrong. Please try again.";
+    const raw = statusOrError.message || "";
+    if (
+      raw.includes("Traceback") ||
+      raw.includes("at ") ||
+      raw.includes("ECONNREFUSED") ||
+      raw.includes(".py:") ||
+      raw.includes(".ts:") ||
+      raw.includes("node_modules")
+    ) {
+      return "Unable to connect to the server. Please check your network connection and ensure the backend is running.";
+    }
+    return raw || "Something went wrong. Please try again.";
   }
 
   return "An unexpected error occurred. Please try again.";

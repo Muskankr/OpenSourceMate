@@ -261,7 +261,7 @@ describe("Analyze Flow - Home Component", () => {
     fireEvent.click(screen.getByRole("button", { name: /Analyze Profile/i }));
 
     expect(
-      await screen.findByText(/temporarily unavailable/i)
+      await screen.findByRole("heading", { name: /temporarily unavailable/i })
     ).toBeInTheDocument();
   });
 
@@ -346,5 +346,32 @@ describe("Analyze Flow - Home Component", () => {
 
     expect(document.documentElement.dataset.theme).toBe("light");
     expect(localStorage.getItem("theme")).toBe("light");
+  });
+
+  it("renders friendly service unavailable banner with report issue link and retry when backend is stopped (Issue #128)", async () => {
+    (global.fetch as jest.Mock)
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"))
+      .mockRejectedValueOnce(new TypeError("Failed to fetch"));
+
+    render(<Home />);
+
+    const input = screen.getByPlaceholderText(/Enter your GitHub username/i);
+    fireEvent.change(input, { target: { value: "stoppedserveruser" } });
+    fireEvent.click(screen.getByRole("button", { name: /Analyze Profile/i }));
+
+    const banner = await screen.findByTestId("service-unavailable-banner");
+    expect(banner).toBeInTheDocument();
+
+    expect(screen.getByText(/Unable to Connect to Server|Service Temporarily Unavailable/i)).toBeInTheDocument();
+    expect(screen.queryByText(/TypeError/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/ECONNREFUSED/i)).not.toBeInTheDocument();
+
+    const retryBtn = screen.getByRole("button", { name: /Retry/i });
+    expect(retryBtn).toBeInTheDocument();
+
+    const reportLink = screen.getByRole("link", { name: /Report Problem/i });
+    expect(reportLink).toBeInTheDocument();
+    expect(reportLink).toHaveAttribute("target", "_blank");
+    expect(reportLink.getAttribute("href")).toContain("github.com");
   });
 });
