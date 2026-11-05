@@ -46,6 +46,7 @@ import {
   validateGitHubUsername,
   resolveAnalyzerErrorMessage,
 } from "../utils/validation";
+import BuildVersionBadge from "../components/BuildVersionBadge";
 
 export default function Home() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -1340,13 +1341,15 @@ export default function Home() {
             }`}
           >
             <p>© {new Date().getFullYear()} OpenSourceMate</p>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4">
               <Link
                 href="/privacy"
                 className="transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded"
               >
                 Privacy & Data Handling
               </Link>
+              <span>•</span>
+              <BuildVersionBadge theme={theme} />
               <span>•</span>
               <p>Built for the open-source community.</p>
             </div>

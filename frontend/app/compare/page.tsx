@@ -4,6 +4,7 @@ import React, { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import ProfileComparison from "../../components/ProfileComparison";
+import BuildVersionBadge from "../../components/BuildVersionBadge";
 
 function CompareContent() {
   const searchParams = useSearchParams();
@@ -134,9 +135,13 @@ function CompareContent() {
           isDark ? "border-white/5 text-gray-500" : "border-gray-200 text-gray-400"
         }`}
       >
-        <p>
-          OpenSourceMate Developer Comparison • Built with Next.js &amp; Tailwind CSS
-        </p>
+        <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-4">
+          <p>
+            OpenSourceMate Developer Comparison • Built with Next.js &amp; Tailwind CSS
+          </p>
+          <span className="hidden sm:inline">•</span>
+          <BuildVersionBadge theme={theme} />
+        </div>
       </footer>
     </div>
   );
