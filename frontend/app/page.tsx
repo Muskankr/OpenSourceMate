@@ -739,7 +739,7 @@ export default function Home() {
                 />
 
                 <span id="username-hint" className="sr-only">
-                  Provide a public GitHub username to analyze technical skills and receive matched issues.
+                  Provide a public GitHub username to analyze technical skills, language proficiencies, and repository breakdowns.
                 </span>
               </div>
 
@@ -1274,8 +1274,9 @@ export default function Home() {
                 <StepCard
                   number="03"
                   icon="→"
-                  title="Find your match"
-                  description="Discover open-source issues that align with your skills and contribution goals."
+                  title="Discover contribution opportunities"
+                  description="Explore recommended issues and contribution areas matched to your skills (issue matching engine currently in active development)."
+                  badge="Roadmap"
                   theme={theme}
                 />
               </div>
@@ -1433,12 +1434,14 @@ function StepCard({
   icon,
   title,
   description,
+  badge,
   theme,
 }: {
   number: string;
   icon: string;
   title: string;
   description: string;
+  badge?: string;
   theme: "dark" | "light";
 }) {
   return (
@@ -1457,13 +1460,26 @@ function StepCard({
           {icon}
         </div>
 
-        <span
-          className={`text-xs font-semibold tracking-widest ${
-            theme === "dark" ? "text-gray-400" : "text-gray-600"
-          }`}
-        >
-          {number}
-        </span>
+        <div className="flex items-center gap-2">
+          {badge && (
+            <span
+              className={`rounded-full px-2 py-0.5 text-[10px] font-semibold tracking-wide uppercase ${
+                theme === "dark"
+                  ? "bg-purple-500/20 text-purple-300 border border-purple-500/30"
+                  : "bg-purple-100 text-purple-700 border border-purple-200"
+              }`}
+            >
+              {badge}
+            </span>
+          )}
+          <span
+            className={`text-xs font-semibold tracking-widest ${
+              theme === "dark" ? "text-gray-400" : "text-gray-600"
+            }`}
+          >
+            {number}
+          </span>
+        </div>
       </div>
 
       <h3 className="mt-7 text-lg font-semibold">{title}</h3>
