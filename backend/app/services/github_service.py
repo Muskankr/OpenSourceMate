@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import json
 import re
@@ -27,22 +28,60 @@ class GitHubRateLimitError(Exception):
         super().__init__("GitHub API rate limit reached")
 
 
+class GitHubTimeoutError(Exception):
+    """Raised when an outgoing GitHub API request times out."""
+
+    def __init__(self, url: str, timeout_seconds: float):
+        self.url = url
+        self.timeout_seconds = timeout_seconds
+        super().__init__(
+            f"GitHub API request to {url} timed out after {timeout_seconds} seconds"
+        )
+
+
+class GitHubUpstreamError(Exception):
+    """Raised when GitHub returns persistent 5xx server errors after retries."""
+
+    def __init__(self, url: str, status_code: int, message: str = ""):
+        self.url = url
+        self.status_code = status_code
+        self.message = message
+        super().__init__(
+            f"GitHub API returned {status_code} for {url}: {message}"
+        )
+
+
 def get_client() -> httpx.AsyncClient:
+    """Return or initialize the singleton AsyncClient configured with explicit timeouts."""
     global _client
 
     if _client is None:
+        settings = get_settings()
         headers = {"Accept": "application/vnd.github+json"}
-        token = get_settings().github_token
+        token = settings.github_token
 
         if token:
             headers["Authorization"] = f"Bearer {token}"
 
-        _client = httpx.AsyncClient(headers=headers, timeout=15.0)
+        # Explicit connect, read, write, and pool timeouts
+        timeout = httpx.Timeout(
+            connect=settings.github_connect_timeout,
+            read=settings.github_read_timeout,
+            write=settings.github_write_timeout,
+            pool=settings.github_pool_timeout,
+        )
+
+        _client = httpx.AsyncClient(
+            headers=headers,
+            timeout=timeout,
+            follow_redirects=True,
+        )
 
     return _client
 
 
 async def close_client() -> None:
+    """Close the shared httpx.AsyncClient if initialized."""
     global _client
 
     if _client is not None:
@@ -76,36 +115,113 @@ def _is_rate_limited(response: httpx.Response) -> bool:
 
 
 async def github_get(url: str, params: dict | None = None) -> httpx.Response:
-    """GET a GitHub API url with the shared client.
+    """GET a GitHub API url with the shared client, handling timeouts, retries, and rate limits.
 
-    Raises GitHubRateLimitError when GitHub reports the rate limit is hit.
+    Retries transient 5xx errors and network drops with exponential backoff up to configured max retries.
+    Raises GitHubRateLimitError when GitHub rate limits are hit.
+    Raises GitHubTimeoutError when timeouts occur.
+    Raises GitHubUpstreamError when 5xx errors persist.
     """
-    logger.debug(
-        f"Calling external GitHub API: {url}",
-        extra={
-            "structured_data": {
-                "event": "github_api_call",
-                "url": url,
-                "params": sanitize_sensitive_data(params or {}),
-            }
-        },
-    )
-    response = await get_client().get(url, params=params)
+    settings = get_settings()
+    max_retries = max(1, settings.github_max_retries)
+    backoff_factor = settings.github_retry_backoff_factor
+    client = get_client()
 
-    if _is_rate_limited(response):
-        logger.warning(
-            f"GitHub API rate limit exceeded on {url}",
-            extra={
-                "structured_data": {
-                    "event": "github_rate_limited",
-                    "status_code": response.status_code,
-                    "remaining": response.headers.get("X-RateLimit-Remaining"),
-                }
-            },
-        )
-        raise GitHubRateLimitError(_rate_limit_reset(response))
+    for attempt in range(1, max_retries + 1):
+        try:
+            logger.debug(
+                f"Calling external GitHub API: {url} (attempt {attempt}/{max_retries})",
+                extra={
+                    "structured_data": {
+                        "event": "github_api_call",
+                        "url": url,
+                        "attempt": attempt,
+                        "params": sanitize_sensitive_data(params or {}),
+                    }
+                },
+            )
 
-    return response
+            response = await client.get(url, params=params)
+
+            # Check rate limiting first
+            if _is_rate_limited(response):
+                logger.warning(
+                    f"GitHub API rate limit exceeded on {url}",
+                    extra={
+                        "structured_data": {
+                            "event": "github_rate_limited",
+                            "status_code": response.status_code,
+                            "remaining": response.headers.get("X-RateLimit-Remaining"),
+                        }
+                    },
+                )
+                raise GitHubRateLimitError(_rate_limit_reset(response))
+
+            # If 5xx transient error and we have retry attempts left, backoff and retry
+            if response.status_code in {500, 502, 503, 504}:
+                if attempt < max_retries:
+                    delay = backoff_factor * (2 ** (attempt - 1))
+                    logger.warning(
+                        f"GitHub API transient error {response.status_code} on {url}. Retrying in {delay}s...",
+                        extra={
+                            "structured_data": {
+                                "event": "github_transient_retry",
+                                "status_code": response.status_code,
+                                "attempt": attempt,
+                                "delay": delay,
+                            }
+                        },
+                    )
+                    await asyncio.sleep(delay)
+                    continue
+                else:
+                    logger.error(
+                        f"GitHub API persistent 5xx error {response.status_code} after {max_retries} attempts on {url}",
+                        extra={
+                            "structured_data": {
+                                "event": "github_persistent_5xx",
+                                "status_code": response.status_code,
+                                "max_retries": max_retries,
+                            }
+                        },
+                    )
+                    raise GitHubUpstreamError(url, response.status_code, response.text)
+
+            return response
+
+        except httpx.TimeoutException as exc:
+            logger.warning(
+                f"GitHub API timeout on {url} (attempt {attempt}/{max_retries}): {exc}",
+                extra={
+                    "structured_data": {
+                        "event": "github_timeout",
+                        "url": url,
+                        "attempt": attempt,
+                    }
+                },
+            )
+            if attempt < max_retries:
+                delay = backoff_factor * (2 ** (attempt - 1))
+                await asyncio.sleep(delay)
+                continue
+            raise GitHubTimeoutError(url, settings.github_read_timeout) from exc
+
+        except httpx.NetworkError as exc:
+            logger.warning(
+                f"GitHub API network error on {url} (attempt {attempt}/{max_retries}): {exc}",
+                extra={
+                    "structured_data": {
+                        "event": "github_network_error",
+                        "url": url,
+                        "attempt": attempt,
+                    }
+                },
+            )
+            if attempt < max_retries:
+                delay = backoff_factor * (2 ** (attempt - 1))
+                await asyncio.sleep(delay)
+                continue
+            raise
 
 
 async def get_github_user(username: str, refresh: bool = False):

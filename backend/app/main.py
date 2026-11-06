@@ -21,6 +21,8 @@ from app.schemas.serializers import (
 )
 from app.services.github_service import (
     GitHubRateLimitError,
+    GitHubTimeoutError,
+    GitHubUpstreamError,
     cache,
     close_client,
     get_github_diagnostics,
@@ -194,6 +196,30 @@ async def github_rate_limit_handler(request: Request, exc: GitHubRateLimitError)
             message="GitHub rate limit reached. Please try again later.",
             details={"reset_at": reset_at},
             extra={"reset_at": reset_at},
+        ),
+    )
+
+
+@app.exception_handler(GitHubTimeoutError)
+async def github_timeout_handler(request: Request, exc: GitHubTimeoutError):
+    return JSONResponse(
+        status_code=504,
+        content=format_error_content(
+            code="UPSTREAM_TIMEOUT",
+            message="GitHub API request timed out. Please try again in a moment.",
+            details={"timeout_seconds": exc.timeout_seconds, "url": exc.url},
+        ),
+    )
+
+
+@app.exception_handler(GitHubUpstreamError)
+async def github_upstream_handler(request: Request, exc: GitHubUpstreamError):
+    return JSONResponse(
+        status_code=502,
+        content=format_error_content(
+            code="UPSTREAM_SERVICE_ERROR",
+            message="Upstream GitHub service is temporarily unavailable or returned a server error.",
+            details={"status_code": exc.status_code, "url": exc.url},
         ),
     )
 

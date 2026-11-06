@@ -54,6 +54,17 @@ class Settings(BaseSettings):
     # Sensible upper bound on the total number of repositories analyzed per profile.
     github_max_repos_cap: int = 300
 
+    # GitHub HTTP client resilience configuration (Issue #196)
+    # Explicit connection and read timeouts in seconds for outgoing GitHub API calls.
+    github_connect_timeout: float = 5.0
+    github_read_timeout: float = 10.0
+    github_write_timeout: float = 10.0
+    github_pool_timeout: float = 5.0
+    # Maximum number of retry attempts on transient network failures or 5xx server errors.
+    github_max_retries: int = 3
+    # Exponential backoff factor (in seconds) between retries.
+    github_retry_backoff_factor: float = 0.5
+
     # -------------------------------------------------------------------------
     # AI Analysis Configuration
     # -------------------------------------------------------------------------
