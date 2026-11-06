@@ -1,0 +1,25 @@
+# Categories for the notes GitHub generates when a release is drafted.
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+    authors:
+      - dependabot
+  categories:
+    - title: Features
+      labels:
+        - enhancement
+        - feature
+    - title: Bug fixes
+      labels:
+        - bug
+    - title: Documentation
+      labels:
+        - documentation
+    - title: Tooling and CI
+      labels:
+        - CI/CD
+        - tooling
+    - title: Other changes
+      labels:
+        - "*"

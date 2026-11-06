@@ -287,6 +287,15 @@ Examples:
    - Screenshots or GIFs for any UI changes
 4. Respond to feedback and make any requested revisions.
 
+### Updating the changelog
+
+Add a line to the `Unreleased` section of [CHANGELOG.md](CHANGELOG.md) when your pull request changes
+what users or contributors see: a new feature, a behaviour change, a bug fix, or a new setup step.
+Put it under `Added`, `Changed` or `Fixed` and keep it to one line. Typo fixes, refactors with no visible
+change and dependency bumps do not need an entry. Maintainers move the `Unreleased` entries under a
+version heading when a release is cut. Releases use the categories in [.github/release.yml](.github/release.yml),
+which GitHub reads from your issue and PR labels.
+
 ---
 
 ## Code Style, Linting & Pre-Commit Hooks
