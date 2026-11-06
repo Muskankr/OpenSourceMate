@@ -120,6 +120,27 @@ export default function ProfileComparison({
 
   // Compare both profiles together
   const handleCompare = useCallback(async () => {
+    const clean1 = input1.trim().replace(/^@+/, "");
+    const clean2 = input2.trim().replace(/^@+/, "");
+
+    // Reject duplicate usernames if both are provided
+    if (clean1 && clean2 && clean1.toLowerCase() === clean2.toLowerCase()) {
+      setUser1State((prev) => ({
+        ...prev,
+        username: clean1,
+        loading: false,
+        error: "Cannot compare a developer with themselves. Please enter two different GitHub usernames.",
+      }));
+      setUser2State((prev) => ({
+        ...prev,
+        username: clean2,
+        loading: false,
+        error: "Duplicate username detected. Please enter two different GitHub usernames.",
+      }));
+      onUsernamesChange?.(input1, input2);
+      return;
+    }
+
     onUsernamesChange?.(input1, input2);
     await Promise.allSettled([
       fetchSingleUser(input1, setUser1State),
@@ -279,6 +300,38 @@ export default function ProfileComparison({
                 className={`w-full rounded-xl border py-2.5 pl-8 pr-4 text-sm outline-none transition focus:ring-2 focus:ring-purple-500/20 ${inputBg}`}
               />
             </div>
+          </div>
+
+          {/* Swap Button In Center on Desktop */}
+          <div className="flex justify-center md:col-span-5 -my-2">
+            <button
+              type="button"
+              onClick={handleSwap}
+              disabled={isAnyLoading || (!input1.trim() && !input2.trim())}
+              aria-label="Swap developer positions"
+              title="Swap Developer 1 and Developer 2"
+              className={`inline-flex items-center gap-1.5 rounded-full border px-4 py-1 text-xs font-medium shadow-sm transition hover:scale-105 active:scale-95 disabled:pointer-events-none disabled:opacity-40 ${
+                isDark
+                  ? "border-purple-500/30 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20"
+                  : "border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100"
+              }`}
+            >
+              <svg
+                className="h-3.5 w-3.5"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                />
+              </svg>
+              <span>Swap Order</span>
+            </button>
           </div>
 
           {/* Action Button */}

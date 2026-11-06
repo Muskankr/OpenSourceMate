@@ -7,8 +7,9 @@ import ProfileComparison from "../../components/ProfileComparison";
 
 function CompareContent() {
   const searchParams = useSearchParams();
-  const initialUser1 = searchParams.get("user1") || "";
-  const initialUser2 = searchParams.get("user2") || "";
+  // Support both /compare?a=user1&b=user2 and /compare?user1=user1&user2=user2
+  const initialUser1 = searchParams.get("a") || searchParams.get("user1") || "";
+  const initialUser2 = searchParams.get("b") || searchParams.get("user2") || "";
 
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
@@ -34,11 +35,15 @@ function CompareContent() {
   const handleUsernamesChange = (u1: string, u2: string) => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      if (u1.trim()) params.set("user1", u1.trim());
-      else params.delete("user1");
+      // Clean up legacy params
+      params.delete("user1");
+      params.delete("user2");
 
-      if (u2.trim()) params.set("user2", u2.trim());
-      else params.delete("user2");
+      if (u1.trim()) params.set("a", u1.trim());
+      else params.delete("a");
+
+      if (u2.trim()) params.set("b", u2.trim());
+      else params.delete("b");
 
       const queryStr = params.toString();
       const newUrl = queryStr ? `${window.location.pathname}?${queryStr}` : window.location.pathname;
