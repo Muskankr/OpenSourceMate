@@ -144,3 +144,38 @@ async def get_user_skills(
         "analyzed_at": datetime.now(timezone.utc).isoformat(),
         **result,
     }
+
+
+
+@router.get(
+    "/users/{username}/external-prs",
+    summary="Get merged PR history for other repositories (Issue #192)",
+)
+async def get_external_prs(
+    username: str,
+    limit: int = Query(default=10, ge=1, le=100),
+    refresh: bool = Query(default=False),
+):
+    validated_username = validate_github_username(username)
+    try:
+        from app.services.github_service import (
+            GitHubRateLimitError,
+            fetch_merged_external_pull_requests,
+        )
+
+        data = await fetch_merged_external_pull_requests(
+            validated_username, limit=limit, bypass_cache=refresh
+        )
+        return data
+    except GitHubRateLimitError as exc:
+        raise HTTPException(
+            status_code=429,
+            detail="GitHub API rate limit reached. Please try again later.",
+            headers={"X-RateLimit-Reset": exc.reset_at.isoformat()}
+            if exc.reset_at
+            else {},
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500, detail=f"Failed to fetch external PR history: {exc}"
+        )

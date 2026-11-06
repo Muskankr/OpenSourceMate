@@ -420,3 +420,98 @@ async def get_github_diagnostics() -> dict:
             "error": str(exc),
             "rate_limit": None,
         }
+
+
+
+async def fetch_merged_external_pull_requests(
+    username: str, limit: int = 10, bypass_cache: bool = False
+) -> dict:
+    """
+    Counts merged pull requests authored by the user in repositories they do not own,
+    and returns repository breakdown statistics (Issue #192).
+    Respects rate limits and response caching.
+    """
+    clean_user = username.strip().lstrip("@")
+    cache_key = f"merged_prs_external:{clean_user.lower()}:{limit}"
+
+    if not bypass_cache:
+        cached = cache.get(cache_key)
+        if cached:
+            return cached
+
+    client = get_client()
+    query = f"is:pr is:merged author:{clean_user} -user:{clean_user}"
+    url = f"{GITHUB_API_URL}/search/issues"
+    params = {
+        "q": query,
+        "per_page": min(limit, 100),
+        "sort": "updated",
+        "order": "desc",
+    }
+
+    try:
+        response = await client.get(url, params=params)
+    except httpx.RequestError as exc:
+        logger.error(
+            "Failed network call fetching merged PRs for %s: %s", clean_user, exc
+        )
+        raise
+
+    if response.status_code in (403, 429):
+        reset_ts = response.headers.get("x-ratelimit-reset")
+        reset_dt = (
+            datetime.fromtimestamp(int(reset_ts), tz=UTC) if reset_ts else None
+        )
+        raise GitHubRateLimitError(reset_at=reset_dt)
+
+    if response.status_code == 422:
+        return {
+            "username": clean_user,
+            "total_merged_prs": 0,
+            "repositories_count": 0,
+            "top_repositories": [],
+            "recent_prs": [],
+        }
+
+    response.raise_for_status()
+    data = response.json()
+    total_count = data.get("total_count", 0)
+    items = data.get("items", [])
+
+    repo_counts: dict[str, int] = {}
+    recent_prs = []
+
+    for item in items:
+        repo_url = item.get("repository_url", "")
+        # Extract owner/repo name
+        parts = repo_url.rstrip("/").split("/")
+        repo_name = f"{parts[-2]}/{parts[-1]}" if len(parts) >= 2 else "external/repo"
+
+        repo_counts[repo_name] = repo_counts.get(repo_name, 0) + 1
+        recent_prs.append(
+            {
+                "id": item.get("id"),
+                "title": item.get("title"),
+                "html_url": item.get("html_url"),
+                "repository": repo_name,
+                "created_at": item.get("created_at"),
+                "closed_at": item.get("closed_at"),
+            }
+        )
+
+    sorted_repos = sorted(
+        [{"repository": r, "count": c} for r, c in repo_counts.items()],
+        key=lambda x: x["count"],
+        reverse=True,
+    )
+
+    result = {
+        "username": clean_user,
+        "total_merged_prs": total_count,
+        "repositories_count": len(repo_counts),
+        "top_repositories": sorted_repos[:10],
+        "recent_prs": recent_prs[:5],
+    }
+
+    cache.set(cache_key, result, ttl=900)
+    return result
