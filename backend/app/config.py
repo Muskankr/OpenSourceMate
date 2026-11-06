@@ -55,6 +55,13 @@ class Settings(BaseSettings):
     github_max_repos_cap: int = 300
 
     # -------------------------------------------------------------------------
+    # API Rate Limiting Configuration (Issue #197)
+    # -------------------------------------------------------------------------
+    api_rate_limit_enabled: bool = True
+    api_rate_limit_per_minute: int = 60
+    api_rate_limit_burst: int = 25
+
+    # -------------------------------------------------------------------------
     # AI Analysis Configuration
     # -------------------------------------------------------------------------
     ai_api_key: str | None = None

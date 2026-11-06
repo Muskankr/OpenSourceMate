@@ -35,6 +35,7 @@ async def lifespan(app: FastAPI):
 
 
 from app.middleware.logging import StructuredLoggingMiddleware
+from app.middleware.rate_limit import IPRateLimitMiddleware
 from app.utils.logging import setup_structured_logging
 
 settings = get_settings()
@@ -97,6 +98,7 @@ for backward compatibility.
     },
 )
 
+app.add_middleware(IPRateLimitMiddleware)
 app.add_middleware(StructuredLoggingMiddleware)
 
 if settings.allowed_hosts and "*" not in settings.allowed_hosts:
