@@ -22,6 +22,7 @@ Thank you for your interest in contributing to **OpenSourceMate**! OpenSourceMat
   - [Submitting a Pull Request](#submitting-a-pull-request)
 - [Code Style & Standards](#code-style--standards)
 - [Community & Getting Help](#community--getting-help)
+- [Updating dependencies](#updating-dependencies)
 
 ---
 
@@ -46,9 +47,9 @@ We are committed to providing a friendly, safe, and welcoming environment for ev
 Before contributing, ensure you have the following installed on your system:
 
 - **Git** (v2.20+)
-- **Python** (v3.10 or higher)
-- **Node.js** (v18.0 or higher)
-- **npm** (v9.0 or higher) or compatible package manager
+- **Python** (v3.12)
+- **Node.js** (v22)
+- **npm** (v10 or higher)
 
 ---
 
@@ -137,7 +138,7 @@ OpenSourceMate/
    ```
 3. Install dependencies:
    ```bash
-   npm install
+   npm ci
    ```
 4. Start the development server:
    ```bash
@@ -160,6 +161,29 @@ You can develop and test the frontend completely offline without running the bac
 
 See the [Mock API Guide](docs/mock-api.md) for test fixtures (`octocat`, `torvalds`, `not-found`, `rate-limited`).
 
+---
+## Updating dependencies
+
+Keep dependency installations reproducible by committing the lockfiles used by the project.
+
+### Frontend dependencies
+
+- `frontend/package.json` defines the frontend dependencies.
+- `frontend/package-lock.json` records the resolved dependency tree.
+- Use `npm ci` for clean and reproducible installations.
+- When adding, removing, or updating dependencies, run the appropriate `npm install` command from the `frontend/` directory.
+- Commit both `package.json` and `package-lock.json` whenever dependencies change.
+- Do not edit `package-lock.json` manually.
+
+### Backend dependencies
+
+- `backend/requirements.txt` contains runtime dependencies.
+- `backend/requirements-dev.txt` contains development and testing dependencies.
+- Update the appropriate requirements file when changing Python dependencies.
+- Keep exact versions pinned where the existing project policy requires them.
+- Commit dependency file changes together with the corresponding code changes.
+
+After updating dependencies, install them in a clean environment and run the relevant tests before opening a pull request.
 ---
 
 ## Environment Configuration
