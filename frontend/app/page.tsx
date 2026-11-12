@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ExportMenu from "../components/ExportMenu";
 import GitHubLink from "../components/GitHubLink";
+import StarterCommentModal from "../components/StarterCommentModal";
 import ProfileCard from "../components/ProfileCard";
 import RecentSearches from "../components/RecentSearches";
 import RefreshAnalysisButton from "../components/RefreshAnalysisButton";
@@ -157,6 +158,7 @@ export default function Home() {
   const [serviceError, setServiceError] = useState<ServiceErrorDetails | null>(null);
   const [lastAnalyzed, setLastAnalyzed] = useState("");
   const [canRetry, setCanRetry] = useState(false);
+  const [isCommentModalOpen, setIsCommentModalOpen] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
   useEffect(() => {
@@ -503,6 +505,14 @@ export default function Home() {
               </Link>
 
               <GitHubLink className="rounded-lg px-2 py-1 transition hover:text-purple-400" />
+
+              <button
+                type="button"
+                onClick={() => setIsCommentModalOpen(true)}
+                className="flex items-center gap-1.5 rounded-full border border-blue-500/20 bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-300 transition hover:bg-blue-500/20 hover:text-white"
+              >
+                <span>💬</span> Starter Comments
+              </button>
 
               <button
                 type="button"
@@ -1414,6 +1424,12 @@ export default function Home() {
             </GitHubLink>
           </div>
         </footer>
+
+        <StarterCommentModal
+          isOpen={isCommentModalOpen}
+          onClose={() => setIsCommentModalOpen(false)}
+          defaultTech={skills?.skills?.[0]?.name || "Python"}
+        />
       </div>
     </>
   );
