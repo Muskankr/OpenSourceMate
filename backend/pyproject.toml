@@ -7,10 +7,10 @@ name = "opensourcemate-backend"
 version = "0.1.0"
 description = "AI-powered open-source contribution assistant backend"
 readme = "../README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.12,<3.13"
 
 [tool.ruff]
-target-version = "py311"
+target-version = "py312"
 line-length = 88
 indent-width = 4
 exclude = [
