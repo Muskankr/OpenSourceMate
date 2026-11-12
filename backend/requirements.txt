@@ -4,5 +4,5 @@ httpx==0.28.1
 openai==3.46.0
 pydantic==2.14.2
 pydantic-settings==2.16.2
-pydantic_core==2.50.4
+pydantic_core==2.50.2
 pytest-asyncio>=1.4.1
