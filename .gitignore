@@ -7,3 +7,8 @@
 node_modules/
 .ruff_cache/
 .pytest_cache/
+
+# Local notebook environment
+.venv-notebooks/
+
+.venv-notebooks-check/
