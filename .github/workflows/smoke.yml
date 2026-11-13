@@ -1,0 +1,94 @@
+name: Smoke Test
+
+# Calls the deployed backend (health endpoint, then a profile and skill analysis
+# for a known public GitHub user) and fails if anything is off.
+#
+# Configure it under Settings > Secrets and variables > Actions > Variables:
+#   SMOKE_API_URL   backend base URL, no trailing slash (required)
+#   SMOKE_USERNAME  public GitHub user with public repos (optional, default octocat)
+# Both are plain variables on purpose. Nothing here needs a secret.
+
+on:
+  schedule:
+    # Every 6 hours. Each run costs a few unauthenticated GitHub API calls on
+    # the backend, so it is kept low.
+    - cron: "17 */6 * * *"
+  # Runs after a production deployment that a deployment integration reports
+  # to GitHub (for example Vercel posts a deployment_status event).
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      api_url:
+        description: "Backend base URL to test instead of SMOKE_API_URL"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: smoke-test
+  cancel-in-progress: false
+
+jobs:
+  smoke:
+    name: Smoke test backend
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    if: >-
+      github.event_name != 'deployment_status' ||
+      (github.event.deployment_status.state == 'success' &&
+      contains(github.event.deployment_status.environment, 'production'))
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run smoke test
+        env:
+          SMOKE_API_URL: ${{ inputs.api_url || vars.SMOKE_API_URL }}
+          SMOKE_USERNAME: ${{ vars.SMOKE_USERNAME }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          # Manual runs must fail without a URL. Scheduled and deployment runs
+          # only warn, so repositories that have not set the variable stay quiet.
+          flags=""
+          if [ "$EVENT_NAME" != "workflow_dispatch" ]; then
+            flags="--skip-if-unconfigured"
+          fi
+          python scripts/smoke_test.py $flags
+
+  notify:
+    name: Open an issue on failure
+    needs: smoke
+    if: failure() && github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    permissions:
+      issues: write
+
+    steps:
+      - name: Open or update the tracking issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          title="Smoke test is failing"
+          body="The smoke test failed (triggered by \`$EVENT_NAME\`). Details: $RUN_URL"
+
+          existing=$(gh issue list --state open --search "\"$title\" in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "$body"
+          else
+            gh issue create --title "$title" --body "$body
+
+          This issue was opened by the Smoke Test workflow. Close it once the backend is healthy again."
+          fi
