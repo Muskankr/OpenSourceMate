@@ -173,6 +173,8 @@ Run through this checklist before launching or rolling out a new release:
   # Expected: HTTP 200 OK with github_api status "reachable" and rate_limit remaining > 0
   ```
 
+The same health check, plus a profile and skill analysis for a known user, runs automatically after production deployments and every 6 hours. See [Post-Deployment Smoke Test](smoke-test.md).
+
 ### 🧪 3. End-to-End User Verification
 - [ ] Open frontend in a browser (e.g., `https://your-frontend.vercel.app`).
 - [ ] Enter a real GitHub username (e.g., `octocat` or `torvalds`) and click **Analyze Profile**.

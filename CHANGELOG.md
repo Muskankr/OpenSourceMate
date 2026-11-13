@@ -19,6 +19,7 @@ All notable changes to OpenSourceMate are recorded here. The format follows
   ids, OpenAPI docs under `/api/v1`, and LLM-written explanations for why an issue matches.
 - Tooling: ESLint, Prettier and pre-commit hooks, root development scripts, a welcome workflow for
   first-time contributors, a mock API (MSW) for the frontend, and a frontend test for the analyze flow.
+- Tooling: a post-deployment smoke test workflow that checks the backend health endpoint and a profile and skill analysis, configured through repository variables (#199).
 
 ### Changed
 
