@@ -304,12 +304,26 @@ Examples:
    git push origin feat/your-feature-name
    ```
 2. Open a Pull Request from your branch to `Muskankr/OpenSourceMate:main`.
-3. Provide a clear and detailed PR description:
+3. Give the pull request a title in the Conventional Commits format (see [PR titles](#pr-titles) below).
+4. Provide a clear and detailed PR description:
    - What changes were made and why
    - Related issues (use keywords like `Fixes #123` or `Closes #456`)
    - How the changes were tested locally
    - Screenshots or GIFs for any UI changes
-4. Respond to feedback and make any requested revisions.
+5. Respond to feedback and make any requested revisions.
+
+#### PR titles
+
+The title of every pull request must follow the same Conventional Commits format as commit messages:
+`type: short summary` or `type(scope): short summary`.
+
+- Allowed types: `feat`, `fix`, `docs`, `test`, `refactor`, `style`, `chore`, `ci`, `build`, `perf`, `revert`.
+- The scope in brackets is optional and the summary must not be empty. Add `!` before the colon for a breaking change, e.g. `feat(api)!: rename the health endpoint`.
+- Good: `feat(ui): add mobile navigation menu`, `fix(backend): handle 403 GitHub API rate limits`, `docs: update the deployment guide`.
+- Bad: `Update stuff`, `Feat: add menu` (the type is lowercase), `fix:handle errors` (a space is needed after the colon).
+
+The **PR Title** workflow checks this on every pull request and fails with an example if the title does not match.
+To fix it, edit the title on GitHub; the check runs again automatically. Dependabot pull requests are skipped.
 
 ### Updating the changelog
 

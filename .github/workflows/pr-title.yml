@@ -1,0 +1,53 @@
+name: PR Title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check-title:
+    name: Conventional Commits title
+    runs-on: ubuntu-latest
+    # Dependabot titles ("Bump x from 1 to 2") are generated, so skip them.
+    if: github.actor != 'dependabot[bot]'
+
+    steps:
+      - name: Check PR title
+        env:
+          # Passed through env so the title is never interpolated into the script.
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          types='feat|fix|docs|test|refactor|style|chore|ci|build|perf|revert'
+          pattern="^(${types})(\([A-Za-z0-9._/-]+\))?!?: [^[:space:]].*$"
+
+          if [[ "$PR_TITLE" =~ $pattern ]]; then
+            echo "PR title is OK: $PR_TITLE"
+            exit 0
+          fi
+
+          echo "::error title=PR title does not follow Conventional Commits::\"$PR_TITLE\" must look like type(scope): short summary"
+          {
+            echo "### PR title check failed"
+            echo
+            echo "Current title: \`$PR_TITLE\`"
+            echo
+            echo "The title has to look like \`type: short summary\` or \`type(scope): short summary\`."
+            echo
+            echo "Allowed types: \`${types//|/\`, \`}\`"
+            echo
+            echo "Examples:"
+            echo
+            echo "- \`feat(ui): add mobile navigation menu\`"
+            echo "- \`fix(backend): handle 403 GitHub API rate limits\`"
+            echo "- \`docs: update the deployment guide\`"
+            echo
+            echo "To fix it, edit the title of this pull request. The check runs again by itself."
+            echo "See the Conventional Commits section in CONTRIBUTING.md."
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit 1
