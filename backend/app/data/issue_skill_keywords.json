@@ -1,0 +1,58 @@
+{
+  "title": "Issue Skill Keywords",
+  "description": "Keyword and alias dictionary used to extract the skills an issue needs from its title, body and labels (Issue #271). Aliases are matched as whole words, case-insensitively. 'extensions' match file names such as utils.py. 'ambiguous' aliases are also ordinary English words, so they only count when written exactly as listed (e.g. 'Go', not 'go'). 'implies' adds a parent skill at lower confidence. Contributors can add skills here without touching Python code.",
+  "version": "1.0.0",
+  "skills": {
+    "Python": {
+      "aliases": ["python", "python3", "pip", "pypi", "pytest", "pyproject.toml", "requirements.txt", "venv", "virtualenv", "mypy"],
+      "extensions": [".py"]
+    },
+    "FastAPI": {"aliases": ["fastapi", "uvicorn", "starlette"], "implies": ["Python"]},
+    "Django": {"aliases": ["django", "drf"], "implies": ["Python"]},
+    "Flask": {"aliases": ["flask", "jinja", "jinja2"], "implies": ["Python"]},
+    "Pydantic": {"aliases": ["pydantic"], "implies": ["Python"]},
+    "PyTorch": {"aliases": ["pytorch", "torch", "torchvision"], "implies": ["Python"]},
+    "TensorFlow": {"aliases": ["tensorflow", "keras"], "implies": ["Python"]},
+    "pandas": {"aliases": ["pandas", "dataframe", "dataframes", "read_csv"], "implies": ["Python"]},
+    "NumPy": {"aliases": ["numpy", "ndarray"], "implies": ["Python"]},
+    "scikit-learn": {"aliases": ["scikit-learn", "sklearn"], "implies": ["Python"]},
+    "JavaScript": {
+      "aliases": ["javascript", "js", "ecmascript", "es6", "jsx"],
+      "extensions": [".js", ".jsx", ".mjs", ".cjs"]
+    },
+    "TypeScript": {
+      "aliases": ["typescript", "ts", "tsx", "tsc", "tsconfig", "tsconfig.json"],
+      "extensions": [".ts", ".tsx"]
+    },
+    "Node.js": {
+      "aliases": ["node.js", "nodejs", "npm", "npx", "yarn", "pnpm"],
+      "ambiguous": ["Node"]
+    },
+    "React": {
+      "aliases": ["react", "reactjs", "react.js", "usestate", "useeffect", "react query", "tanstack query"]
+    },
+    "Next.js": {"aliases": ["next.js", "nextjs"], "implies": ["React"]},
+    "Vue": {"aliases": ["vue", "vuejs", "vue.js", "nuxt"], "extensions": [".vue"]},
+    "Angular": {"aliases": ["angular", "angularjs"]},
+    "Svelte": {"aliases": ["svelte", "sveltekit"], "extensions": [".svelte"]},
+    "Express": {"aliases": ["express.js", "expressjs"], "ambiguous": ["Express"]},
+    "HTML": {"aliases": ["html", "html5"], "extensions": [".html"]},
+    "CSS": {
+      "aliases": ["css", "css3", "scss", "sass", "flexbox", "stylesheet", "focus-visible", "media query", "media queries"],
+      "extensions": [".css", ".scss"]
+    },
+    "Tailwind CSS": {"aliases": ["tailwind", "tailwindcss", "tailwind css"], "implies": ["CSS"]},
+    "GraphQL": {"aliases": ["graphql", "apollo"], "extensions": [".graphql"]},
+    "SQL": {"aliases": ["sql", "postgres", "postgresql", "mysql", "sqlite"], "extensions": [".sql"]},
+    "Docker": {"aliases": ["docker", "dockerfile", "docker-compose", "container image", "base image"]},
+    "Kubernetes": {"aliases": ["kubernetes", "k8s", "kubectl", "helm"]},
+    "GitHub Actions": {"aliases": ["github actions", "github action", "github workflow"]},
+    "Go": {"aliases": ["golang", "golangci-lint", "gofmt", "go.mod", "goroutine", "goroutines"], "ambiguous": ["Go"]},
+    "Rust": {"aliases": ["rust", "cargo", "crate", "crates", "rustc", "clippy"], "extensions": [".rs"]},
+    "Java": {"aliases": ["java", "maven", "gradle", "jvm"], "extensions": [".java"]},
+    "Kotlin": {"aliases": ["kotlin"], "extensions": [".kt"]},
+    "Swift": {"aliases": ["swiftui", "xcode"], "ambiguous": ["Swift"], "extensions": [".swift"]},
+    "Ruby": {"aliases": ["ruby", "rails", "gem", "bundler"], "extensions": [".rb"]},
+    "C++": {"aliases": ["c++", "cpp", "cmake"], "extensions": [".cpp", ".hpp", ".cc"]}
+  }
+}
