@@ -1,11 +1,47 @@
 """Regenerates labelled_issues.json. The labels below are written by hand.
 
 relevance: 2 = fits the profile, 1 = generic or mildly relevant, 0 = unrelated.
+required_skills: the skills a contributor needs, read from the issue text only
+(not the repository language). Used by evaluate_skill_extraction.py.
 The issues are examples written for this evaluation, not scraped from GitHub.
 """
 
 import json
 from pathlib import Path
+
+# Issue id -> skills the issue needs, for the skill extraction evaluation (#271).
+REQUIRED_SKILLS = {
+    101: ["Python", "FastAPI", "Pydantic"],
+    102: ["Docker"],
+    103: [],
+    104: ["React"],
+    105: ["Python", "FastAPI"],
+    106: ["GitHub Actions", "Node.js"],
+    107: ["Python"],
+    108: [],
+    109: ["Python"],
+    110: ["Rust"],
+    201: ["React", "Tailwind CSS", "CSS"],
+    202: ["React", "TypeScript"],
+    203: ["Python", "Django"],
+    204: ["React"],
+    205: [],
+    206: ["Kubernetes"],
+    207: ["React", "TypeScript"],
+    208: [],
+    209: ["Go"],
+    210: ["Tailwind CSS", "CSS"],
+    301: ["Python", "PyTorch"],
+    302: ["Python", "pandas"],
+    303: [],
+    304: ["React"],
+    305: ["Python", "NumPy", "PyTorch"],
+    306: ["Docker"],
+    307: ["Swift"],
+    308: ["Python", "pandas"],
+    309: [],
+    310: ["Java"],
+}
 
 
 def issue(issue_id, title, body, language, relevance, repo):
@@ -19,6 +55,7 @@ def issue(issue_id, title, body, language, relevance, repo):
         "repository": repo,
         "updated_at": "2026-10-20T00:00:00Z",
         "relevance": relevance,
+        "required_skills": REQUIRED_SKILLS[issue_id],
     }
 
 
@@ -299,7 +336,9 @@ if __name__ == "__main__":
     target = Path(__file__).with_name("labelled_issues.json")
     note = (
         "Hand-labelled examples written for this evaluation (not scraped from GitHub). "
-        "relevance: 2 = fits the profile, 1 = generic or mildly relevant, 0 = unrelated."
+        "relevance: 2 = fits the profile, 1 = generic or mildly relevant, 0 = unrelated. "
+        "required_skills: the skills a contributor needs, read from the issue text only "
+        "(not the repository language)."
     )
     target.write_text(
         json.dumps({"note": note, "profiles": PROFILES}, indent=1), encoding="utf-8"

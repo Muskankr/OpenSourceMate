@@ -1,5 +1,5 @@
 {
-  "note": "Hand-labelled examples written for this evaluation (not scraped from GitHub). relevance: 2 = fits the profile, 1 = generic or mildly relevant, 0 = unrelated.",
+  "note": "Hand-labelled examples written for this evaluation (not scraped from GitHub). relevance: 2 = fits the profile, 1 = generic or mildly relevant, 0 = unrelated. required_skills: the skills a contributor needs, read from the issue text only (not the repository language).",
   "profiles": [
     {
       "name": "python-fastapi",
@@ -27,7 +27,8 @@
           "comments": 1,
           "repository": "acme/fastapi-shop",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 2
+          "relevance": 2,
+          "required_skills": ["Python", "FastAPI", "Pydantic"]
         },
         {
           "id": 102,
@@ -38,7 +39,8 @@
           "comments": 1,
           "repository": "acme/api-service",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 2
+          "relevance": 2,
+          "required_skills": ["Docker"]
         },
         {
           "id": 103,
@@ -49,7 +51,8 @@
           "comments": 1,
           "repository": "acme/api-service",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 1
+          "relevance": 1,
+          "required_skills": []
         },
         {
           "id": 104,
@@ -60,7 +63,8 @@
           "comments": 1,
           "repository": "acme/web-dashboard",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 0
+          "relevance": 0,
+          "required_skills": ["React"]
         },
         {
           "id": 105,
@@ -71,7 +75,8 @@
           "comments": 1,
           "repository": "acme/fastapi-shop",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 2
+          "relevance": 2,
+          "required_skills": ["Python", "FastAPI"]
         },
         {
           "id": 106,
@@ -82,7 +87,8 @@
           "comments": 1,
           "repository": "acme/web-dashboard",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 0
+          "relevance": 0,
+          "required_skills": ["GitHub Actions", "Node.js"]
         },
         {
           "id": 107,
@@ -93,7 +99,8 @@
           "comments": 1,
           "repository": "acme/parser",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 2
+          "relevance": 2,
+          "required_skills": ["Python"]
         },
         {
           "id": 108,
@@ -104,7 +111,8 @@
           "comments": 1,
           "repository": "acme/docs",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 0
+          "relevance": 0,
+          "required_skills": []
         },
         {
           "id": 109,
@@ -115,7 +123,8 @@
           "comments": 1,
           "repository": "acme/utils",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 1
+          "relevance": 1,
+          "required_skills": ["Python"]
         },
         {
           "id": 110,
@@ -126,7 +135,8 @@
           "comments": 1,
           "repository": "acme/tokenizer",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 0
+          "relevance": 0,
+          "required_skills": ["Rust"]
         }
       ]
     },
@@ -156,7 +166,8 @@
           "comments": 1,
           "repository": "acme/web-ui",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 2
+          "relevance": 2,
+          "required_skills": ["React", "Tailwind CSS", "CSS"]
         },
         {
           "id": 202,
@@ -167,7 +178,8 @@
           "comments": 1,
           "repository": "acme/web-ui",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 2
+          "relevance": 2,
+          "required_skills": ["React", "TypeScript"]
         },
         {
           "id": 203,
@@ -178,7 +190,8 @@
           "comments": 1,
           "repository": "acme/backend",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 0
+          "relevance": 0,
+          "required_skills": ["Python", "Django"]
         },
         {
           "id": 204,
@@ -189,7 +202,8 @@
           "comments": 1,
           "repository": "acme/dashboard",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 2
+          "relevance": 2,
+          "required_skills": ["React"]
         },
         {
           "id": 205,
@@ -200,7 +214,8 @@
           "comments": 1,
           "repository": "acme/dashboard",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 1
+          "relevance": 1,
+          "required_skills": []
         },
         {
           "id": 206,
@@ -211,7 +226,8 @@
           "comments": 1,
           "repository": "acme/infra",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 0
+          "relevance": 0,
+          "required_skills": ["Kubernetes"]
         },
         {
           "id": 207,
@@ -222,7 +238,8 @@
           "comments": 1,
           "repository": "acme/legacy-ui",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 2
+          "relevance": 2,
+          "required_skills": ["React", "TypeScript"]
         },
         {
           "id": 208,
@@ -233,7 +250,8 @@
           "comments": 1,
           "repository": "acme/web-ui",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 1
+          "relevance": 1,
+          "required_skills": []
         },
         {
           "id": 209,
@@ -244,7 +262,8 @@
           "comments": 1,
           "repository": "acme/tools",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 0
+          "relevance": 0,
+          "required_skills": ["Go"]
         },
         {
           "id": 210,
@@ -255,7 +274,8 @@
           "comments": 1,
           "repository": "acme/web-ui",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 2
+          "relevance": 2,
+          "required_skills": ["Tailwind CSS", "CSS"]
         }
       ]
     },
@@ -285,7 +305,8 @@
           "comments": 1,
           "repository": "acme/trainer",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 2
+          "relevance": 2,
+          "required_skills": ["Python", "PyTorch"]
         },
         {
           "id": 302,
@@ -296,7 +317,8 @@
           "comments": 1,
           "repository": "acme/data-tools",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 2
+          "relevance": 2,
+          "required_skills": ["Python", "pandas"]
         },
         {
           "id": 303,
@@ -307,7 +329,8 @@
           "comments": 1,
           "repository": "acme/data-tools",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 1
+          "relevance": 1,
+          "required_skills": []
         },
         {
           "id": 304,
@@ -318,7 +341,8 @@
           "comments": 1,
           "repository": "acme/web",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 0
+          "relevance": 0,
+          "required_skills": ["React"]
         },
         {
           "id": 305,
@@ -329,7 +353,8 @@
           "comments": 1,
           "repository": "acme/trainer",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 2
+          "relevance": 2,
+          "required_skills": ["Python", "NumPy", "PyTorch"]
         },
         {
           "id": 306,
@@ -340,7 +365,8 @@
           "comments": 1,
           "repository": "acme/trainer",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 1
+          "relevance": 1,
+          "required_skills": ["Docker"]
         },
         {
           "id": 307,
@@ -351,7 +377,8 @@
           "comments": 1,
           "repository": "acme/sdk",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 0
+          "relevance": 0,
+          "required_skills": ["Swift"]
         },
         {
           "id": 308,
@@ -362,7 +389,8 @@
           "comments": 1,
           "repository": "acme/data-tools",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 2
+          "relevance": 2,
+          "required_skills": ["Python", "pandas"]
         },
         {
           "id": 309,
@@ -373,7 +401,8 @@
           "comments": 1,
           "repository": "acme/trainer",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 1
+          "relevance": 1,
+          "required_skills": []
         },
         {
           "id": 310,
@@ -384,7 +413,8 @@
           "comments": 1,
           "repository": "acme/sdk",
           "updated_at": "2026-10-20T00:00:00Z",
-          "relevance": 0
+          "relevance": 0,
+          "required_skills": ["Java"]
         }
       ]
     }

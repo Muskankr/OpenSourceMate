@@ -7,8 +7,10 @@ import GitHubLink from "../components/GitHubLink";
 import ProfileCard from "../components/ProfileCard";
 import RecentSearches from "../components/RecentSearches";
 import RefreshAnalysisButton from "../components/RefreshAnalysisButton";
+import ServiceUnavailableBanner from "../components/ServiceUnavailableBanner";
 import SkillChart from "../components/SkillChart";
 import SkillProficiencyBadge from "../components/SkillProficiencyBadge";
+import SkillsToLearn from "../components/SkillsToLearn";
 import IssueCard from "../components/IssueCard";
 import { getMockRecommendedIssues } from "../data/mockIssues";
 import {
