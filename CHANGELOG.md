@@ -20,6 +20,7 @@ All notable changes to OpenSourceMate are recorded here. The format follows
 - Tooling: ESLint, Prettier and pre-commit hooks, root development scripts, a welcome workflow for
   first-time contributors, a mock API (MSW) for the frontend, and a frontend test for the analyze flow.
 - Tooling: a post-deployment smoke test workflow that checks the backend health endpoint and a profile and skill analysis, configured through repository variables (#199).
+- Security: Content-Security-Policy, nosniff, referrer, permissions and frame headers on the frontend, and nosniff, referrer, CSP and HSTS headers on the backend driven by environment variables (#262).
 
 ### Changed
 

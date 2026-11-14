@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { buildSecurityHeaders } from "./utils/securityHeaders";
 
 const nextConfig: NextConfig = {
   images: {
@@ -20,6 +21,18 @@ const nextConfig: NextConfig = {
   },
   compress: true,
   poweredByHeader: false,
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: buildSecurityHeaders({
+          apiUrl: process.env.NEXT_PUBLIC_API_URL,
+          isDev: process.env.NODE_ENV === "development",
+          isVercelPreview: process.env.VERCEL_ENV === "preview",
+        }),
+      },
+    ];
+  },
 };
 
 export default nextConfig;
