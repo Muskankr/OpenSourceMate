@@ -22,6 +22,7 @@ The project is being developed with a focus on making open-source contribution d
 - [✨ Current Features](#-current-features)
   - [🔎 GitHub Profile Analysis](#-github-profile-analysis)
   - [🧠 Technical Skill Analysis](#-technical-skill-analysis)
+  - [👥 Contributors Wall](#-contributors-wall)
   - [🎯 Contribution Discovery — Coming Next](#-contribution-discovery--coming-next)
 - [🖼️ Screenshots](#%EF%B8%8F-screenshots)
 - [🏗️ Project Structure](#%EF%B8%8F-project-structure)
@@ -73,6 +74,15 @@ OpenSourceMate analyzes the user's public GitHub repositories to identify techni
 - Repository count associated with each skill
 - Skill distribution
 - Number of repositories analyzed
+
+### 👥 Contributors Wall
+
+OpenSourceMate celebrates its open-source community with a live Contributors Wall on the homepage. It fetches contributor data from the public GitHub Contributors API and:
+
+- Displays contributor avatars and usernames, individual contribution counts, and links to GitHub profiles.
+- Filters bot accounts, anonymous entries, and duplicates.
+- Provides loading and empty states, plus a retry option for API errors and rate limits.
+- Uses a responsive layout for mobile and desktop screens.
 
 ### 🎯 Contribution Discovery — Coming Next
 
@@ -542,13 +552,19 @@ For detailed guidelines on setup, branch naming, PR conventions, and coding stan
 
 ## 👥 Contributors
 
-Thanks goes to these wonderful people for contributing to OpenSourceMate:
+Thanks to everyone who contributes to OpenSourceMate:
 
 <p align="left">
   <a href="https://github.com/Muskankr/OpenSourceMate/graphs/contributors">
-    <img src="https://contrib.rocks/image?repo=Muskankr/OpenSourceMate" alt="Contributors" />
+    <img src="https://contrib.rocks/image?repo=Muskankr/OpenSourceMate" alt="OpenSourceMate contributors" />
   </a>
 </p>
+
+### Live Contributors Wall
+
+The homepage wall is implemented in [`frontend/components/ContributorsWall.tsx`](frontend/components/ContributorsWall.tsx) and [`frontend/utils/githubContributors.ts`](frontend/utils/githubContributors.ts). It fetches the repository's top contributors from GitHub's public API and displays their avatars, usernames, contribution counts, and links to their GitHub profiles.
+
+Bot, anonymous, and duplicate entries are filtered out. Loading and empty states are provided, and network, server, or rate-limit errors show a friendly message with a retry option rather than breaking the page. Unauthenticated GitHub API requests are limited to 60 requests per hour per IP.
 
 Contributions of any kind are welcome! Please check out [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 
