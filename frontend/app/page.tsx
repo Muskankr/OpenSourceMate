@@ -9,6 +9,8 @@ import RecentSearches from "../components/RecentSearches";
 import RefreshAnalysisButton from "../components/RefreshAnalysisButton";
 import SkillChart from "../components/SkillChart";
 import SkillProficiencyBadge from "../components/SkillProficiencyBadge";
+import ServiceUnavailableBanner from "../components/ServiceUnavailableBanner";
+import SkillsToLearn from "../components/SkillsToLearn";
 import IssueCard from "../components/IssueCard";
 import { getMockRecommendedIssues } from "../data/mockIssues";
 import {
@@ -48,7 +50,7 @@ import {
   resolveAnalyzerErrorMessage,
 } from "../utils/validation";
 import BuildVersionBadge from "../components/BuildVersionBadge";
-
+import ContributorsWall from "../components/ContributorsWall";
 export default function Home() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
 
@@ -1338,6 +1340,9 @@ export default function Home() {
               </div>
             </div>
           </section>
+
+          {/* Contributors Wall (Issue #201) */}
+          <ContributorsWall theme={theme} />
 
           {/* Call to Action */}
           <section className="px-4 py-16 sm:px-6 sm:py-24">
