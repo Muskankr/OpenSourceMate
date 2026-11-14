@@ -57,6 +57,9 @@ Before contributing, ensure you have the following installed on your system:
 
 OpenSourceMate is organized as a monorepo with separate frontend and backend directories:
 
+Architecture decisions are recorded in [docs/adr/](docs/adr/). Read the records there
+for the rationale behind the frontend, backend, and analysis data-source choices.
+
 ```text
 OpenSourceMate/
 ├── backend/                  # FastAPI REST API
