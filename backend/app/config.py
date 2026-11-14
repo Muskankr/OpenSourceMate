@@ -36,6 +36,16 @@ class Settings(BaseSettings):
     cors_allow_headers: list[str] = ["*"]
 
     # -------------------------------------------------------------------------
+    # Security Headers (Issue #262)
+    # -------------------------------------------------------------------------
+    security_headers_enabled: bool = True
+    # HSTS max-age in seconds. Defaults to one year in production and 0 (off) elsewhere.
+    security_hsts_seconds: int | None = None
+    security_hsts_include_subdomains: bool = False
+    security_hsts_preload: bool = False
+    security_referrer_policy: str = "no-referrer"
+
+    # -------------------------------------------------------------------------
     # GitHub Integration
     # -------------------------------------------------------------------------
     # Optional. Raises GitHub rate limit from 60 to 5,000 requests/hour.
@@ -122,6 +132,12 @@ class Settings(BaseSettings):
         # 1. Resolve debug default based on environment if not explicitly set
         if self.debug is None:
             self.debug = False if is_prod else True
+
+        # Resolve the HSTS default: on for production, off for local HTTP development
+        if self.security_hsts_seconds is None:
+            self.security_hsts_seconds = 31536000 if is_prod else 0
+        if self.security_hsts_seconds < 0:
+            raise ValueError("SECURITY_HSTS_SECONDS must be 0 or a positive number of seconds.")
 
         # 2. Strict production enforcement
         if is_prod:
