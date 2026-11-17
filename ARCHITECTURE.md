@@ -93,7 +93,8 @@ OpenSourceMate/
 │   ├── workflows/                 # CI, inactive assignees manager (#265), and contributor workflows
 │   │   ├── ci.yml                 # Automated CI running tests with coverage thresholds and reporting (#269)
 │   │   └── inactive-assignees.yml # Scheduled workflow to nudge (5d) and unassign (7d) inactive assignees (#265)
-│   └── PULL_REQUEST_TEMPLATE.md   # Standard pull request description guidelines
+│   ├── CODEOWNERS                 # Subsystem ownership assignments and automated reviewers (#184)
+│   └── PULL_REQUEST_TEMPLATE.md   # Standard pull request description guidelines and reviewer checklist link (#184)
 │
 ├── backend/                       # FastAPI backend microservice
 │   ├── app/
@@ -159,6 +160,9 @@ OpenSourceMate/
 │       └── validation.ts          # Username format validation regex
 │
 ├── docs/                          # Architectural specs, audits, and contributor guides
+│   ├── MAINTAINERS.md             # Operational triage, releases, and moderation guide for maintainers (#184)
+│   ├── REVIEWING.md               # Reviewer checklist, kind feedback guide, and merge criteria (#184)
+│   └── ...                        # Feature audits, specs, and design documentation
 ├── CONTRIBUTING.md                # Contributor setup, PR process, and code standards
 ├── GOVERNANCE.md                  # Project governance, roles, decisions, and progression (#296)
 ├── LICENSE                        # MIT License

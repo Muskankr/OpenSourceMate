@@ -640,7 +640,9 @@ For detailed support guidelines and checklists, see [SUPPORT.md](SUPPORT.md).
 
 OpenSourceMate is governed openly and transparently:
 
-- **Roles**: Contributor, Reviewer, and Maintainer / Project Lead ([@Muskankr](https://github.com/Muskankr)).
+- **Roles**: Contributor, Reviewer, and Maintainer / Project Lead ([@Muskankr](https://github.com/Muskankr)). Subsystem ownership is defined in [`.github/CODEOWNERS`](.github/CODEOWNERS).
+- **Review Guidelines**: Pull requests are evaluated against our [Reviewer Checklist](docs/REVIEWING.md).
+- **Maintainer Operations**: Triage, issue assignments, and release workflows follow the [Maintainer Guide](docs/MAINTAINERS.md).
 - **Progression**: Clear, meritocratic pathways from contributor to reviewer and maintainer.
 - **Decisions & Consensus**: Open discussion via RFCs, Lazy Consensus for routine fixes, and Architecture Decision Records ([`docs/adr/`](docs/adr/)).
 - **Conflict Resolution**: Data-driven technical discussions, Code of Conduct enforcement, and Project Admin tie-breaking.

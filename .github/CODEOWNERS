@@ -1,0 +1,22 @@
+# OpenSourceMate CODEOWNERS
+# For details on the syntax, see:
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global fallback owner
+* @Muskankr
+
+# Backend subsystem (FastAPI, Python services, pytest test suites)
+/backend/ @Muskankr
+
+# Frontend subsystem (Next.js, React, Tailwind CSS, TypeScript, Jest test suites)
+/frontend/ @Muskankr
+
+# Documentation and guides
+/docs/ @Muskankr
+*.md @Muskankr
+
+# GitHub actions, workflows, and issue/PR templates
+/.github/ @Muskankr
+
+# Container & workspace development configurations
+/.devcontainer/ @Muskankr

@@ -367,6 +367,14 @@ Examples:
    - Screenshots or GIFs for any UI changes
 4. Respond to feedback and make any requested revisions.
 
+### Code Reviews & Maintainer Oversight
+
+All pull requests are reviewed against our quality, testing, accessibility, and security standards:
+
+- **Reviewer Checklist**: Pull requests are evaluated using the [Reviewer Checklist and Guidelines](docs/REVIEWING.md). Review this checklist before opening your PR to ensure an expedited review.
+- **Code Ownership**: Subsystem reviews are guided by [`.github/CODEOWNERS`](.github/CODEOWNERS), which automatically requests review from designated domain leads.
+- **Maintainer Guide**: Repository triage, release cadence, and merge protocol are documented in the [Maintainer Guide](docs/MAINTAINERS.md).
+
 ### Updating the changelog
 
 Add a line to the `Unreleased` section of [CHANGELOG.md](CHANGELOG.md) when your pull request changes

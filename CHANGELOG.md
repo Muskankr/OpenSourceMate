@@ -7,6 +7,7 @@ All notable changes to OpenSourceMate are recorded here. The format follows
 
 ### Added
 
+- Documentation & Governance: comprehensive PR reviewer checklist and kind feedback guide in `docs/REVIEWING.md`, operational triage and release guide for maintainers in `docs/MAINTAINERS.md`, `.github/CODEOWNERS` path ownership mapping, and reviewer checklist references linked from `.github/PULL_REQUEST_TEMPLATE.md`, `CONTRIBUTING.md`, `GOVERNANCE.md`, and `README.md` (#184).
 - Frontend: dedicated "Open Source 101" resources page (`/resources`) with curated, verified external guides covering Git basics, first pull requests, reading contributing guides, writing issue comments, and communicating with maintainers, integrated into Navbar and Footer navigation (#187).
 - Tooling & Development: devcontainer configuration in `.devcontainer/devcontainer.json` and `.devcontainer/post-create.sh` for one-click GitHub Codespaces cloud development with Python 3.12, Node.js 22, automatic port forwarding (3000, 8000), and "Open in Codespaces" badges in `README.md` and `README.hi.md` (#264).
 - Automation & Workflow: scheduled workflow in `.github/workflows/inactive-assignees.yml` and `.github/scripts/check-inactive-assignees.js` that kindly nudges assignees inactive for 5 days and unassigns after 7 days, with `on-hold` exemption policy documented in `CONTRIBUTING.md` and `docs/LABELS.md` (#265).

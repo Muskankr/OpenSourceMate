@@ -30,15 +30,16 @@ We recognize three primary roles in the community:
 
 - **Who they are**: Active, trusted contributors who have demonstrated a track record of high-quality PRs, reliable code reviews, and deep familiarity with the codebase.
 - **Responsibilities**:
-  - Review pull requests for architectural fit, test coverage, security, and accessibility.
+  - Review pull requests using the [Reviewer Checklist and Guidelines](docs/REVIEWING.md) for architectural fit, test coverage, security, and accessibility.
   - Triage incoming issues by validating reproduction steps and applying relevant labels (`docs/LABELS.md`).
   - Help onboard first-time contributors with constructive, supportive feedback.
   - Recommend PRs for merging to maintainers.
 
 ### Maintainer / Project Lead
 
-- **Who they are**: Core project leaders responsible for repository direction, security, and releases. The Project Admin and Lead Maintainer is Muskan Kumari ([@Muskankr](https://github.com/Muskankr)).
+- **Who they are**: Core project leaders responsible for repository direction, security, and releases. The Project Admin and Lead Maintainer is Muskan Kumari ([@Muskankr](https://github.com/Muskankr)). Subsystem code ownership is codified in [`.github/CODEOWNERS`](.github/CODEOWNERS).
 - **Responsibilities**:
+  - Guide repository operations according to the [Maintainer Guide](docs/MAINTAINERS.md).
   - Make final decisions on architecture, features, and breaking changes.
   - Approve and merge pull requests into `main`.
   - Maintain CI/CD pipelines, release management, and package deployments.
