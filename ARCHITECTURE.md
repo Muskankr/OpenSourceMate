@@ -137,7 +137,8 @@ OpenSourceMate/
 │   │   ├── error.tsx              # Error boundary component
 │   │   ├── layout.tsx             # Root HTML layout with providers and metadata
 │   │   ├── not-found.tsx          # 404 page
-│   │   └── page.tsx               # Main single-page application dashboard
+│   │   ├── page.tsx               # Main single-page application dashboard
+│   │   └── resources/             # Open Source 101 curated contributor learning hub (#187)
 │   ├── components/                # Modular React UI components
 │   │   ├── ExportMenu.tsx         # JSON/Markdown analysis exporter
 │   │   ├── FAQ.tsx                # Frequently asked questions collapsible panel
