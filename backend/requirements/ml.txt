@@ -3,6 +3,6 @@
 -r base.txt
 sentence-transformers==3.0.1
 torch>=2.2.0,<3
-numpy>=1.26.0,<2
+numpy>=2.5.4,<3
 scikit-learn>=1.4.0,<2
 transformers>=4.40.0,<5
