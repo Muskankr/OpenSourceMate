@@ -1,0 +1,357 @@
+{
+  "$schema": "./curated-projects.schema.json",
+  "version": "1.0.0",
+  "description": "Curated directory of welcoming, active open-source projects tagged with student and mentorship programs (GSoC, Outreachy, Hacktoberfest, LFX Mentorship) and verifiable proof links (Issue #298).",
+  "projects": [
+    {
+      "repo": "zulip/zulip",
+      "name": "Zulip",
+      "description": "Real-time team chat with unique threaded conversations designed for productive open collaboration.",
+      "languages": ["Python", "JavaScript", "TypeScript"],
+      "topics": ["chat", "collaboration", "django", "good-first-issue", "python", "typescript"],
+      "contributing_url": "https://github.com/zulip/zulip/blob/main/CONTRIBUTING.md",
+      "programs": [
+        {
+          "name": "GSoC",
+          "source": "https://summerofcode.withgoogle.com/archive/2024/organizations/zulip",
+          "years": [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+        },
+        {
+          "name": "Outreachy",
+          "source": "https://www.outreachy.org/alums/",
+          "notes": "Repeated participating mentoring organization"
+        },
+        {
+          "name": "Hacktoberfest",
+          "source": "https://github.com/zulip/zulip/labels/hacktoberfest"
+        }
+      ]
+    },
+    {
+      "repo": "django/django",
+      "name": "Django",
+      "description": "High-level Python web framework that encourages rapid development and clean, pragmatic design.",
+      "languages": ["Python"],
+      "topics": ["django", "framework", "python", "web", "web-framework"],
+      "contributing_url": "https://github.com/django/django/blob/main/CONTRIBUTING.rst",
+      "programs": [
+        {
+          "name": "GSoC",
+          "source": "https://summerofcode.withgoogle.com/archive/2024/organizations/django",
+          "years": [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+        }
+      ]
+    },
+    {
+      "repo": "pallets/flask",
+      "name": "Flask",
+      "description": "Lightweight WSGI web application microframework designed to make getting started quick and easy.",
+      "languages": ["Python"],
+      "topics": ["flask", "microframework", "python", "wsgi"],
+      "contributing_url": "https://github.com/pallets/flask/blob/main/CONTRIBUTING.rst",
+      "programs": [
+        {
+          "name": "Hacktoberfest",
+          "source": "https://github.com/pallets/flask/labels/hacktoberfest"
+        }
+      ]
+    },
+    {
+      "repo": "scikit-learn/scikit-learn",
+      "name": "scikit-learn",
+      "description": "Machine learning library in Python with simple and efficient tools for predictive data analysis.",
+      "languages": ["Python", "Cython", "C++"],
+      "topics": ["data-analysis", "data-science", "machine-learning", "python", "scikit-learn"],
+      "contributing_url": "https://github.com/scikit-learn/scikit-learn/blob/main/CONTRIBUTING.md",
+      "programs": [
+        {
+          "name": "GSoC",
+          "source": "https://summerofcode.withgoogle.com/archive/2024/organizations/scikit-learn",
+          "years": [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+        },
+        {
+          "name": "Outreachy",
+          "source": "https://www.outreachy.org/communities/cfp/scikit-learn/"
+        }
+      ]
+    },
+    {
+      "repo": "pandas-dev/pandas",
+      "name": "pandas",
+      "description": "Flexible and powerful open-source data analysis and manipulation tool built on top of Python.",
+      "languages": ["Python", "Cython"],
+      "topics": ["data-analysis", "data-science", "pandas", "python"],
+      "contributing_url": "https://github.com/pandas-dev/pandas/blob/main/CONTRIBUTING.md",
+      "programs": [
+        {
+          "name": "GSoC",
+          "source": "https://summerofcode.withgoogle.com/archive/2024/organizations/numfocus",
+          "notes": "Mentored under NumFOCUS umbrella organization"
+        },
+        {
+          "name": "Outreachy",
+          "source": "https://www.outreachy.org/communities/cfp/pandas/"
+        }
+      ]
+    },
+    {
+      "repo": "numpy/numpy",
+      "name": "NumPy",
+      "description": "The fundamental package for scientific computing with Python, powering modern machine learning.",
+      "languages": ["Python", "C"],
+      "topics": ["array", "mathematics", "numpy", "python", "scientific-computing"],
+      "contributing_url": "https://github.com/numpy/numpy/blob/main/CONTRIBUTING.md",
+      "programs": [
+        {
+          "name": "GSoC",
+          "source": "https://summerofcode.withgoogle.com/archive/2024/organizations/numfocus",
+          "notes": "Mentored under NumFOCUS umbrella organization"
+        }
+      ]
+    },
+    {
+      "repo": "oppia/oppia",
+      "name": "Oppia",
+      "description": "Interactive online learning tool that makes education accessible, engaging, and personalized.",
+      "languages": ["Python", "TypeScript", "Angular"],
+      "topics": ["angular", "education", "e-learning", "oppia", "python", "typescript"],
+      "contributing_url": "https://github.com/oppia/oppia/blob/develop/.github/CONTRIBUTING.md",
+      "programs": [
+        {
+          "name": "GSoC",
+          "source": "https://summerofcode.withgoogle.com/archive/2024/organizations/oppia-foundation",
+          "years": [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+        },
+        {
+          "name": "Outreachy",
+          "source": "https://www.outreachy.org/communities/cfp/oppia/"
+        },
+        {
+          "name": "Hacktoberfest",
+          "source": "https://github.com/oppia/oppia/labels/hacktoberfest"
+        }
+      ]
+    },
+    {
+      "repo": "wikimedia/mediawiki",
+      "name": "MediaWiki",
+      "description": "Free server-based software powering Wikipedia and thousands of community collaborative knowledge sites.",
+      "languages": ["PHP", "JavaScript"],
+      "topics": ["mediawiki", "php", "wiki", "wikimedia", "wikipedia"],
+      "contributing_url": "https://www.mediawiki.org/wiki/How_to_contribute",
+      "programs": [
+        {
+          "name": "GSoC",
+          "source": "https://summerofcode.withgoogle.com/archive/2024/organizations/wikimedia-foundation",
+          "years": [2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+        },
+        {
+          "name": "Outreachy",
+          "source": "https://www.outreachy.org/communities/cfp/wikimedia/"
+        }
+      ]
+    },
+    {
+      "repo": "publiclab/plots2",
+      "name": "Public Lab Plots2",
+      "description": "Collaborative knowledge-sharing platform for grassroots environmental science and community research.",
+      "languages": ["Ruby", "JavaScript"],
+      "topics": ["citizen-science", "civic-tech", "good-first-issue", "rails", "ruby"],
+      "contributing_url": "https://github.com/publiclab/plots2/blob/main/CONTRIBUTING.md",
+      "programs": [
+        {
+          "name": "GSoC",
+          "source": "https://summerofcode.withgoogle.com/archive/2024/organizations/public-lab"
+        },
+        {
+          "name": "Outreachy",
+          "source": "https://www.outreachy.org/communities/cfp/public-lab/"
+        },
+        {
+          "name": "Hacktoberfest",
+          "source": "https://github.com/publiclab/plots2/labels/hacktoberfest"
+        }
+      ]
+    },
+    {
+      "repo": "home-assistant/core",
+      "name": "Home Assistant Core",
+      "description": "Open source home automation that puts local control and privacy first, with 2000+ integrations.",
+      "languages": ["Python"],
+      "topics": ["asyncio", "home-assistant", "home-automation", "iot", "python"],
+      "contributing_url": "https://github.com/home-assistant/core/blob/dev/CONTRIBUTING.md",
+      "programs": [
+        {
+          "name": "Hacktoberfest",
+          "source": "https://github.com/home-assistant/core/labels/hacktoberfest"
+        }
+      ]
+    },
+    {
+      "repo": "freeCodeCamp/freeCodeCamp",
+      "name": "freeCodeCamp",
+      "description": "Interactive open-source learning web platform helping millions learn to code and earn certifications for free.",
+      "languages": ["JavaScript", "TypeScript"],
+      "topics": ["curriculum", "education", "javascript", "nodejs", "react", "typescript"],
+      "contributing_url": "https://github.com/freeCodeCamp/freeCodeCamp/blob/main/CONTRIBUTING.md",
+      "programs": [
+        {
+          "name": "Hacktoberfest",
+          "source": "https://github.com/freeCodeCamp/freeCodeCamp/labels/hacktoberfest"
+        }
+      ]
+    },
+    {
+      "repo": "cockpit-project/cockpit",
+      "name": "Cockpit",
+      "description": "User-friendly, web-based graphical interface for administering GNU/Linux servers.",
+      "languages": ["C", "JavaScript", "Python"],
+      "topics": ["cockpit", "linux", "server", "sysadmin", "systemd"],
+      "contributing_url": "https://github.com/cockpit-project/cockpit/blob/main/CONTRIBUTING.md",
+      "programs": [
+        {
+          "name": "Outreachy",
+          "source": "https://www.outreachy.org/communities/cfp/cockpit/"
+        }
+      ]
+    },
+    {
+      "repo": "kubernetes/kubernetes",
+      "name": "Kubernetes",
+      "description": "Production-grade container orchestration system for automating deployment, scaling, and management.",
+      "languages": ["Go"],
+      "topics": ["cloud-native", "containers", "go", "kubernetes", "orchestration"],
+      "contributing_url": "https://github.com/kubernetes/kubernetes/blob/master/CONTRIBUTING.md",
+      "programs": [
+        {
+          "name": "GSoC",
+          "source": "https://summerofcode.withgoogle.com/archive/2024/organizations/cloud-native-computing-foundation-cncf",
+          "notes": "Mentored under CNCF umbrella organization"
+        },
+        {
+          "name": "LFX Mentorship",
+          "source": "https://lfx.linuxfoundation.org/tools/mentorship/"
+        }
+      ]
+    },
+    {
+      "repo": "curl/curl",
+      "name": "curl",
+      "description": "Ubiquitous command line tool and library for transferring data with URLs using various protocols.",
+      "languages": ["C"],
+      "topics": ["c", "curl", "http", "libcurl", "networking"],
+      "contributing_url": "https://github.com/curl/curl/blob/master/CONTRIBUTING.md",
+      "programs": [
+        {
+          "name": "Hacktoberfest",
+          "source": "https://github.com/curl/curl/labels/hacktoberfest"
+        }
+      ]
+    },
+    {
+      "repo": "git/git",
+      "name": "Git",
+      "description": "Fast, scalable, distributed revision control system with rich command set and high data integrity.",
+      "languages": ["C", "Shell"],
+      "topics": ["c", "git", "version-control", "vcs"],
+      "contributing_url": "https://github.com/git/git/blob/master/Documentation/SubmittingPatches",
+      "programs": [
+        {
+          "name": "GSoC",
+          "source": "https://summerofcode.withgoogle.com/archive/2024/organizations/git",
+          "years": [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+        },
+        {
+          "name": "Outreachy",
+          "source": "https://www.outreachy.org/communities/cfp/git/"
+        }
+      ]
+    },
+    {
+      "repo": "mozilla/gecko-dev",
+      "name": "Firefox / Gecko",
+      "description": "Source tree for Mozilla's browser layout engine and the open-source Firefox web browser.",
+      "languages": ["C++", "Rust", "JavaScript", "Python"],
+      "topics": ["browser", "firefox", "gecko", "mozilla", "rust"],
+      "contributing_url": "https://firefox-source-docs.mozilla.org/contributing/contribution_quickref.html",
+      "programs": [
+        {
+          "name": "GSoC",
+          "source": "https://summerofcode.withgoogle.com/archive/2024/organizations/mozilla"
+        },
+        {
+          "name": "Outreachy",
+          "source": "https://www.outreachy.org/communities/cfp/mozilla/"
+        }
+      ]
+    },
+    {
+      "repo": "musescore/MuseScore",
+      "name": "MuseScore",
+      "description": "Free and open-source professional sheet music notation and composition software.",
+      "languages": ["C++"],
+      "topics": ["audio", "composition", "cpp", "music", "notation", "qt"],
+      "contributing_url": "https://github.com/musescore/MuseScore/blob/master/CONTRIBUTING.md",
+      "programs": [
+        {
+          "name": "GSoC",
+          "source": "https://summerofcode.withgoogle.com/archive/2024/organizations/musescore",
+          "years": [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+        }
+      ]
+    },
+    {
+      "repo": "processing/p5.js",
+      "name": "p5.js",
+      "description": "Client-side JS platform making creative coding accessible for artists, designers, educators, and beginners.",
+      "languages": ["JavaScript"],
+      "topics": ["art", "canvas", "creative-coding", "graphics", "javascript", "p5js"],
+      "contributing_url": "https://github.com/processing/p5.js/blob/main/contributor_docs/contributing.md",
+      "programs": [
+        {
+          "name": "GSoC",
+          "source": "https://summerofcode.withgoogle.com/archive/2024/organizations/processing-foundation",
+          "years": [2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+        },
+        {
+          "name": "Outreachy",
+          "source": "https://www.outreachy.org/communities/cfp/processing-foundation/"
+        }
+      ]
+    },
+    {
+      "repo": "metabrainz/musicbrainz-server",
+      "name": "MusicBrainz Server",
+      "description": "The open music encyclopedia collecting music metadata and releasing it to the public domain.",
+      "languages": ["Perl", "JavaScript", "React"],
+      "topics": ["database", "music", "musicbrainz", "open-data", "perl", "react"],
+      "contributing_url": "https://github.com/metabrainz/musicbrainz-server/blob/master/CONTRIBUTING.md",
+      "programs": [
+        {
+          "name": "GSoC",
+          "source": "https://summerofcode.withgoogle.com/archive/2024/organizations/metabrainz-foundation-inc",
+          "years": [2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024]
+        }
+      ]
+    },
+    {
+      "repo": "qutebrowser/qutebrowser",
+      "name": "qutebrowser",
+      "description": "Keyboard-focused, vim-like browser with a minimal GUI based on Python and PyQt5/QtWebEngine.",
+      "languages": ["Python"],
+      "topics": ["browser", "keyboard-driven", "pyqt", "python", "qt", "vim"],
+      "contributing_url": "https://github.com/qutebrowser/qutebrowser/blob/main/doc/contributing.asciidoc",
+      "programs": [
+        {
+          "name": "GSoC",
+          "source": "https://summerofcode.withgoogle.com/archive/2024/organizations/qutebrowser",
+          "years": [2021, 2022, 2023, 2024]
+        },
+        {
+          "name": "Hacktoberfest",
+          "source": "https://github.com/qutebrowser/qutebrowser/labels/hacktoberfest"
+        }
+      ]
+    }
+  ]
+}

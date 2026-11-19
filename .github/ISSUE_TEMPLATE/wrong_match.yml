@@ -1,0 +1,40 @@
+name: Wrong match recommendation
+description: Report a recommendation that does not fit a public GitHub profile.
+title: "[Wrong match]: "
+labels:
+  - bug
+  - wrong-match
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This form contains only public recommendation details. Explain why the match is wrong without including tokens, private profile data, or other secrets.
+  - type: input
+    id: username
+    attributes:
+      label: Public GitHub username
+      description: The public profile used for the recommendation, if available.
+      placeholder: octocat
+    validations:
+      required: false
+  - type: input
+    id: issue_url
+    attributes:
+      label: Recommended issue URL
+      placeholder: https://github.com/owner/repository/issues/123
+    validations:
+      required: true
+  - type: input
+    id: match_score
+    attributes:
+      label: Match score (percent)
+      placeholder: "88"
+    validations:
+      required: true
+  - type: textarea
+    id: explanation
+    attributes:
+      label: Why is this match wrong?
+      description: Describe what makes the recommendation irrelevant.
+    validations:
+      required: true

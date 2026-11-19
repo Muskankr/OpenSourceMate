@@ -1,5 +1,8 @@
+from datetime import UTC, datetime
 from typing import Any
-from fastapi import APIRouter, HTTPException, Query
+from xml.etree import ElementTree
+
+from fastapi import APIRouter, HTTPException, Query, Request, Response
 
 from app.ai.ai_service import generate_issue_match_explanation
 from app.services.embedding_service import similarities
@@ -16,6 +19,24 @@ router = APIRouter(
     prefix="/matching",
     tags=["Matching"],
 )
+
+ATOM_NS = "http://www.w3.org/2005/Atom"
+ElementTree.register_namespace("", ATOM_NS)
+
+
+def _atom_date(value: str | None) -> str:
+    """Return an Atom-compatible UTC timestamp, tolerating incomplete issue data."""
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00")) if value else None
+        if parsed is None or parsed.tzinfo is None:
+            raise ValueError("Missing timezone")
+    except ValueError:
+        parsed = datetime.now(UTC)
+    return parsed.astimezone(UTC).isoformat().replace("+00:00", "Z")
+
+
+def _atom_element(parent: ElementTree.Element, name: str, text: str) -> None:
+    ElementTree.SubElement(parent, f"{{{ATOM_NS}}}{name}").text = text
 
 
 @router.get("/users/{username}/issues")
@@ -145,6 +166,49 @@ async def get_matched_issues(
         "skills": user_skills,
         "recommendations": top_recommendations,
     }
+
+
+@router.get("/users/{username}/feed.atom", response_class=Response)
+async def get_matched_issues_feed(username: str, request: Request) -> Response:
+    """Expose the same ranked matches as an Atom feed for feed readers."""
+    matches = await get_matched_issues(username, exclude_stale=False)
+    recommendations = matches["recommendations"]
+    feed = ElementTree.Element(f"{{{ATOM_NS}}}feed")
+    _atom_element(feed, "id", str(request.url))
+    _atom_element(feed, "title", f"OpenSourceMate matches for @{matches['username']}")
+    _atom_element(
+        feed,
+        "updated",
+        max(
+            (_atom_date(issue.get("updated_at")) for issue in recommendations),
+            default=_atom_date(None),
+        ),
+    )
+    ElementTree.SubElement(
+        feed, f"{{{ATOM_NS}}}link", {"href": str(request.url), "rel": "self"}
+    )
+    author = ElementTree.SubElement(feed, f"{{{ATOM_NS}}}author")
+    _atom_element(author, "name", "OpenSourceMate")
+
+    for issue in recommendations:
+        entry = ElementTree.SubElement(feed, f"{{{ATOM_NS}}}entry")
+        issue_url = issue["url"]
+        repository = issue["repository"]
+        _atom_element(entry, "id", issue_url)
+        _atom_element(entry, "title", issue["title"])
+        _atom_element(entry, "updated", _atom_date(issue.get("updated_at")))
+        ElementTree.SubElement(entry, f"{{{ATOM_NS}}}link", {"href": issue_url})
+        ElementTree.SubElement(entry, f"{{{ATOM_NS}}}category", {"term": repository})
+        _atom_element(
+            entry,
+            "summary",
+            f"Repository: {repository}; match score: {issue['match_score']}%",
+        )
+
+    return Response(
+        content=ElementTree.tostring(feed, encoding="utf-8", xml_declaration=True),
+        media_type="application/atom+xml",
+    )
 
 
 @router.post("/explain")

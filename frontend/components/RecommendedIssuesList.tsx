@@ -4,6 +4,7 @@ import React, { useMemo, useState } from "react";
 import type { IssueRecommendation } from "../types/api";
 import IssueCard from "./IssueCard";
 import { inferIssueDifficulty, type IssueDifficulty } from "../data/mockIssues";
+import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
 
 export interface RecommendedIssuesListProps {
   issues: IssueRecommendation[];
@@ -26,6 +27,9 @@ export default function RecommendedIssuesList({
   const [labelFilter, setLabelFilter] = useState("all");
   const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
   const [minScoreFilter, setMinScoreFilter] = useState(0);
+  const [showHidden, setShowHidden] = useState(false);
+  const { hiddenIds, isHidden, hideIssue, restoreIssue } = useHiddenIssues();
+  const hiddenCount = issues.filter((issue) => hiddenIds.includes(hiddenIssueId(issue))).length;
 
   // Extract available languages dynamically
   const availableLanguages = useMemo(() => {
@@ -39,6 +43,7 @@ export default function RecommendedIssuesList({
   // Filtering logic
   const filteredIssues = useMemo(() => {
     return issues.filter((issue) => {
+      if (!showHidden && hiddenIds.includes(hiddenIssueId(issue))) return false;
       // Language filter
       if (
         languageFilter !== "all" &&
@@ -87,6 +92,8 @@ export default function RecommendedIssuesList({
     });
   }, [
     issues,
+    hiddenIds,
+    showHidden,
     languageFilter,
     labelFilter,
     difficultyFilter,
@@ -166,6 +173,16 @@ export default function RecommendedIssuesList({
           </div>
         )}
       </div>
+
+      {hiddenCount > 0 && (
+        <button
+          type="button"
+          onClick={() => setShowHidden((value) => !value)}
+          className="mt-4 rounded text-xs font-medium text-purple-400 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+        >
+          {showHidden ? "Hide hidden" : `Show hidden (${hiddenCount})`}
+        </button>
+      )}
 
       {/* Subtle Demo data indicator banner */}
       {isDemo && (
@@ -413,6 +430,10 @@ export default function RecommendedIssuesList({
               issue={issue}
               theme={theme}
               isMock={isDemo}
+              username={username}
+              isHidden={isHidden(issue)}
+              onHide={() => hideIssue(issue)}
+              onRestore={() => restoreIssue(issue)}
             />
           ))}
         </div>

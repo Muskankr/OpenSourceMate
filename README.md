@@ -19,6 +19,8 @@ OpenSourceMate is an AI-powered open-source contribution discovery platform that
 
 The project is being developed with a focus on making open-source contribution discovery easier for developers and newcomers.
 
+> ❄️ **NWOC'26 Contributors:** Check out our [NWOC'26 Participant Guide](PROGRAM_GUIDE.md) to learn how to claim issues, issue difficulty levels (L1/L2/L3), scoring, and review timelines!
+
 ---
 
 ## 📑 Table of Contents
@@ -584,6 +586,8 @@ Then open a pull request describing:
 - Any relevant screenshots or examples
 
 For detailed guidelines on setup, branch naming, PR conventions, and coding standards, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+> ❄️ **Participating in NWOC'26 (NJACK Winter of Code)?** Read the [NWOC'26 Program Guide](PROGRAM_GUIDE.md) for details on issue difficulty levels (L1/L2/L3), scoring, assignment windows, and program FAQs.
 
 ---
 

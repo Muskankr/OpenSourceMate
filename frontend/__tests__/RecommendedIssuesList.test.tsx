@@ -4,6 +4,8 @@ import RecommendedIssuesList from "../components/RecommendedIssuesList";
 import { MOCK_RECOMMENDED_ISSUES } from "../data/mockIssues";
 
 describe("RecommendedIssuesList Component", () => {
+  beforeEach(() => window.localStorage.clear());
+
   it("renders a list of recommended issues with header and issue count", () => {
     render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} />);
 
@@ -18,6 +20,43 @@ describe("RecommendedIssuesList Component", () => {
     expect(
       screen.getByText(MOCK_RECOMMENDED_ISSUES[0].title)
     ).toBeInTheDocument();
+  });
+
+  it("provides a distinct pre-filled feedback link for every recommendation", () => {
+    render(
+      <RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} username="octocat" />
+    );
+
+    const links = screen.getAllByRole("link", { name: /Report wrong match for/i });
+    expect(links).toHaveLength(MOCK_RECOMMENDED_ISSUES.length);
+    links.forEach((link, index) => {
+      const params = new URL(link.getAttribute("href")!).searchParams;
+      expect(params.get("username")).toBe("octocat");
+      expect(params.get("issue_url")).toBe(MOCK_RECOMMENDED_ISSUES[index].url);
+      expect(params.get("match_score")).toBe(
+        String(Math.round(MOCK_RECOMMENDED_ISSUES[index].match_score ?? MOCK_RECOMMENDED_ISSUES[index].score ?? 0))
+      );
+    });
+  });
+
+  it("hides a recommendation, keeps it hidden after remount, and restores it", () => {
+    const issues = MOCK_RECOMMENDED_ISSUES.slice(0, 2);
+    const { unmount } = render(<RecommendedIssuesList issues={issues} username="octocat" />);
+    fireEvent.click(screen.getAllByRole("button", { name: "Not interested" })[0]);
+    expect(screen.queryByText(issues[0].title)).not.toBeInTheDocument();
+    expect(screen.getByText(issues[1].title)).toBeInTheDocument();
+
+    unmount();
+    render(<RecommendedIssuesList issues={issues} username="octocat" />);
+    expect(screen.queryByText(issues[0].title)).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Show hidden (1)" }));
+    expect(screen.getByText(issues[0].title)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Undo" }));
+    expect(screen.queryByRole("button", { name: "Show hidden (1)" })).not.toBeInTheDocument();
+    expect(screen.getByText(issues[0].title)).toBeInTheDocument();
+    const feedbackLinks = screen.getAllByRole("link", { name: /Report wrong match for/i });
+    expect(feedbackLinks).toHaveLength(issues.length);
+    expect(new URL(feedbackLinks[0].getAttribute("href")!).searchParams.get("username")).toBe("octocat");
   });
 
   it("shows demo data / coming soon banner when isMock is true", () => {

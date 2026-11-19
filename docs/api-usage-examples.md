@@ -12,7 +12,7 @@ A ready-to-use [Bruno](https://www.usebruno.com/) collection with every request 
 - [Health](#health): `GET /api/v1`, `GET /api/v1/health`, `GET /api/v1/health/diagnostics`
 - [GitHub](#github): profile, repositories, top repositories, skills, external PRs
 - [Issues](#issues): `GET /api/v1/issues/search`
-- [Matching](#matching): `GET /api/v1/matching/users/{username}/issues`, `POST /api/v1/matching/explain`
+- [Matching](#matching): `GET /api/v1/matching/users/{username}/issues`, `GET /api/v1/matching/users/{username}/feed.atom`, `POST /api/v1/matching/explain`
 - [AI](#ai): `POST /api/v1/ai/analyze-issue`
 - [Errors](#errors)
 - [Request collection](#request-collection)
@@ -480,6 +480,17 @@ console.log(await response.json());
 ---
 
 ## Matching
+
+### `GET /api/v1/matching/users/{username}/feed.atom`: Atom feed
+
+Subscribe to ranked issue matches for a public GitHub username in an Atom feed reader. Each entry includes the issue title, repository, issue link, match score and GitHub update time. The endpoint uses the same matching path, GitHub response cache and rate limits as the JSON recommendations endpoint. Unknown usernames return HTTP 404.
+
+```bash
+curl -H 'Accept: application/atom+xml' \
+  http://localhost:8000/api/v1/matching/users/octocat/feed.atom
+```
+
+The response has content type `application/atom+xml` and can be used directly as a feed subscription URL.
 
 ### `GET /api/v1/matching/users/{username}/issues`: recommended issues
 
