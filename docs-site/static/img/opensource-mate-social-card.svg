@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">OpenSourceMate Documentation</title>
+  <desc id="desc">Guides, architecture decisions, tutorials, and API references.</desc>
+  <rect width="1200" height="630" fill="#0f172a"/>
+  <circle cx="1020" cy="100" r="260" fill="#064e3b" opacity=".8"/>
+  <text x="90" y="260" fill="#34d399" font-family="Arial, sans-serif" font-size="72" font-weight="700">OpenSourceMate</text>
+  <text x="90" y="350" fill="#e2e8f0" font-family="Arial, sans-serif" font-size="46">Documentation</text>
+</svg>
