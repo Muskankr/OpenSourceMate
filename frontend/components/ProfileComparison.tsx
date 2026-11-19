@@ -7,6 +7,7 @@ import { fetchUserProfile, fetchUserSkills, ApiClientError } from "../utils/apiC
 import { validateGitHubUsername } from "../utils/validation";
 import { computeProfileComparison } from "../utils/compareProfiles";
 import type { UserComparisonState } from "../types/compare";
+import TechIcon from "./TechIcon";
 
 interface ProfileComparisonProps {
   initialUser1?: string;
@@ -129,7 +130,8 @@ export default function ProfileComparison({
         ...prev,
         username: clean1,
         loading: false,
-        error: "Cannot compare a developer with themselves. Please enter two different GitHub usernames.",
+        error:
+          "Cannot compare a developer with themselves. Please enter two different GitHub usernames.",
       }));
       setUser2State((prev) => ({
         ...prev,
@@ -440,7 +442,9 @@ export default function ProfileComparison({
             <div className="flex flex-wrap items-center gap-3">
               <div
                 className={`rounded-xl border px-3 py-1.5 text-center ${
-                  isDark ? "border-purple-500/30 bg-purple-500/10" : "border-purple-200 bg-purple-50"
+                  isDark
+                    ? "border-purple-500/30 bg-purple-500/10"
+                    : "border-purple-200 bg-purple-50"
                 }`}
               >
                 <span className="block text-xs uppercase tracking-wider text-purple-400 font-semibold">
@@ -507,8 +511,7 @@ export default function ProfileComparison({
               }`}
             >
               Unique Skills (
-              {comparison.uniqueSkillsUser1.length + comparison.uniqueSkillsUser2.length}
-              )
+              {comparison.uniqueSkillsUser1.length + comparison.uniqueSkillsUser2.length})
             </button>
 
             <button
@@ -537,7 +540,9 @@ export default function ProfileComparison({
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-sm" role="table">
                     <thead>
-                      <tr className={`border-b border-white/10 text-xs uppercase tracking-wider ${textSecondary}`}>
+                      <tr
+                        className={`border-b border-white/10 text-xs uppercase tracking-wider ${textSecondary}`}
+                      >
                         <th className="py-3 px-4 font-semibold">Skill</th>
                         <th className="py-3 px-4 font-semibold">
                           @{comparison.user1.username} Repos
@@ -552,9 +557,13 @@ export default function ProfileComparison({
                       {comparison.sharedSkills.map((skill) => (
                         <tr key={skill.name} className="hover:bg-white/[0.02]">
                           <td className="py-3 px-4 font-medium">
-                            <span className={`inline-block rounded-lg px-2.5 py-1 text-xs font-semibold ${
-                              isDark ? "bg-purple-500/10 text-purple-300" : "bg-purple-50 text-purple-700"
-                            }`}>
+                            <span
+                              className={`inline-block rounded-lg px-2.5 py-1 text-xs font-semibold ${
+                                isDark
+                                  ? "bg-purple-500/10 text-purple-300"
+                                  : "bg-purple-50 text-purple-700"
+                              }`}
+                            >
                               {skill.name}
                             </span>
                           </td>
@@ -600,11 +609,17 @@ export default function ProfileComparison({
 
           {/* Tab 2: Unique Skills Side-by-Side */}
           {activeTab === "unique" && (
-            <div role="tabpanel" aria-label="Unique skills comparison" className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div
+              role="tabpanel"
+              aria-label="Unique skills comparison"
+              className="grid grid-cols-1 gap-6 md:grid-cols-2"
+            >
               {/* Unique to User 1 */}
               <div
                 className={`rounded-xl border p-4 ${
-                  isDark ? "border-purple-500/20 bg-purple-500/5" : "border-purple-100 bg-purple-50/50"
+                  isDark
+                    ? "border-purple-500/20 bg-purple-500/5"
+                    : "border-purple-100 bg-purple-50/50"
                 }`}
               >
                 <div className="mb-3 flex items-center justify-between">
@@ -683,18 +698,31 @@ export default function ProfileComparison({
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm" role="table">
                   <thead>
-                    <tr className={`border-b border-white/10 text-xs uppercase tracking-wider ${textSecondary}`}>
+                    <tr
+                      className={`border-b border-white/10 text-xs uppercase tracking-wider ${textSecondary}`}
+                    >
                       <th className="py-3 px-4 font-semibold">Skill</th>
                       <th className="py-3 px-4 font-semibold">Status</th>
                       <th className="py-3 px-4 font-semibold">@{comparison.user1.username}</th>
-                      <th className="py-3 px-4 font-semibold text-right">@{comparison.user2.username}</th>
+                      <th className="py-3 px-4 font-semibold text-right">
+                        @{comparison.user2.username}
+                      </th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-white/5">
                     {/* Shared rows */}
                     {comparison.sharedSkills.map((skill) => (
                       <tr key={`shared-${skill.name}`} className="hover:bg-white/[0.02]">
-                        <td className={`py-3 px-4 font-semibold ${textPrimary}`}>{skill.name}</td>
+                        <td className={`py-3 px-4 font-semibold ${textPrimary}`}>
+                          <div className="flex items-center gap-2">
+                            <TechIcon
+                              name={skill.name}
+                              theme={theme}
+                              className="h-4 w-4 shrink-0"
+                            />
+                            <span>{skill.name}</span>
+                          </div>
+                        </td>
                         <td className="py-3 px-4">
                           <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-400">
                             Shared
@@ -708,7 +736,16 @@ export default function ProfileComparison({
                     {/* Unique to user 1 */}
                     {comparison.uniqueSkillsUser1.map((skill) => (
                       <tr key={`u1-${skill.name}`} className="hover:bg-white/[0.02]">
-                        <td className={`py-3 px-4 font-semibold ${textPrimary}`}>{skill.name}</td>
+                        <td className={`py-3 px-4 font-semibold ${textPrimary}`}>
+                          <div className="flex items-center gap-2">
+                            <TechIcon
+                              name={skill.name}
+                              theme={theme}
+                              className="h-4 w-4 shrink-0"
+                            />
+                            <span>{skill.name}</span>
+                          </div>
+                        </td>
                         <td className="py-3 px-4">
                           <span className="rounded-full bg-purple-500/10 px-2 py-0.5 text-xs font-semibold text-purple-400">
                             @{comparison.user1.username} only
@@ -722,7 +759,16 @@ export default function ProfileComparison({
                     {/* Unique to user 2 */}
                     {comparison.uniqueSkillsUser2.map((skill) => (
                       <tr key={`u2-${skill.name}`} className="hover:bg-white/[0.02]">
-                        <td className={`py-3 px-4 font-semibold ${textPrimary}`}>{skill.name}</td>
+                        <td className={`py-3 px-4 font-semibold ${textPrimary}`}>
+                          <div className="flex items-center gap-2">
+                            <TechIcon
+                              name={skill.name}
+                              theme={theme}
+                              className="h-4 w-4 shrink-0"
+                            />
+                            <span>{skill.name}</span>
+                          </div>
+                        </td>
                         <td className="py-3 px-4">
                           <span className="rounded-full bg-blue-500/10 px-2 py-0.5 text-xs font-semibold text-blue-400">
                             @{comparison.user2.username} only
@@ -793,9 +839,7 @@ function ProfileSummaryCard({
             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
           />
         </svg>
-        <p className={`text-sm font-semibold ${textPrimary}`}>
-          Loading developer @{username}...
-        </p>
+        <p className={`text-sm font-semibold ${textPrimary}`}>Loading developer @{username}...</p>
       </div>
     );
   }
@@ -901,15 +945,11 @@ function ProfileSummaryCard({
           </div>
           <div>
             <span className="block text-xs text-gray-400">Followers</span>
-            <span className={`text-sm font-bold ${textPrimary}`}>
-              {profile.followers}
-            </span>
+            <span className={`text-sm font-bold ${textPrimary}`}>{profile.followers}</span>
           </div>
           <div>
             <span className="block text-xs text-gray-400">Following</span>
-            <span className={`text-sm font-bold ${textPrimary}`}>
-              {profile.following}
-            </span>
+            <span className={`text-sm font-bold ${textPrimary}`}>{profile.following}</span>
           </div>
         </div>
 
@@ -933,7 +973,12 @@ function ProfileSummaryCard({
         >
           View GitHub Profile
           <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+            />
           </svg>
         </a>
 

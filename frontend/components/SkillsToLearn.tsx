@@ -3,6 +3,7 @@
 import React, { useMemo } from "react";
 import { SkillItem } from "../types/api";
 import { getSkillsToLearn, SkillSuggestion, SkillsMapping } from "../utils/skillsToLearn";
+import TechIcon from "./TechIcon";
 
 export interface SkillsToLearnProps {
   /** Array of user's detected skills (either SkillItem objects from API or plain string names) */
@@ -77,11 +78,7 @@ export default function SkillsToLearn({
             Skills to learn next
           </h4>
 
-          <p
-            className={`mt-1 text-xs sm:text-sm ${
-              isDark ? "text-gray-400" : "text-gray-600"
-            }`}
-          >
+          <p className={`mt-1 text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
             Recommended companion technologies to broaden your open-source opportunities.
           </p>
         </div>
@@ -110,13 +107,18 @@ export default function SkillsToLearn({
           >
             <div>
               <div className="flex items-center justify-between gap-1">
-                <span
-                  className={`text-sm font-bold tracking-tight ${
-                    isDark ? "text-gray-100 group-hover:text-purple-300" : "text-gray-900 group-hover:text-purple-700"
-                  } transition-colors`}
-                >
-                  {suggestion.name}
-                </span>
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <TechIcon name={suggestion.name} theme={theme} className="h-4 w-4 shrink-0" />
+                  <span
+                    className={`text-sm font-bold tracking-tight truncate ${
+                      isDark
+                        ? "text-gray-100 group-hover:text-purple-300"
+                        : "text-gray-900 group-hover:text-purple-700"
+                    } transition-colors`}
+                  >
+                    {suggestion.name}
+                  </span>
+                </div>
 
                 <span
                   aria-hidden="true"
@@ -131,7 +133,8 @@ export default function SkillsToLearn({
                   isDark ? "text-gray-400" : "text-gray-500"
                 }`}
               >
-                Pairs with <span className="font-medium text-purple-400">{suggestion.recommendedFrom}</span>
+                Pairs with{" "}
+                <span className="font-medium text-purple-400">{suggestion.recommendedFrom}</span>
               </p>
             </div>
 

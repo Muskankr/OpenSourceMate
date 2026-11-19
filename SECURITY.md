@@ -17,3 +17,7 @@ The maintainers will review reports and may ask for additional details. Please a
 ## Scope
 
 This policy applies to security vulnerabilities in OpenSourceMate's code and services. Please report suspected issues even if you are unsure whether they are exploitable.
+
+## Automated scanning
+
+Pull requests and the `main` branch are scanned with `npm audit`, pip-audit, Bandit and CodeQL. See [docs/security-scanning.md](docs/security-scanning.md) for what runs, which findings block a merge and how to triage them.
