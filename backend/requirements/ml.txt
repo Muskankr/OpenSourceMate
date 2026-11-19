@@ -2,7 +2,7 @@
 # Install only when OSM_USE_EMBEDDINGS=true is needed
 -r base.txt
 sentence-transformers==3.0.1
-torch>=2.2.0,<3
+torch>=2.15.0,<3
 numpy>=1.26.0,<2
 scikit-learn>=1.4.0,<2
-transformers>=4.40.0,<5
+transformers>=5.23.0,<6

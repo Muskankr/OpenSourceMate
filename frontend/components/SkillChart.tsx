@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useId } from "react";
-import { COLOR_BLIND_SAFE_PALETTE, getColorForIndex, type ColorBlindSafeColor } from "../utils/colorPalette";
+import { COLOR_BLIND_SAFE_PALETTE } from "../utils/colorPalette";
+import TechIcon from "./TechIcon";
 
 export type SkillItem = {
   name: string;
@@ -342,6 +343,7 @@ export default function SkillChart({
                         style={{ backgroundColor: skill.color.fill }}
                         aria-hidden="true"
                       />
+                      <TechIcon name={skill.name} theme={theme} className="h-4 w-4 shrink-0" />
                       <span className="font-semibold">{skill.name}</span>
                     </div>
 
@@ -412,6 +414,7 @@ export default function SkillChart({
                       style={{ backgroundColor: skill.color.fill }}
                       aria-hidden="true"
                     />
+                    <TechIcon name={skill.name} theme={theme} className="h-3.5 w-3.5 shrink-0" />
                     <span className="truncate font-medium">{skill.name}</span>
                   </div>
 
@@ -427,6 +430,11 @@ export default function SkillChart({
       <div className="mt-6 border-t pt-4 border-white/5">
         <button
           type="button"
+          aria-label={
+            showTable
+              ? "Hide accessible data table"
+              : "View as table (Accessible data table fallback)"
+          }
           onClick={() => setShowTable((prev) => !prev)}
           className={`flex items-center gap-2 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded-lg px-2 py-1 ${
             theme === "dark"
@@ -461,7 +469,7 @@ export default function SkillChart({
                     Skill / Technology
                   </th>
                   <th scope="col" className="px-4 py-2.5 font-semibold text-right">
-                    Repository Count
+                    Repositories Count
                   </th>
                   <th scope="col" className="px-4 py-2.5 font-semibold text-right">
                     Share Percentage

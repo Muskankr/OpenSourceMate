@@ -1,6 +1,6 @@
 # Production base dependencies for OpenSourceMate API
 # Fast, lightweight setup (<150MB total disk usage)
-fastapi==0.111.0
+fastapi==0.162.7
 uvicorn==0.54.0
 httpx==0.28.1
 openai==3.46.0

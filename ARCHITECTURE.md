@@ -149,7 +149,9 @@ OpenSourceMate/
 │   │   ├── SavedIssuesModal.tsx   # Saved/bookmarked issues drawer
 │   │   ├── SkillChart.tsx         # Responsive skill distribution visualization
 │   │   ├── SkillProficiencyBadge.tsx # Beginner, Intermediate, Advanced indicator
-│   │   └── StarterCommentModal.tsx# One-click starter issue claim comment generator
+│   │   ├── StarterCommentModal.tsx# One-click starter issue claim comment generator
+│   │   ├── TechIcon.tsx           # Inline SVG technology icons with fallback (#299)
+│   │   └── icons/LICENSE.md       # Permissive license notices for SVG icons (CC0 1.0, MIT)
 │   ├── hooks/                     # Custom React hooks (e.g., useBookmarkedIssues)
 │   ├── types/                     # TypeScript interface definitions (api.ts)
 │   └── utils/                     # Frontend client utilities
@@ -474,6 +476,7 @@ Defined in `backend/app/config.py` using Pydantic `BaseSettings`:
 * **SkillProficiencyBadge (`components/SkillProficiencyBadge.tsx`)**: Visually indicates competency tier (`Beginner`, `Intermediate`, `Advanced`).
 * **RecentSearches (`components/RecentSearches.tsx`)**: Displays clickable pills for previous searches stored in browser `localStorage`.
 * **StarterCommentModal (`components/StarterCommentModal.tsx`)**: Generates polite, customizable markdown comments for claiming GitHub issues, with a one-click copy button.
+* **TechIcon (`components/TechIcon.tsx`)**: Renders inline SVG icons for 25+ common languages and frameworks with a neutral fallback icon. Fully compliant with CSP (zero external network requests) and accessibility standards (`aria-hidden="true"`), with seamless light and dark mode contrast (#299).
 * **SavedIssuesModal (`components/SavedIssuesModal.tsx`)**: Slide-out drawer displaying issues bookmarked by the user.
 * **ExportMenu (`components/ExportMenu.tsx`)**: One-click download of profile and skill analysis in JSON or Markdown format.
 
