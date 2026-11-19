@@ -27,6 +27,7 @@ OpenSourceMate एक AI-संचालित ओपन-सोर्स यो�
   - [🔎 GitHub प्रोफाइल विश्लेषण (GitHub Profile Analysis)](#-github-प्रोफाइल-विश्लेषण-github-profile-analysis)
   - [🧠 तकनीकी कौशल विश्लेषण (Technical Skill Analysis)](#-तकनीकी-कौशल-विश्लेषण-technical-skill-analysis)
   - [👥 योगदानकर्ता दीवार (Contributors Wall)](#-योगदानकर्ता-दीवार-contributors-wall)
+  - [📚 ओपन-सोर्स 101 संसाधन (Open Source 101 Resources)](#-ओपन-सोर्स-101-संसाधन-open-source-101-resources)
   - [🎯 योगदान खोज — आगामी सुविधाएँ (Contribution Discovery — Coming Next)](#-योगदान-खोज--आगामी-सुविधाएँ-contribution-discovery--coming-next)
 - [🖼️ स्क्रीनशॉट्स (Screenshots)](#%EF%B8%8F-स्क्रीनशॉट्स-screenshots)
 - [🏗️ प्रोजेक्ट संरचना (Project Structure)](#%EF%B8%8F-प्रोजेक्ट-संरचना-project-structure)
@@ -91,6 +92,16 @@ OpenSourceMate होमपेज पर एक लाइव कंट्री�
 - बॉट खातों, अनाम प्रविष्टियों और डुप्लिकेट्स को फ़िल्टर करता है।
 - लोडिंग और खाली अवस्थाएं (empty states) प्रदान करता है, साथ ही API त्रुटियों और दर सीमाओं (rate limits) के लिए पुनः प्रयास (retry) का विकल्प देता है।
 - मोबाइल और डेस्कटॉप स्क्रीन दोनों के लिए एक रिस्पॉन्सिव लेआउट का उपयोग करता है।
+
+### 📚 ओपन-सोर्स 101 संसाधन (Open Source 101 Resources)
+
+OpenSourceMate नए और उभरते ओपन-सोर्स डेवलपर्स के लिए [`/resources`](https://open-source-mate-tawny.vercel.app/resources) पर एक क्यूरेटेड शिक्षण हब प्रदान करता है:
+
+- **गिट की मूल बातें (Git Basics)**: कमिट्स, ब्रांचेस और संस्करण नियंत्रण के मूलभूत सिद्धांत।
+- **पहला पुल अनुरोध (First Pull Request)**: फोर्क करने, ब्रांच बनाने और साफ-सुथरा PR सबमिट करने के चरणबद्ध गाइड।
+- **योगदान दिशा-निर्देश (Contributing Guidelines)**: किसी प्रोजेक्ट के `CONTRIBUTING.md` को समझना और उसका पालन करना।
+- **इश्यू टिप्पणियाँ और बग रिपोर्ट (Issue Comments & Bug Reports)**: स्पष्ट पुनरुत्पादन चरण और सम्मानजनक टिप्पणियाँ लिखना।
+- **अनुरक्षक शिष्टाचार (Maintainer Etiquette)**: प्रभावी संचार, कोड समीक्षा प्रतिक्रिया और सामुदायिक आचार संहिता।
 
 ### 🎯 योगदान खोज — आगामी सुविधाएँ (Contribution Discovery — Coming Next)
 
@@ -632,7 +643,9 @@ OpenSourceMate सेट करने, किसी समस्या को �
 
 OpenSourceMate खुले और पारदर्शी तरीके से संचालित होता है:
 
-- **भूमिकाएँ**: योगदानकर्ता (Contributor), समीक्षक (Reviewer), और अनुरक्षक / प्रोजेक्ट लीड (Maintainer / Project Lead - [@Muskankr](https://github.com/Muskankr))।
+- **भूमिकाएँ**: योगदानकर्ता (Contributor), समीक्षक (Reviewer), और अनुरक्षक / प्रोजेक्ट लीड (Maintainer / Project Lead - [@Muskankr](https://github.com/Muskankr))। सबसिस्टम कोड स्वामित्व [`.github/CODEOWNERS`](.github/CODEOWNERS) में परिभाषित है।
+- **समीक्षा दिशा-निर्देश**: पुल अनुरोधों का मूल्यांकन [समीक्षक चेकलिस्ट (Reviewer Checklist)](docs/REVIEWING.md) के अनुसार किया जाता है।
+- **अनुरक्षक संचालन**: ट्राइएज, इश्यू आवंटन और रिलीज़ वर्कफ़्लो [अनुरक्षक मार्गदर्शिका (Maintainer Guide)](docs/MAINTAINERS.md) का पालन करते हैं।
 - **प्रगति पथ**: योगदानकर्ता से समीक्षक और अनुरक्षक बनने के स्पष्ट, योग्यता-आधारित मार्ग।
 - **निर्णय और सहमति**: RFCs के माध्यम से खुली चर्चा, नियमित सुधारों के लिए लेज़ी सर्वसम्मति (Lazy Consensus), और आर्किटेक्चर डिसीजन रिकॉर्ड्स ([`docs/adr/`](docs/adr/))।
 - **संघर्ष समाधान**: डेटा-संचालित तकनीकी चर्चाएँ, आचार संहिता प्रवर्तन, और प्रोजेक्ट एडमिन का निर्णायक वोट।
