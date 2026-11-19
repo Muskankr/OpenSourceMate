@@ -45,7 +45,6 @@ describe("TechIcon Component (#299)", () => {
       unmount();
     });
   });
-
   it("sets aria-hidden='true' and focusable='false' on icons for screen reader accessibility", () => {
     render(<TechIcon name="Python" />);
     const icon = screen.getByTestId("tech-icon-python");
@@ -103,4 +102,3 @@ describe("TechIcon Component (#299)", () => {
     expect(icon).toHaveClass("custom-rust-class");
   });
 });
-

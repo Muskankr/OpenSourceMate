@@ -35,6 +35,9 @@ export const Footer: React.FC<FooterProps> = ({ theme }) => {
           <Link href="/contribute" className="hover:text-emerald-400 transition-colors">
             Contribute
           </Link>
+          <Link href="/resources" className="hover:text-emerald-400 transition-colors">
+            Open Source 101
+          </Link>
           <Link href="/privacy" className="hover:text-emerald-400 transition-colors">
             Privacy Policy
           </Link>
