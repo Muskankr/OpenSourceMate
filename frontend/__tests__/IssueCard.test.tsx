@@ -97,4 +97,29 @@ describe("IssueCard Component", () => {
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
+
+  it("pre-fills wrong-match feedback with only public recommendation details", () => {
+    const issue = {
+      ...sampleIssue,
+      url: "https://github.com/octocat/hello-world/issues/42?tab=comments&sort=asc",
+      match_score: 87.6,
+    };
+    render(<IssueCard issue={issue} username="octo cat" />);
+
+    const link = screen.getByRole("link", {
+      name: /Report wrong match for .* on GitHub in a new tab/i,
+    });
+    const url = new URL(link.getAttribute("href")!);
+    expect(url.origin + url.pathname).toBe(
+      "https://github.com/Muskankr/OpenSourceMate/issues/new"
+    );
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      template: "wrong_match.yml",
+      username: "octo cat",
+      issue_url: issue.url,
+      match_score: "88",
+    });
+    expect(link).toHaveAttribute("target", "_blank");
+    expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  });
 });

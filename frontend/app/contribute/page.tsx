@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import IssueCard from "../../components/IssueCard";
 import type { IssueRecommendation } from "../../types/api";
+import { hiddenIssueId, useHiddenIssues } from "../../hooks/useHiddenIssues";
 
 const REPO_OWNER = "Muskankr";
 const REPO_NAME = "OpenSourceMate";
@@ -83,6 +84,9 @@ export default function ContributePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filterTag, setFilterTag] = useState<string>("all");
+  const [showHidden, setShowHidden] = useState(false);
+  const { hiddenIds, isHidden, hideIssue, restoreIssue } = useHiddenIssues();
+  const hiddenCount = issues.filter((issue) => hiddenIds.includes(hiddenIssueId(issue))).length;
 
   useEffect(() => {
     let isMounted = true;
@@ -136,6 +140,7 @@ export default function ContributePage() {
   }, []);
 
   const filteredIssues = issues.filter((issue) => {
+    if (!showHidden && hiddenIds.includes(hiddenIssueId(issue))) return false;
     if (filterTag === "all") return true;
     return issue.labels?.some((l) => l.toLowerCase().includes(filterTag.toLowerCase()));
   });
@@ -191,6 +196,16 @@ export default function ContributePage() {
           ))}
         </div>
 
+        {hiddenCount > 0 && (
+          <button
+            type="button"
+            onClick={() => setShowHidden((value) => !value)}
+            className="rounded text-xs font-medium text-emerald-400 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+          >
+            {showHidden ? "Hide hidden" : `Show hidden (${hiddenCount})`}
+          </button>
+        )}
+
         {/* Status / Error Notifications */}
         {error && (
           <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-200 text-xs">
@@ -212,7 +227,14 @@ export default function ContributePage() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {filteredIssues.map((issue, idx) => (
-              <IssueCard key={issue.url + idx} issue={issue} theme="dark" />
+              <IssueCard
+                key={issue.url + idx}
+                issue={issue}
+                theme="dark"
+                isHidden={isHidden(issue)}
+                onHide={() => hideIssue(issue)}
+                onRestore={() => restoreIssue(issue)}
+              />
             ))}
           </div>
         )}

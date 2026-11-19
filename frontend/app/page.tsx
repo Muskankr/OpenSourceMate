@@ -13,6 +13,7 @@ import SkillProficiencyBadge from "../components/SkillProficiencyBadge";
 import SkillsToLearn from "../components/SkillsToLearn";
 import TechIcon from "../components/TechIcon";
 import IssueCard from "../components/IssueCard";
+import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
 import { getMockRecommendedIssues } from "../data/mockIssues";
 import {
   type GitHubUserProfile as Profile,
@@ -148,6 +149,9 @@ export default function Home() {
   const [labelFilter, setLabelFilter] = useState("all");
   const [minScoreFilter, setMinScoreFilter] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showHidden, setShowHidden] = useState(false);
+  const { hiddenIds, isHidden, hideIssue, restoreIssue } = useHiddenIssues();
+  const hiddenCount = recommendations.filter((issue) => hiddenIds.includes(hiddenIssueId(issue))).length;
 
   const [error, setError] = useState("");
   const [serviceError, setServiceError] = useState<ServiceErrorDetails | null>(null);
@@ -240,6 +244,7 @@ export default function Home() {
   // Client-side filtering logic (Issue #47)
   const filteredRecommendations = useMemo(() => {
     return recommendations.filter((rec) => {
+      if (!showHidden && hiddenIds.includes(hiddenIssueId(rec))) return false;
       if (
         languageFilter !== "all" &&
         rec.language?.toLowerCase() !== languageFilter.toLowerCase()
@@ -269,7 +274,15 @@ export default function Home() {
 
       return true;
     });
-  }, [recommendations, languageFilter, labelFilter, minScoreFilter, searchQuery]);
+  }, [
+    recommendations,
+    hiddenIds,
+    showHidden,
+    languageFilter,
+    labelFilter,
+    minScoreFilter,
+    searchQuery,
+  ]);
 
   const hasActiveFilters =
     languageFilter !== "all" ||
@@ -981,12 +994,23 @@ export default function Home() {
                     </div>
 
                     {recommendations.length > 0 && (
-                      <div
-                        className={`text-xs sm:text-sm ${
-                          theme === "dark" ? "text-gray-400" : "text-gray-600"
-                        }`}
-                      >
-                        Showing {filteredRecommendations.length} of {recommendations.length} issues
+                      <div className="flex flex-col items-end gap-2">
+                        <span
+                          className={`text-xs sm:text-sm ${
+                            theme === "dark" ? "text-gray-400" : "text-gray-600"
+                          }`}
+                        >
+                          Showing {filteredRecommendations.length} of {recommendations.length} issues
+                        </span>
+                        {hiddenCount > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => setShowHidden((value) => !value)}
+                            className="rounded text-xs font-medium text-purple-400 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                          >
+                            {showHidden ? "Hide hidden" : `Show hidden (${hiddenCount})`}
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1213,7 +1237,16 @@ export default function Home() {
                   {!loadingMatching && filteredRecommendations.length > 0 && (
                     <div className="mt-6 space-y-4">
                       {filteredRecommendations.map((issue) => (
-                        <IssueCard key={issue.id} issue={issue} theme={theme} isMock={isDemoData} />
+                        <IssueCard
+                          key={issue.id}
+                          issue={issue}
+                          theme={theme}
+                          isMock={isDemoData}
+                          username={profile?.username || username}
+                          isHidden={isHidden(issue)}
+                          onHide={() => hideIssue(issue)}
+                          onRestore={() => restoreIssue(issue)}
+                        />
                       ))}
                     </div>
                   )}

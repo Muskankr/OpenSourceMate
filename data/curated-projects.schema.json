@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Curated Projects Schema",
+  "description": "JSON schema for beginner-friendly curated projects with program tags and verifiable sources (Issue #298).",
+  "type": "object",
+  "required": ["version", "projects"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "description": {
+      "type": "string"
+    },
+    "projects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "repo",
+          "name",
+          "description",
+          "languages",
+          "topics",
+          "contributing_url",
+          "programs"
+        ],
+        "properties": {
+          "repo": {
+            "type": "string",
+            "pattern": "^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string",
+            "minLength": 10
+          },
+          "languages": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "topics": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "contributing_url": {
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https?://[a-zA-Z0-9_.-]+"
+          },
+          "programs": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": ["name", "source"],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "enum": [
+                    "GSoC",
+                    "Outreachy",
+                    "Hacktoberfest",
+                    "LFX Mentorship",
+                    "Google Season of Docs",
+                    "MLH Fellowship",
+                    "Major League Hacking",
+                    "Other"
+                  ]
+                },
+                "source": {
+                  "type": "string",
+                  "format": "uri",
+                  "pattern": "^https?://[a-zA-Z0-9_.-]+"
+                },
+                "notes": {
+                  "type": "string"
+                },
+                "years": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "minimum": 2000,
+                    "maximum": 2100
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}
