@@ -85,6 +85,47 @@ jobs:
             --ignore-vuln PYSEC-2026-249 \
             --ignore-vuln PYSEC-2026-248
 
+  license-compliance:
+    name: Dependency licence compliance
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        run: npm ci
+        working-directory: frontend
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Create clean licence environment
+        run: python -m venv .license-venv
+
+      - name: Install backend dependencies and licence tooling
+        run: |
+          .license-venv/bin/python -m pip install -r backend/requirements.txt
+          .license-venv/bin/python -m pip install pip-licenses==5.5.0
+
+      - name: Install frontend licence tooling
+        run: npm exec --yes --package=license-checker@25.0.1 -- license-checker --version
+
+      - name: Validate generated third-party notices
+        run: .license-venv/bin/python scripts/third_party_licenses.py --check
+
   bandit:
     name: Bandit (backend)
     runs-on: ubuntu-latest
