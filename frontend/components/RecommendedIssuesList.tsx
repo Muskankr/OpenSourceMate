@@ -3,14 +3,17 @@
 import React, { useMemo, useState } from "react";
 import type { IssueRecommendation } from "../types/api";
 import IssueCard from "./IssueCard";
+import ExportIssuesMenu from "./ExportIssuesMenu";
 import { inferIssueDifficulty, type IssueDifficulty } from "../data/mockIssues";
 import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
+import { exportRecommendedIssues, type IssueExportFormat } from "../utils/exportIssues";
 
 export interface RecommendedIssuesListProps {
   issues: IssueRecommendation[];
   theme?: "dark" | "light";
   isMock?: boolean;
   username?: string;
+  onExport?: (format: IssueExportFormat, exportedIssues: IssueRecommendation[]) => void;
 }
 
 export default function RecommendedIssuesList({
@@ -18,6 +21,7 @@ export default function RecommendedIssuesList({
   theme = "dark",
   isMock = false,
   username = "",
+  onExport,
 }: RecommendedIssuesListProps) {
   const isDark = theme === "dark";
 
@@ -54,21 +58,16 @@ export default function RecommendedIssuesList({
 
       // Label filter
       if (labelFilter === "good-first-issue") {
-        const hasGFI = issue.labels?.some((l) =>
-          l.toLowerCase().includes("good first")
-        );
+        const hasGFI = issue.labels?.some((l) => l.toLowerCase().includes("good first"));
         if (!hasGFI) return false;
       } else if (labelFilter === "help-wanted") {
-        const hasHW = issue.labels?.some((l) =>
-          l.toLowerCase().includes("help wanted")
-        );
+        const hasHW = issue.labels?.some((l) => l.toLowerCase().includes("help wanted"));
         if (!hasHW) return false;
       }
 
       // Difficulty filter
       if (difficultyFilter !== "all") {
-        const diff: IssueDifficulty =
-          issue.difficulty || inferIssueDifficulty(issue.labels);
+        const diff: IssueDifficulty = issue.difficulty || inferIssueDifficulty(issue.labels);
         if (diff.toLowerCase() !== difficultyFilter.toLowerCase()) {
           return false;
         }
@@ -116,6 +115,14 @@ export default function RecommendedIssuesList({
     setSearchQuery("");
   };
 
+  const handleExport = (format: IssueExportFormat) => {
+    if (onExport) {
+      onExport(format, filteredIssues);
+    } else {
+      exportRecommendedIssues(filteredIssues, format, { username });
+    }
+  };
+
   const hasIssues = issues.length > 0;
   const isDemo = isMock || issues.some((i) => i.is_mock);
 
@@ -124,13 +131,11 @@ export default function RecommendedIssuesList({
       id="recommendations"
       aria-label="Recommended open-source issues"
       className={`mt-6 rounded-3xl border p-5 sm:p-8 transition-all duration-300 ${
-        isDark
-          ? "border-white/10 bg-white/[0.035]"
-          : "border-gray-200 bg-white shadow-sm"
+        isDark ? "border-white/10 bg-white/[0.035]" : "border-gray-200 bg-white shadow-sm"
       }`}
     >
       {/* Header section */}
-      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
           <div className="flex items-center gap-2">
             <p className="text-xs font-semibold uppercase tracking-wider text-purple-400 sm:text-sm">
@@ -150,26 +155,19 @@ export default function RecommendedIssuesList({
             )}
           </div>
 
-          <h3 className="mt-2 text-2xl font-bold">
-            Recommended open-source issues
-          </h3>
+          <h3 className="mt-2 text-2xl font-bold">Recommended open-source issues</h3>
 
-          <p
-            className={`mt-2 text-sm ${
-              isDark ? "text-gray-300" : "text-gray-600"
-            }`}
-          >
+          <p className={`mt-2 text-sm ${isDark ? "text-gray-300" : "text-gray-600"}`}>
             Hand-picked issues ranked by relevance to your technical skills.
           </p>
         </div>
 
         {hasIssues && (
-          <div
-            className={`text-xs sm:text-sm ${
-              isDark ? "text-gray-400" : "text-gray-500"
-            }`}
-          >
-            Showing {filteredIssues.length} of {issues.length} issues
+          <div className="flex flex-wrap items-center gap-3">
+            <div className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              Showing {filteredIssues.length} of {issues.length} issues
+            </div>
+            <ExportIssuesMenu onExport={handleExport} disabled={filteredIssues.length === 0} />
           </div>
         )}
       </div>
@@ -198,13 +196,11 @@ export default function RecommendedIssuesList({
             ℹ️
           </span>
           <div>
-            <p className="font-semibold">
-              Live matching service is currently in preview
-            </p>
+            <p className="font-semibold">Live matching service is currently in preview</p>
             <p className="mt-0.5 text-[11px] opacity-85">
               Displaying realistic open-source issues matched to{" "}
-              {username ? `@${username}'s` : "your"} technical skill set. You
-              can filter by difficulty, language, and keywords below.
+              {username ? `@${username}'s` : "your"} technical skill set. You can filter by
+              difficulty, language, and keywords below.
             </p>
           </div>
         </div>
@@ -214,9 +210,7 @@ export default function RecommendedIssuesList({
       {hasIssues && (
         <div
           className={`mt-6 rounded-2xl border p-4 ${
-            isDark
-              ? "border-white/5 bg-white/[0.02]"
-              : "border-gray-200 bg-gray-50/50"
+            isDark ? "border-white/5 bg-white/[0.02]" : "border-gray-200 bg-gray-50/50"
           }`}
         >
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
@@ -331,9 +325,7 @@ export default function RecommendedIssuesList({
                 >
                   Min Match
                 </label>
-                <span className="text-xs font-bold text-purple-400">
-                  {minScoreFilter}%
-                </span>
+                <span className="text-xs font-bold text-purple-400">{minScoreFilter}%</span>
               </div>
               <input
                 id="issue-score-filter"
@@ -371,19 +363,12 @@ export default function RecommendedIssuesList({
         <div
           data-testid="filter-empty-state"
           className={`mt-8 rounded-2xl border border-dashed p-8 text-center ${
-            isDark
-              ? "border-white/10 bg-white/[0.01]"
-              : "border-gray-200 bg-gray-50"
+            isDark ? "border-white/10 bg-white/[0.01]" : "border-gray-200 bg-gray-50"
           }`}
         >
           <p className="text-sm font-semibold">No issues match your filters</p>
-          <p
-            className={`mt-1 text-xs ${
-              isDark ? "text-gray-400" : "text-gray-500"
-            }`}
-          >
-            Try adjusting your language, difficulty, or search terms to see more
-            recommendations.
+          <p className={`mt-1 text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+            Try adjusting your language, difficulty, or search terms to see more recommendations.
           </p>
           <button
             type="button"
@@ -400,9 +385,7 @@ export default function RecommendedIssuesList({
         <div
           data-testid="no-issues-empty-state"
           className={`mt-8 rounded-2xl border border-dashed p-10 text-center ${
-            isDark
-              ? "border-white/10 bg-white/[0.01]"
-              : "border-gray-200 bg-gray-50"
+            isDark ? "border-white/10 bg-white/[0.01]" : "border-gray-200 bg-gray-50"
           }`}
         >
           <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-2xl">
@@ -414,9 +397,8 @@ export default function RecommendedIssuesList({
               isDark ? "text-gray-400" : "text-gray-500"
             } max-w-md mx-auto`}
           >
-            We couldn&apos;t find matching open-source issues for your analyzed
-            skills at this time. Check back soon as new repository issues are
-            indexed continuously.
+            We couldn&apos;t find matching open-source issues for your analyzed skills at this time.
+            Check back soon as new repository issues are indexed continuously.
           </p>
         </div>
       )}

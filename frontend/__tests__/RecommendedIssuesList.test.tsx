@@ -9,23 +9,19 @@ describe("RecommendedIssuesList Component", () => {
   it("renders a list of recommended issues with header and issue count", () => {
     render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} />);
 
+    expect(screen.getByText("Recommended open-source issues")).toBeInTheDocument();
     expect(
-      screen.getByText("Recommended open-source issues")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(`Showing ${MOCK_RECOMMENDED_ISSUES.length} of ${MOCK_RECOMMENDED_ISSUES.length} issues`)
+      screen.getByText(
+        `Showing ${MOCK_RECOMMENDED_ISSUES.length} of ${MOCK_RECOMMENDED_ISSUES.length} issues`
+      )
     ).toBeInTheDocument();
 
     // Verify first issue title
-    expect(
-      screen.getByText(MOCK_RECOMMENDED_ISSUES[0].title)
-    ).toBeInTheDocument();
+    expect(screen.getByText(MOCK_RECOMMENDED_ISSUES[0].title)).toBeInTheDocument();
   });
 
   it("provides a distinct pre-filled feedback link for every recommendation", () => {
-    render(
-      <RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} username="octocat" />
-    );
+    render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} username="octocat" />);
 
     const links = screen.getAllByRole("link", { name: /Report wrong match for/i });
     expect(links).toHaveLength(MOCK_RECOMMENDED_ISSUES.length);
@@ -34,7 +30,11 @@ describe("RecommendedIssuesList Component", () => {
       expect(params.get("username")).toBe("octocat");
       expect(params.get("issue_url")).toBe(MOCK_RECOMMENDED_ISSUES[index].url);
       expect(params.get("match_score")).toBe(
-        String(Math.round(MOCK_RECOMMENDED_ISSUES[index].match_score ?? MOCK_RECOMMENDED_ISSUES[index].score ?? 0))
+        String(
+          Math.round(
+            MOCK_RECOMMENDED_ISSUES[index].match_score ?? MOCK_RECOMMENDED_ISSUES[index].score ?? 0
+          )
+        )
       );
     });
   });
@@ -56,7 +56,9 @@ describe("RecommendedIssuesList Component", () => {
     expect(screen.getByText(issues[0].title)).toBeInTheDocument();
     const feedbackLinks = screen.getAllByRole("link", { name: /Report wrong match for/i });
     expect(feedbackLinks).toHaveLength(issues.length);
-    expect(new URL(feedbackLinks[0].getAttribute("href")!).searchParams.get("username")).toBe("octocat");
+    expect(new URL(feedbackLinks[0].getAttribute("href")!).searchParams.get("username")).toBe(
+      "octocat"
+    );
   });
 
   it("shows demo data / coming soon banner when isMock is true", () => {
@@ -67,11 +69,11 @@ describe("RecommendedIssuesList Component", () => {
     expect(screen.getByTestId("coming-soon-banner-badge")).toHaveTextContent(
       "Demo Data • Coming Soon"
     );
+    expect(screen.getByText("Live matching service is currently in preview")).toBeInTheDocument();
     expect(
-      screen.getByText("Live matching service is currently in preview")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Displaying realistic open-source issues matched to @octocat's technical skill set/i)
+      screen.getByText(
+        /Displaying realistic open-source issues matched to @octocat's technical skill set/i
+      )
     ).toBeInTheDocument();
   });
 
@@ -132,5 +134,62 @@ describe("RecommendedIssuesList Component", () => {
 
     expect(screen.getByTestId("no-issues-empty-state")).toBeInTheDocument();
     expect(screen.getByText("No issues found")).toBeInTheDocument();
+  });
+
+  it("renders export button and opens menu with Markdown and CSV options", () => {
+    render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} />);
+
+    const exportBtn = screen.getByRole("button", {
+      name: /export recommended issues as csv or markdown/i,
+    });
+    expect(exportBtn).toBeInTheDocument();
+
+    fireEvent.click(exportBtn);
+
+    expect(screen.getByRole("menu", { name: /export issues formats/i })).toBeInTheDocument();
+    expect(screen.getByText("CSV Spreadsheet")).toBeInTheDocument();
+    expect(screen.getByText("Markdown Report")).toBeInTheDocument();
+  });
+
+  it("respects active filters when exporting visible recommendations", () => {
+    const onExportMock = jest.fn();
+    render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} onExport={onExportMock} />);
+
+    // Apply filter: Python language
+    const langSelect = screen.getByLabelText(/Filter issues by programming language/i);
+    fireEvent.change(langSelect, { target: { value: "Python" } });
+
+    // Click Export button
+    const exportBtn = screen.getByRole("button", {
+      name: /export recommended issues as csv or markdown/i,
+    });
+    fireEvent.click(exportBtn);
+
+    // Select CSV format
+    const csvOption = screen.getByRole("menuitem", {
+      name: /csv spreadsheet \.csv/i,
+    });
+    fireEvent.click(csvOption);
+
+    expect(onExportMock).toHaveBeenCalledTimes(1);
+    const [format, exportedIssues] = onExportMock.mock.calls[0];
+    expect(format).toBe("csv");
+    expect(exportedIssues.length).toBeGreaterThan(0);
+    // Every exported issue must have language Python (active filter respected)
+    exportedIssues.forEach((issue: any) => {
+      expect(issue.language).toBe("Python");
+    });
+  });
+
+  it("disables export button when filters produce zero matching issues", () => {
+    render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} />);
+
+    const searchInput = screen.getByLabelText(/Filter issues by title or repository/i);
+    fireEvent.change(searchInput, { target: { value: "nonexistent-query-string-xyz" } });
+
+    const exportBtn = screen.getByRole("button", {
+      name: /export recommended issues as csv or markdown/i,
+    });
+    expect(exportBtn).toBeDisabled();
   });
 });
