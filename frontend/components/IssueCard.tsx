@@ -25,12 +25,8 @@ export default function IssueCard({
 }: IssueCardProps) {
   const isDark = theme === "dark";
 
-  const isGoodFirst = issue.labels?.some((l) =>
-    l.toLowerCase().includes("good first")
-  );
-  const isHelpWanted = issue.labels?.some((l) =>
-    l.toLowerCase().includes("help wanted")
-  );
+  const isGoodFirst = issue.labels?.some((l) => l.toLowerCase().includes("good first"));
+  const isHelpWanted = issue.labels?.some((l) => l.toLowerCase().includes("help wanted"));
 
   const score = Math.round(issue.match_score ?? issue.score ?? 0);
   const feedbackUrl = `https://github.com/Muskankr/OpenSourceMate/issues/new?${new URLSearchParams({
@@ -42,8 +38,7 @@ export default function IssueCard({
   const reasons = issue.match_reasons ?? issue.reasons ?? [];
 
   // Determine difficulty
-  const difficulty: IssueDifficulty =
-    issue.difficulty || inferIssueDifficulty(issue.labels);
+  const difficulty: IssueDifficulty = issue.difficulty || inferIssueDifficulty(issue.labels);
 
   const getDifficultyBadge = (diff: IssueDifficulty) => {
     switch (diff) {
@@ -92,11 +87,7 @@ export default function IssueCard({
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-2 text-xs">
             {/* Repository Name */}
-            <span
-              className={`font-semibold ${
-                isDark ? "text-purple-400" : "text-purple-600"
-              }`}
-            >
+            <span className={`font-semibold ${isDark ? "text-purple-400" : "text-purple-600"}`}>
               {issue.repository}
             </span>
 
@@ -106,9 +97,7 @@ export default function IssueCard({
                 <span className="text-gray-500" aria-hidden="true">
                   •
                 </span>
-                <span className={isDark ? "text-gray-400" : "text-gray-600"}>
-                  {issue.language}
-                </span>
+                <span className={isDark ? "text-gray-400" : "text-gray-600"}>{issue.language}</span>
               </>
             )}
 
@@ -133,6 +122,21 @@ export default function IssueCard({
             >
               {difficulty}
             </span>
+
+            {/* Learning Mode Badge */}
+            {issue.is_learning_mode && (
+              <span
+                data-testid="learning-mode-badge"
+                className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold tracking-wide ${
+                  isDark
+                    ? "border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
+                    : "border-emerald-300 bg-emerald-50 text-emerald-800"
+                }`}
+                title={`Picked for target learning skill: ${issue.learning_skill || issue.language || "Skill"}`}
+              >
+                🌱 Learning: {issue.learning_skill || issue.language || "Target Skill"}
+              </span>
+            )}
 
             {/* Demo / Coming Soon indicator */}
             {showMockBadge && (
@@ -164,10 +168,7 @@ export default function IssueCard({
 
           {/* Labels List */}
           {issue.labels && issue.labels.length > 0 && (
-            <div
-              className="mt-3 flex flex-wrap gap-1.5"
-              aria-label="Issue labels"
-            >
+            <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Issue labels">
               {issue.labels.slice(0, 6).map((label, idx) => (
                 <span
                   key={idx}
@@ -175,10 +176,10 @@ export default function IssueCard({
                     isGoodFirst && label.toLowerCase().includes("good first")
                       ? "border border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
                       : isHelpWanted && label.toLowerCase().includes("help wanted")
-                      ? "border border-amber-400/30 bg-amber-400/10 text-amber-300"
-                      : isDark
-                      ? "border border-white/10 bg-white/5 text-gray-300"
-                      : "border border-gray-300 bg-white text-gray-700"
+                        ? "border border-amber-400/30 bg-amber-400/10 text-amber-300"
+                        : isDark
+                          ? "border border-white/10 bg-white/5 text-gray-300"
+                          : "border border-gray-300 bg-white text-gray-700"
                   }`}
                 >
                   {label}
@@ -190,32 +191,39 @@ export default function IssueCard({
           {/* Explanation if present */}
           {issue.explanation && (
             <div
+              data-testid="issue-explanation"
               className={`mt-4 rounded-xl border p-3.5 text-xs ${
-                isDark
-                  ? "border-purple-500/20 bg-purple-500/5 text-gray-200"
-                  : "border-purple-200 bg-purple-50 text-gray-800"
+                issue.is_learning_mode
+                  ? isDark
+                    ? "border-emerald-500/30 bg-emerald-500/5 text-gray-200"
+                    : "border-emerald-300 bg-emerald-50/70 text-gray-800"
+                  : isDark
+                    ? "border-purple-500/20 bg-purple-500/5 text-gray-200"
+                    : "border-purple-200 bg-purple-50 text-gray-800"
               }`}
             >
-              <div className="flex items-center gap-1.5 font-semibold text-purple-400">
-                <span aria-hidden="true">✦</span>
-                <span>Why this is recommended for you</span>
+              <div
+                className={`flex items-center gap-1.5 font-semibold ${
+                  issue.is_learning_mode ? "text-emerald-400" : "text-purple-400"
+                }`}
+              >
+                <span aria-hidden="true">{issue.is_learning_mode ? "🌱" : "✦"}</span>
+                <span>
+                  {issue.is_learning_mode
+                    ? "Why this is recommended for you (Learning Mode)"
+                    : "Why this is recommended for you"}
+                </span>
                 {issue.is_ai_generated && (
                   <span
                     className={`ml-1.5 rounded-full px-1.5 py-0.2 text-[9px] uppercase tracking-wider font-bold ${
-                      isDark
-                        ? "bg-purple-400/20 text-purple-300"
-                        : "bg-purple-200 text-purple-800"
+                      isDark ? "bg-purple-400/20 text-purple-300" : "bg-purple-200 text-purple-800"
                     }`}
                   >
                     AI MATCH
                   </span>
                 )}
               </div>
-              <p
-                className={`mt-1 leading-relaxed ${
-                  isDark ? "text-gray-300" : "text-gray-700"
-                }`}
-              >
+              <p className={`mt-1 leading-relaxed ${isDark ? "text-gray-300" : "text-gray-700"}`}>
                 {issue.explanation}
               </p>
             </div>
@@ -255,9 +263,7 @@ export default function IssueCard({
             )}`}
           >
             <span className="text-sm font-bold sm:text-base">{score}%</span>
-            <span className="block text-[10px] uppercase tracking-wider text-gray-400">
-              Match
-            </span>
+            <span className="block text-[10px] uppercase tracking-wider text-gray-400">Match</span>
           </div>
 
           {/* Link to GitHub */}

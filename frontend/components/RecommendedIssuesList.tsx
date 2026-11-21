@@ -25,6 +25,10 @@ export default function RecommendedIssuesList({
 }: RecommendedIssuesListProps) {
   const isDark = theme === "dark";
 
+  // Learning mode states
+  const [isLearningMode, setIsLearningMode] = useState<boolean>(initialLearningMode);
+  const [targetSkills, setTargetSkills] = useState<string[]>(initialTargetSkills);
+
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
   const [languageFilter, setLanguageFilter] = useState("all");
@@ -44,9 +48,23 @@ export default function RecommendedIssuesList({
     return Array.from(langs).sort();
   }, [issues]);
 
+  // Dynamic set of selectable target skills for learning mode
+  const selectableSkills = useMemo(() => {
+    const set = new Set<string>(COMMON_TARGET_SKILLS);
+    issues.forEach((i) => {
+      if (i.language) set.add(i.language);
+    });
+    return Array.from(set).sort();
+  }, [issues]);
+
+  // Re-rank issues when Learning Mode is active
+  const rankedIssues = useMemo(() => {
+    return rankIssuesForLearningMode(issues, targetSkills, isLearningMode);
+  }, [issues, targetSkills, isLearningMode]);
+
   // Filtering logic
   const filteredIssues = useMemo(() => {
-    return issues.filter((issue) => {
+    return rankedIssues.filter((issue) => {
       if (!showHidden && hiddenIds.includes(hiddenIssueId(issue))) return false;
       // Language filter
       if (
@@ -90,7 +108,7 @@ export default function RecommendedIssuesList({
       return true;
     });
   }, [
-    issues,
+    rankedIssues,
     hiddenIds,
     showHidden,
     languageFilter,
@@ -203,6 +221,120 @@ export default function RecommendedIssuesList({
               difficulty, language, and keywords below.
             </p>
           </div>
+        </div>
+      )}
+
+      {/* Learning Mode Toggle & Target Skills Picker */}
+      {hasIssues && (
+        <div
+          data-testid="learning-mode-container"
+          className={`mt-4 rounded-2xl border p-4 transition-all duration-200 ${
+            isLearningMode
+              ? isDark
+                ? "border-emerald-500/30 bg-emerald-500/5 shadow-sm"
+                : "border-emerald-200 bg-emerald-50/70 shadow-sm"
+              : isDark
+                ? "border-white/5 bg-white/[0.02]"
+                : "border-gray-200 bg-gray-50/50"
+          }`}
+        >
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <label
+                htmlFor="learning-mode-toggle"
+                className="relative inline-flex cursor-pointer items-center"
+              >
+                <input
+                  id="learning-mode-toggle"
+                  type="checkbox"
+                  data-testid="learning-mode-toggle"
+                  checked={isLearningMode}
+                  onChange={(e) => setIsLearningMode(e.target.checked)}
+                  className="peer sr-only"
+                  aria-label="Toggle learning mode"
+                />
+                <div className="peer h-6 w-11 rounded-full bg-gray-700 peer-checked:bg-emerald-500 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-emerald-400 after:absolute after:left-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
+              </label>
+
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
+                    🌱 Learning Mode
+                  </span>
+                  {isLearningMode && (
+                    <span
+                      data-testid="learning-mode-active-indicator"
+                      className="rounded-full bg-emerald-500/20 px-2 py-0.2 text-[10px] font-semibold text-emerald-300"
+                    >
+                      Active
+                    </span>
+                  )}
+                </div>
+                <p className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                  Prioritize beginner-friendly issues in target skills you want to learn.
+                </p>
+              </div>
+            </div>
+
+            {isLearningMode && targetSkills.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setTargetSkills([])}
+                className="self-start text-xs text-gray-400 hover:text-white underline sm:self-auto"
+              >
+                Clear target skills
+              </button>
+            )}
+          </div>
+
+          {/* Target Skills Picker */}
+          {isLearningMode && (
+            <div data-testid="target-skills-picker" className="mt-3.5 border-t border-white/5 pt-3">
+              <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <span className="text-xs font-semibold text-gray-300">
+                  Select target technologies to learn:
+                </span>
+                {targetSkills.length > 0 && (
+                  <span className="text-xs font-medium text-emerald-400">
+                    {targetSkills.length} selected: {targetSkills.join(", ")}
+                  </span>
+                )}
+              </div>
+
+              <div
+                className="mt-2.5 flex flex-wrap gap-1.5"
+                role="group"
+                aria-label="Target skills picker"
+              >
+                {selectableSkills.map((skill) => {
+                  const isSelected = targetSkills.includes(skill);
+                  return (
+                    <button
+                      key={skill}
+                      type="button"
+                      data-testid={`target-skill-chip-${skill}`}
+                      aria-pressed={isSelected}
+                      onClick={() => {
+                        setTargetSkills((prev) =>
+                          isSelected ? prev.filter((s) => s !== skill) : [...prev, skill]
+                        );
+                      }}
+                      className={`rounded-lg px-2.5 py-1 text-xs font-medium transition ${
+                        isSelected
+                          ? "border border-emerald-400 bg-emerald-500/20 text-emerald-300 ring-1 ring-emerald-400/50"
+                          : isDark
+                            ? "border border-white/10 bg-white/5 text-gray-300 hover:bg-white/10 hover:text-white"
+                            : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
+                      }`}
+                    >
+                      {isSelected ? "✓ " : "+ "}
+                      {skill}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
