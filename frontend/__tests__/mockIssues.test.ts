@@ -67,5 +67,34 @@ describe("mockIssues module", () => {
       const issuesUndefined = getMockRecommendedIssues(undefined);
       expect(issuesUndefined.length).toBe(MOCK_RECOMMENDED_ISSUES.length);
     });
+
+    it("favours target skills and beginner issues when learningMode is active", () => {
+      // User has existing heavy TypeScript skills
+      const defaultRanking = getMockRecommendedIssues(["TypeScript"]);
+      expect(defaultRanking[0].language).toBe("TypeScript");
+
+      // User switches on Learning Mode with target skill "Rust"
+      const learningRanking = getMockRecommendedIssues(["TypeScript"], {
+        learningMode: true,
+        targetSkills: ["Rust"],
+      });
+
+      expect(learningRanking[0].language).toBe("Rust");
+      expect(learningRanking[0].difficulty).toBe("Beginner");
+      expect(learningRanking[0].is_learning_mode).toBe(true);
+      expect(learningRanking[0].learning_skill).toBe("Rust");
+      expect(learningRanking[0].match_score).toBeGreaterThanOrEqual(95);
+    });
+
+    it("keeps ranking unchanged when learningMode is explicitly false", () => {
+      const defaultRanking = getMockRecommendedIssues(["TypeScript"]);
+      const withFalseOption = getMockRecommendedIssues(["TypeScript"], {
+        learningMode: false,
+        targetSkills: ["Rust"],
+      });
+
+      expect(withFalseOption[0].id).toBe(defaultRanking[0].id);
+      expect(withFalseOption[0].match_score).toBe(defaultRanking[0].match_score);
+    });
   });
 });

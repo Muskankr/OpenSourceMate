@@ -61,6 +61,8 @@ export interface IssueRecommendation {
   is_ai_generated?: boolean;
   difficulty?: string;
   is_mock?: boolean;
+  is_learning_mode?: boolean;
+  learning_skill?: string;
 }
 
 export interface MatchedIssuesResponse {
