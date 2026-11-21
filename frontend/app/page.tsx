@@ -3,6 +3,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ExportMenu from "../components/ExportMenu";
+import ExportIssuesMenu from "../components/ExportIssuesMenu";
 import GitHubLink from "../components/GitHubLink";
 import ProfileCard from "../components/ProfileCard";
 import RecentSearches from "../components/RecentSearches";
@@ -15,7 +16,7 @@ import TechIcon from "../components/TechIcon";
 import IssueCard from "../components/IssueCard";
 import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
 import { getMockRecommendedIssues } from "../data/mockIssues";
-import { rankIssuesForLearningMode, COMMON_TARGET_SKILLS } from "../utils/learningMode";
+import { exportRecommendedIssues, type IssueExportFormat } from "../utils/exportIssues";
 import {
   type GitHubUserProfile as Profile,
   type SkillItem as Skill,
@@ -238,6 +239,12 @@ export default function Home() {
     };
 
     exportAnalysisData(payload, format);
+  };
+
+  const handleExportIssues = (format: IssueExportFormat) => {
+    exportRecommendedIssues(filteredRecommendations, format, {
+      username: profile?.username || username,
+    });
   };
 
   // Dynamic language options extracted from recommendations
@@ -1017,14 +1024,20 @@ export default function Home() {
 
                     {recommendations.length > 0 && (
                       <div className="flex flex-col items-end gap-2">
-                        <span
-                          className={`text-xs sm:text-sm ${
-                            theme === "dark" ? "text-gray-400" : "text-gray-600"
-                          }`}
-                        >
-                          Showing {filteredRecommendations.length} of {recommendations.length}{" "}
-                          issues
-                        </span>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span
+                            className={`text-xs sm:text-sm ${
+                              theme === "dark" ? "text-gray-400" : "text-gray-600"
+                            }`}
+                          >
+                            Showing {filteredRecommendations.length} of {recommendations.length}{" "}
+                            issues
+                          </span>
+                          <ExportIssuesMenu
+                            onExport={handleExportIssues}
+                            disabled={filteredRecommendations.length === 0}
+                          />
+                        </div>
                         {hiddenCount > 0 && (
                           <button
                             type="button"

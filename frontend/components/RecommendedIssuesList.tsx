@@ -3,17 +3,17 @@
 import React, { useMemo, useState } from "react";
 import type { IssueRecommendation } from "../types/api";
 import IssueCard from "./IssueCard";
+import ExportIssuesMenu from "./ExportIssuesMenu";
 import { inferIssueDifficulty, type IssueDifficulty } from "../data/mockIssues";
 import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
-import { rankIssuesForLearningMode, COMMON_TARGET_SKILLS } from "../utils/learningMode";
+import { exportRecommendedIssues, type IssueExportFormat } from "../utils/exportIssues";
 
 export interface RecommendedIssuesListProps {
   issues: IssueRecommendation[];
   theme?: "dark" | "light";
   isMock?: boolean;
   username?: string;
-  initialLearningMode?: boolean;
-  initialTargetSkills?: string[];
+  onExport?: (format: IssueExportFormat, exportedIssues: IssueRecommendation[]) => void;
 }
 
 export default function RecommendedIssuesList({
@@ -21,8 +21,7 @@ export default function RecommendedIssuesList({
   theme = "dark",
   isMock = false,
   username = "",
-  initialLearningMode = false,
-  initialTargetSkills = [],
+  onExport,
 }: RecommendedIssuesListProps) {
   const isDark = theme === "dark";
 
@@ -134,6 +133,14 @@ export default function RecommendedIssuesList({
     setSearchQuery("");
   };
 
+  const handleExport = (format: IssueExportFormat) => {
+    if (onExport) {
+      onExport(format, filteredIssues);
+    } else {
+      exportRecommendedIssues(filteredIssues, format, { username });
+    }
+  };
+
   const hasIssues = issues.length > 0;
   const isDemo = isMock || issues.some((i) => i.is_mock);
 
@@ -146,7 +153,7 @@ export default function RecommendedIssuesList({
       }`}
     >
       {/* Header section */}
-      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
           <div className="flex items-center gap-2">
             <p className="text-xs font-semibold uppercase tracking-wider text-purple-400 sm:text-sm">
@@ -174,8 +181,11 @@ export default function RecommendedIssuesList({
         </div>
 
         {hasIssues && (
-          <div className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-            Showing {filteredIssues.length} of {issues.length} issues
+          <div className="flex flex-wrap items-center gap-3">
+            <div className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              Showing {filteredIssues.length} of {issues.length} issues
+            </div>
+            <ExportIssuesMenu onExport={handleExport} disabled={filteredIssues.length === 0} />
           </div>
         )}
       </div>

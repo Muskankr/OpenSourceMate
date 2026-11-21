@@ -136,57 +136,60 @@ describe("RecommendedIssuesList Component", () => {
     expect(screen.getByText("No issues found")).toBeInTheDocument();
   });
 
-  it("renders Learning Mode toggle and reveals target skills picker when toggled", () => {
+  it("renders export button and opens menu with Markdown and CSV options", () => {
     render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} />);
 
-    const toggle = screen.getByTestId("learning-mode-toggle");
-    expect(toggle).toBeInTheDocument();
-    expect(toggle).not.toBeChecked();
+    const exportBtn = screen.getByRole("button", {
+      name: /export recommended issues as csv or markdown/i,
+    });
+    expect(exportBtn).toBeInTheDocument();
 
-    // Target skills picker is not rendered yet
-    expect(screen.queryByTestId("target-skills-picker")).not.toBeInTheDocument();
+    fireEvent.click(exportBtn);
 
-    // Toggle Learning Mode ON
-    fireEvent.click(toggle);
-    expect(toggle).toBeChecked();
-    expect(screen.getByTestId("learning-mode-active-indicator")).toBeInTheDocument();
-
-    const picker = screen.getByTestId("target-skills-picker");
-    expect(picker).toBeInTheDocument();
-    expect(screen.getByTestId("target-skill-chip-Rust")).toBeInTheDocument();
-    expect(screen.getByTestId("target-skill-chip-Python")).toBeInTheDocument();
+    expect(screen.getByRole("menu", { name: /export issues formats/i })).toBeInTheDocument();
+    expect(screen.getByText("CSV Spreadsheet")).toBeInTheDocument();
+    expect(screen.getByText("Markdown Report")).toBeInTheDocument();
   });
 
-  it("re-ranks issues to favour chosen target skills when learning mode is active and restores when toggled off", () => {
+  it("respects active filters when exporting visible recommendations", () => {
+    const onExportMock = jest.fn();
+    render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} onExport={onExportMock} />);
+
+    // Apply filter: Python language
+    const langSelect = screen.getByLabelText(/Filter issues by programming language/i);
+    fireEvent.change(langSelect, { target: { value: "Python" } });
+
+    // Click Export button
+    const exportBtn = screen.getByRole("button", {
+      name: /export recommended issues as csv or markdown/i,
+    });
+    fireEvent.click(exportBtn);
+
+    // Select CSV format
+    const csvOption = screen.getByRole("menuitem", {
+      name: /csv spreadsheet \.csv/i,
+    });
+    fireEvent.click(csvOption);
+
+    expect(onExportMock).toHaveBeenCalledTimes(1);
+    const [format, exportedIssues] = onExportMock.mock.calls[0];
+    expect(format).toBe("csv");
+    expect(exportedIssues.length).toBeGreaterThan(0);
+    // Every exported issue must have language Python (active filter respected)
+    exportedIssues.forEach((issue: any) => {
+      expect(issue.language).toBe("Python");
+    });
+  });
+
+  it("disables export button when filters produce zero matching issues", () => {
     render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} />);
 
-    // Default ranking top issue is TypeScript (vercel/next.js)
-    const initialCards = screen.getAllByRole("article");
-    expect(initialCards[0]).toHaveTextContent("vercel/next.js");
+    const searchInput = screen.getByLabelText(/Filter issues by title or repository/i);
+    fireEvent.change(searchInput, { target: { value: "nonexistent-query-string-xyz" } });
 
-    // Toggle Learning Mode ON
-    const toggle = screen.getByTestId("learning-mode-toggle");
-    fireEvent.click(toggle);
-
-    // Pick target skill "Rust"
-    const rustChip = screen.getByTestId("target-skill-chip-Rust");
-    fireEvent.click(rustChip);
-
-    // After picking Rust, top card should become BurntSushi/ripgrep (Rust, Beginner)
-    const learningCards = screen.getAllByRole("article");
-    expect(learningCards[0]).toHaveTextContent("BurntSushi/ripgrep");
-    expect(screen.getByTestId("learning-mode-badge")).toHaveTextContent("Learning: Rust");
-    expect(
-      screen.getByText(
-        /Picked for Learning Mode: beginner-friendly starter issue to help you learn and grow into Rust/i
-      )
-    ).toBeInTheDocument();
-
-    // Toggle Learning Mode OFF
-    fireEvent.click(toggle);
-
-    // Ranking is restored to initial order
-    const restoredCards = screen.getAllByRole("article");
-    expect(restoredCards[0]).toHaveTextContent("vercel/next.js");
+    const exportBtn = screen.getByRole("button", {
+      name: /export recommended issues as csv or markdown/i,
+    });
+    expect(exportBtn).toBeDisabled();
   });
 });
