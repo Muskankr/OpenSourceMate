@@ -13,7 +13,7 @@ from app.services.github_service import (
 from app.services.issue_service import search_github_issues
 from app.services.matching_service import build_idf, calculate_issue_score
 from app.services.skill_service import analyze_skills
-from app.utils.validation import validate_github_username
+from app.utils.validation import validate_github_username, validate_skill
 
 router = APIRouter(
     prefix="/matching",
@@ -43,8 +43,21 @@ def _atom_element(parent: ElementTree.Element, name: str, text: str) -> None:
 async def get_matched_issues(
     username: str,
     exclude_stale: bool = Query(default=False),
+    skills: list[str] | None = Query(default=None),
 ):
     validated_username = validate_github_username(username)
+
+    # Validate explicit skills if provided
+    validated_custom_skills = None
+    if skills is not None:
+        flat_skills: list[str] = []
+        for s in skills:
+            for item in s.split(","):
+                item_clean = item.strip()
+                if item_clean:
+                    flat_skills.append(validate_skill(item_clean))
+        validated_custom_skills = flat_skills
+
     repositories = await get_user_repositories(validated_username)
 
     if repositories is None:
@@ -53,9 +66,11 @@ async def get_matched_issues(
             detail="GitHub user not found",
         )
 
-    skill_data = analyze_skills(repositories)
-
-    user_skills = [skill["name"] for skill in skill_data["skills"]]
+    if validated_custom_skills is not None:
+        user_skills = validated_custom_skills
+    else:
+        skill_data = analyze_skills(repositories)
+        user_skills = [skill["name"] for skill in skill_data["skills"]]
 
     # Relative weight of each skill, so a main language counts for more than a side one.
     max_count = max(

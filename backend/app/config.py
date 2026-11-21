@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     # Network, Hosts & CORS
     # -------------------------------------------------------------------------
     allowed_hosts: list[str] = ["*"]
+    frontend_url: str | None = None
     cors_origins: list[str] = [
         "http://localhost:3000",
         "http://127.0.0.1:3000",
@@ -81,6 +82,8 @@ class Settings(BaseSettings):
     api_rate_limit_enabled: bool = True
     api_rate_limit_per_minute: int = 60
     api_rate_limit_burst: int = 25
+    api_analyze_rate_limit_per_minute: int = 30
+    api_analyze_rate_limit_burst: int = 15
 
     # -------------------------------------------------------------------------
     # AI Analysis Configuration
@@ -128,6 +131,12 @@ class Settings(BaseSettings):
         """Enforce strict production invariants and sane development defaults."""
         env_norm = (self.environment or "development").strip().lower()
         is_prod = env_norm in ("production", "prod")
+
+        # Automatically include configured frontend_url in CORS origins
+        if self.frontend_url:
+            clean_origin = self.frontend_url.strip().rstrip("/")
+            if clean_origin and clean_origin not in self.cors_origins:
+                self.cors_origins.append(clean_origin)
 
         # 1. Resolve debug default based on environment if not explicitly set
         if self.debug is None:

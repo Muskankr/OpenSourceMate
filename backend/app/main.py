@@ -232,6 +232,18 @@ async def github_upstream_handler(request: Request, exc: GitHubUpstreamError):
     )
 
 
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception):
+    return JSONResponse(
+        status_code=500,
+        content=format_error_content(
+            code="INTERNAL_SERVER_ERROR",
+            message="An unexpected server error occurred. Please try again later.",
+            details=str(exc) if getattr(settings, "debug", False) else None,
+        ),
+    )
+
+
 # ---------------------------------------------------------
 # Health Endpoints
 # ---------------------------------------------------------

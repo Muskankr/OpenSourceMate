@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, HTTPException, Query
 from app.services.friendliness_service import evaluate_contributor_friendliness
+from app.utils.validation import validate_repo_slug
 
 router = APIRouter(prefix="/repositories", tags=["Repositories"])
 
@@ -17,8 +18,9 @@ router = APIRouter(prefix="/repositories", tags=["Repositories"])
 async def get_repository_friendliness(
     repo: str = Query(..., description="Repository URL or slug, e.g. 'owner/repo' or 'https://github.com/owner/repo'"),
 ):
+    clean_repo = validate_repo_slug(repo)
     try:
-        result = await evaluate_contributor_friendliness(repo)
+        result = await evaluate_contributor_friendliness(clean_repo)
         return result
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
