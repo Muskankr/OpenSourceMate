@@ -476,25 +476,58 @@ async def get_repository_details(
     repositories: list[dict],
     limit: int = MAX_DETAIL_REPOSITORIES,
     refresh: bool = False,
+    concurrency_limit: int | None = None,
 ) -> dict[str, dict]:
     """Languages and dependencies for the most recently updated non-fork repos.
 
+    Fetches repositories in parallel bounded by an asyncio.Semaphore concurrency limit
+    to reduce overall latency while preventing GitHub secondary rate limiting.
     Only `limit` repos are looked at so a large profile stays inside the GitHub
     rate limit. Anything that fails is skipped; the skill list then falls back to
     the main language and topics for that repo.
     """
     candidates = [r for r in repositories if not r.get("fork") and r.get("full_name")]
     candidates.sort(key=lambda r: r.get("updated_at") or "", reverse=True)
+    target_repos = candidates[:limit]
 
-    details = {}
+    if not target_repos:
+        return {}
 
-    for repository in candidates[:limit]:
-        try:
-            details[repository["full_name"]] = await _fetch_repo_details(
-                repository["full_name"], refresh=refresh
-            )
-        except (GitHubRateLimitError, httpx.HTTPError):
-            continue
+    settings = get_settings()
+    max_concurrency = max(
+        1,
+        concurrency_limit
+        if concurrency_limit is not None
+        else getattr(settings, "github_concurrency_limit", 5),
+    )
+    semaphore = asyncio.Semaphore(max_concurrency)
+
+    async def _fetch_with_semaphore(repo: dict) -> tuple[str, dict | None]:
+        full_name = repo["full_name"]
+        async with semaphore:
+            try:
+                repo_details = await _fetch_repo_details(full_name, refresh=refresh)
+                return full_name, repo_details
+            except (GitHubRateLimitError, httpx.HTTPError, Exception) as exc:
+                logger.warning(
+                    f"Failed to fetch repository details for {full_name}: {exc}",
+                    extra={
+                        "structured_data": {
+                            "event": "repo_detail_fetch_failed",
+                            "repo": full_name,
+                            "error": str(exc),
+                        }
+                    },
+                )
+                return full_name, None
+
+    tasks = [_fetch_with_semaphore(repo) for repo in target_repos]
+    results = await asyncio.gather(*tasks, return_exceptions=False)
+
+    details: dict[str, dict] = {}
+    for full_name, repo_details in results:
+        if repo_details is not None:
+            details[full_name] = repo_details
 
     return details
 

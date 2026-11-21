@@ -58,6 +58,9 @@ class Settings(BaseSettings):
     # Maximum number of repository pages to fetch per user analysis.
     github_max_repo_pages: int = 3
 
+    # Concurrency limit for parallel repository details & manifest fetching (Issue #337)
+    github_concurrency_limit: int = 5
+
     # Items per page requested from GitHub API (maximum allowed by GitHub is 100).
     github_repos_per_page: int = 100
 
