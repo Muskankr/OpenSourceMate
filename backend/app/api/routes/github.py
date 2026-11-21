@@ -25,6 +25,18 @@ router = APIRouter(
 
 
 @router.get(
+    "/users/autocomplete",
+    summary="Autocomplete GitHub usernames with rate-limit protection (Issue #346)",
+)
+async def get_username_autocomplete(
+    q: str = Query(..., min_length=3, description="Username query prefix (min 3 chars)"),
+    limit: int = Query(default=5, ge=1, le=10),
+):
+    from app.services.autocomplete_service import autocomplete_github_users
+    return await autocomplete_github_users(q, limit=limit)
+
+
+@router.get(
     "/users/{username}",
     response_model=ExtendedGitHubUserProfileSerializer,
     summary="Get GitHub user profile",
