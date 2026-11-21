@@ -22,6 +22,9 @@ def build_security_headers(settings: Settings) -> dict[str, str]:
         "X-Frame-Options": "DENY",
         "Referrer-Policy": settings.security_referrer_policy,
         "Cross-Origin-Opener-Policy": "same-origin",
+        "X-XSS-Protection": "0",
+        "X-Permitted-Cross-Domain-Policies": "none",
+        "Permissions-Policy": "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()",
     }
     if settings.security_hsts_seconds:
         hsts = f"max-age={settings.security_hsts_seconds}"

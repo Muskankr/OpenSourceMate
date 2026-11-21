@@ -1,3 +1,4 @@
+import re
 import time
 import asyncio
 from collections import defaultdict
@@ -79,8 +80,21 @@ class RateLimiter:
             self.records.clear()
 
 
-# Global in-memory rate limiter instance
+# Global in-memory rate limiter instances
 _global_rate_limiter: RateLimiter | None = None
+_analyze_rate_limiter: RateLimiter | None = None
+
+ANALYZE_ENDPOINT_PATTERNS = [
+    re.compile(r"^/api(/v1)?/github/users/[^/]+(/.*)?$"),
+    re.compile(r"^/api(/v1)?/matching/users/[^/]+(/.*)?$"),
+    re.compile(r"^/api(/v1)?/ai/analyze-issue$"),
+    re.compile(r"^/api(/v1)?/repositories/friendliness$"),
+]
+
+
+def is_analyze_endpoint(path: str) -> bool:
+    """Check if the given request path targets an analyze endpoint."""
+    return any(pattern.match(path) for pattern in ANALYZE_ENDPOINT_PATTERNS)
 
 
 def get_rate_limiter() -> RateLimiter:
@@ -91,6 +105,16 @@ def get_rate_limiter() -> RateLimiter:
         burst = getattr(settings, "api_rate_limit_burst", 25)
         _global_rate_limiter = RateLimiter(requests_per_minute=rpm, burst_limit=burst)
     return _global_rate_limiter
+
+
+def get_analyze_rate_limiter() -> RateLimiter:
+    global _analyze_rate_limiter
+    if _analyze_rate_limiter is None:
+        settings = get_settings()
+        rpm = getattr(settings, "api_analyze_rate_limit_per_minute", 30)
+        burst = getattr(settings, "api_analyze_rate_limit_burst", 15)
+        _analyze_rate_limiter = RateLimiter(requests_per_minute=rpm, burst_limit=burst)
+    return _analyze_rate_limiter
 
 
 def get_client_ip(request: Request) -> str:
@@ -130,6 +154,54 @@ class IPRateLimitMiddleware(BaseHTTPMiddleware):
                 return await call_next(request)
 
         client_ip = get_client_ip(request)
+
+        # Check analyze endpoints against dedicated analyzer limit
+        if is_analyze_endpoint(path):
+            analyze_limiter = get_analyze_rate_limiter()
+            allowed, remaining, retry_after = await analyze_limiter.is_allowed(client_ip)
+            if not allowed:
+                logger.warning(
+                    f"Analyze rate limit exceeded for IP: {client_ip} on path {path}",
+                    extra={
+                        "structured_data": {
+                            "event": "analyze_rate_limited",
+                            "client_ip": client_ip,
+                            "path": path,
+                            "retry_after": retry_after,
+                        }
+                    },
+                )
+                msg = "Too many requests to analysis endpoints. Please slow down and try again."
+                return JSONResponse(
+                    status_code=429,
+                    content={
+                        "error": {
+                            "code": "IP_RATE_LIMIT_EXCEEDED",
+                            "message": msg,
+                            "details": {
+                                "client_ip": client_ip,
+                                "retry_after_seconds": int(retry_after),
+                                "endpoint": path,
+                            },
+                        },
+                        "detail": msg,
+                        "code": "IP_RATE_LIMIT_EXCEEDED",
+                        "message": msg,
+                        "details": {
+                            "client_ip": client_ip,
+                            "retry_after_seconds": int(retry_after),
+                            "endpoint": path,
+                        },
+                    },
+                    headers={
+                        "Retry-After": str(int(retry_after)),
+                        "X-RateLimit-Limit": str(analyze_limiter.requests_per_minute),
+                        "X-RateLimit-Remaining": "0",
+                        "X-RateLimit-Reset": str(int(time.time() + retry_after)),
+                    },
+                )
+
+        # General endpoint limit
         limiter = get_rate_limiter()
         allowed, remaining, retry_after = await limiter.is_allowed(client_ip)
 
@@ -145,11 +217,21 @@ class IPRateLimitMiddleware(BaseHTTPMiddleware):
                     }
                 },
             )
+            msg = "Too many requests. Please slow down and try again in a minute."
             return JSONResponse(
                 status_code=429,
                 content={
+                    "error": {
+                        "code": "IP_RATE_LIMIT_EXCEEDED",
+                        "message": msg,
+                        "details": {
+                            "client_ip": client_ip,
+                            "retry_after_seconds": int(retry_after),
+                        },
+                    },
+                    "detail": msg,
                     "code": "IP_RATE_LIMIT_EXCEEDED",
-                    "message": "Too many requests. Please slow down and try again in a minute.",
+                    "message": msg,
                     "details": {
                         "client_ip": client_ip,
                         "retry_after_seconds": int(retry_after),

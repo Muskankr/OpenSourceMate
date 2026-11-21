@@ -217,10 +217,15 @@ async def get_user_skills(
 )
 async def get_external_prs(
     username: str,
-    limit: int = Query(default=10, ge=1, le=100),
+    limit: int = Query(default=10, description="Maximum number of merged external pull requests (1-100)"),
     refresh: bool = Query(default=False),
 ):
     validated_username = validate_github_username(username)
+    if limit < 1 or limit > 100:
+        raise HTTPException(
+            status_code=400,
+            detail="Query parameter 'limit' must be an integer between 1 and 100.",
+        )
     try:
         from app.services.github_service import (
             GitHubRateLimitError,
