@@ -9,23 +9,19 @@ describe("RecommendedIssuesList Component", () => {
   it("renders a list of recommended issues with header and issue count", () => {
     render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} />);
 
+    expect(screen.getByText("Recommended open-source issues")).toBeInTheDocument();
     expect(
-      screen.getByText("Recommended open-source issues")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(`Showing ${MOCK_RECOMMENDED_ISSUES.length} of ${MOCK_RECOMMENDED_ISSUES.length} issues`)
+      screen.getByText(
+        `Showing ${MOCK_RECOMMENDED_ISSUES.length} of ${MOCK_RECOMMENDED_ISSUES.length} issues`
+      )
     ).toBeInTheDocument();
 
     // Verify first issue title
-    expect(
-      screen.getByText(MOCK_RECOMMENDED_ISSUES[0].title)
-    ).toBeInTheDocument();
+    expect(screen.getByText(MOCK_RECOMMENDED_ISSUES[0].title)).toBeInTheDocument();
   });
 
   it("provides a distinct pre-filled feedback link for every recommendation", () => {
-    render(
-      <RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} username="octocat" />
-    );
+    render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} username="octocat" />);
 
     const links = screen.getAllByRole("link", { name: /Report wrong match for/i });
     expect(links).toHaveLength(MOCK_RECOMMENDED_ISSUES.length);
@@ -34,7 +30,11 @@ describe("RecommendedIssuesList Component", () => {
       expect(params.get("username")).toBe("octocat");
       expect(params.get("issue_url")).toBe(MOCK_RECOMMENDED_ISSUES[index].url);
       expect(params.get("match_score")).toBe(
-        String(Math.round(MOCK_RECOMMENDED_ISSUES[index].match_score ?? MOCK_RECOMMENDED_ISSUES[index].score ?? 0))
+        String(
+          Math.round(
+            MOCK_RECOMMENDED_ISSUES[index].match_score ?? MOCK_RECOMMENDED_ISSUES[index].score ?? 0
+          )
+        )
       );
     });
   });
@@ -56,7 +56,9 @@ describe("RecommendedIssuesList Component", () => {
     expect(screen.getByText(issues[0].title)).toBeInTheDocument();
     const feedbackLinks = screen.getAllByRole("link", { name: /Report wrong match for/i });
     expect(feedbackLinks).toHaveLength(issues.length);
-    expect(new URL(feedbackLinks[0].getAttribute("href")!).searchParams.get("username")).toBe("octocat");
+    expect(new URL(feedbackLinks[0].getAttribute("href")!).searchParams.get("username")).toBe(
+      "octocat"
+    );
   });
 
   it("shows demo data / coming soon banner when isMock is true", () => {
@@ -67,11 +69,11 @@ describe("RecommendedIssuesList Component", () => {
     expect(screen.getByTestId("coming-soon-banner-badge")).toHaveTextContent(
       "Demo Data • Coming Soon"
     );
+    expect(screen.getByText("Live matching service is currently in preview")).toBeInTheDocument();
     expect(
-      screen.getByText("Live matching service is currently in preview")
-    ).toBeInTheDocument();
-    expect(
-      screen.getByText(/Displaying realistic open-source issues matched to @octocat's technical skill set/i)
+      screen.getByText(
+        /Displaying realistic open-source issues matched to @octocat's technical skill set/i
+      )
     ).toBeInTheDocument();
   });
 
@@ -132,5 +134,59 @@ describe("RecommendedIssuesList Component", () => {
 
     expect(screen.getByTestId("no-issues-empty-state")).toBeInTheDocument();
     expect(screen.getByText("No issues found")).toBeInTheDocument();
+  });
+
+  it("renders Learning Mode toggle and reveals target skills picker when toggled", () => {
+    render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} />);
+
+    const toggle = screen.getByTestId("learning-mode-toggle");
+    expect(toggle).toBeInTheDocument();
+    expect(toggle).not.toBeChecked();
+
+    // Target skills picker is not rendered yet
+    expect(screen.queryByTestId("target-skills-picker")).not.toBeInTheDocument();
+
+    // Toggle Learning Mode ON
+    fireEvent.click(toggle);
+    expect(toggle).toBeChecked();
+    expect(screen.getByTestId("learning-mode-active-indicator")).toBeInTheDocument();
+
+    const picker = screen.getByTestId("target-skills-picker");
+    expect(picker).toBeInTheDocument();
+    expect(screen.getByTestId("target-skill-chip-Rust")).toBeInTheDocument();
+    expect(screen.getByTestId("target-skill-chip-Python")).toBeInTheDocument();
+  });
+
+  it("re-ranks issues to favour chosen target skills when learning mode is active and restores when toggled off", () => {
+    render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} />);
+
+    // Default ranking top issue is TypeScript (vercel/next.js)
+    const initialCards = screen.getAllByRole("article");
+    expect(initialCards[0]).toHaveTextContent("vercel/next.js");
+
+    // Toggle Learning Mode ON
+    const toggle = screen.getByTestId("learning-mode-toggle");
+    fireEvent.click(toggle);
+
+    // Pick target skill "Rust"
+    const rustChip = screen.getByTestId("target-skill-chip-Rust");
+    fireEvent.click(rustChip);
+
+    // After picking Rust, top card should become BurntSushi/ripgrep (Rust, Beginner)
+    const learningCards = screen.getAllByRole("article");
+    expect(learningCards[0]).toHaveTextContent("BurntSushi/ripgrep");
+    expect(screen.getByTestId("learning-mode-badge")).toHaveTextContent("Learning: Rust");
+    expect(
+      screen.getByText(
+        /Picked for Learning Mode: beginner-friendly starter issue to help you learn and grow into Rust/i
+      )
+    ).toBeInTheDocument();
+
+    // Toggle Learning Mode OFF
+    fireEvent.click(toggle);
+
+    // Ranking is restored to initial order
+    const restoredCards = screen.getAllByRole("article");
+    expect(restoredCards[0]).toHaveTextContent("vercel/next.js");
   });
 });

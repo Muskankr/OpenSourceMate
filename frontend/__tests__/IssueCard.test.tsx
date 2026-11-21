@@ -2,8 +2,19 @@ import React from "react";
 import { render, screen } from "@testing-library/react";
 import IssueCard from "../components/IssueCard";
 import type { IssueRecommendation } from "../types/api";
+import { setCachedResponsiveness, determineResponsiveness } from "../utils/repoResponsiveness";
 
 describe("IssueCard Component", () => {
+  beforeAll(() => {
+    setCachedResponsiveness(
+      "octocat/hello-world",
+      determineResponsiveness({
+        repository: "octocat/hello-world",
+        medianResponseHours: 12.0,
+        sampleCount: 5,
+      })
+    );
+  });
   const sampleIssue: IssueRecommendation = {
     id: 42,
     title: "Implement automatic retry for network errors in API client",
@@ -16,12 +27,8 @@ describe("IssueCard Component", () => {
     updated_at: "2026-10-05T15:00:00Z",
     language: "TypeScript",
     match_score: 88,
-    match_reasons: [
-      "Matched skill: TypeScript",
-      "Repository matches recent contributions",
-    ],
-    explanation:
-      "This issue fits your experience with client-side error handling.",
+    match_reasons: ["Matched skill: TypeScript", "Repository matches recent contributions"],
+    explanation: "This issue fits your experience with client-side error handling.",
     difficulty: "Beginner",
   };
 
@@ -64,9 +71,7 @@ describe("IssueCard Component", () => {
     expect(scoreBadge).toHaveTextContent("88%");
 
     expect(screen.getByText("Matched skill: TypeScript")).toBeInTheDocument();
-    expect(
-      screen.getByText("Repository matches recent contributions")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Repository matches recent contributions")).toBeInTheDocument();
   });
 
   it("displays the demo data badge when isMock is true", () => {
@@ -90,10 +95,7 @@ describe("IssueCard Component", () => {
       name: /Open issue "Implement automatic retry for network errors in API client" on GitHub in a new tab/i,
     });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute(
-      "href",
-      "https://github.com/octocat/hello-world/issues/42"
-    );
+    expect(link).toHaveAttribute("href", "https://github.com/octocat/hello-world/issues/42");
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
   });
@@ -110,9 +112,7 @@ describe("IssueCard Component", () => {
       name: /Report wrong match for .* on GitHub in a new tab/i,
     });
     const url = new URL(link.getAttribute("href")!);
-    expect(url.origin + url.pathname).toBe(
-      "https://github.com/Muskankr/OpenSourceMate/issues/new"
-    );
+    expect(url.origin + url.pathname).toBe("https://github.com/Muskankr/OpenSourceMate/issues/new");
     expect(Object.fromEntries(url.searchParams)).toEqual({
       template: "wrong_match.yml",
       username: "octo cat",
@@ -121,5 +121,26 @@ describe("IssueCard Component", () => {
     });
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", "noopener noreferrer");
+  });
+
+  it("renders Learning Mode badge and tailored explanation for learning issues", () => {
+    const learningIssue: IssueRecommendation = {
+      ...sampleIssue,
+      is_learning_mode: true,
+      learning_skill: "Rust",
+      explanation:
+        "Picked for Learning Mode: beginner-friendly starter issue to help you learn and grow into Rust.",
+    };
+
+    render(<IssueCard issue={learningIssue} theme="dark" />);
+
+    const learningBadge = screen.getByTestId("learning-mode-badge");
+    expect(learningBadge).toBeInTheDocument();
+    expect(learningBadge).toHaveTextContent("Learning: Rust");
+
+    expect(screen.getByText("Why this is recommended for you (Learning Mode)")).toBeInTheDocument();
+    expect(
+      screen.getByText(/beginner-friendly starter issue to help you learn and grow into Rust/i)
+    ).toBeInTheDocument();
   });
 });

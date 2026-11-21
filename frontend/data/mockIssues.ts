@@ -1,4 +1,5 @@
 import type { IssueRecommendation, SkillItem } from "../types/api";
+import { rankIssuesForLearningMode } from "../utils/learningMode";
 
 export type IssueDifficulty = "Beginner" | "Intermediate" | "Advanced";
 
@@ -107,10 +108,7 @@ export const MOCK_RECOMMENDED_ISSUES: IssueRecommendation[] = [
     updated_at: "2026-10-30T09:10:00Z",
     language: "JavaScript",
     match_score: 85,
-    match_reasons: [
-      "Matched skill: React and JavaScript",
-      "Performance optimization focus",
-    ],
+    match_reasons: ["Matched skill: React and JavaScript", "Performance optimization focus"],
     explanation:
       "Deep dive into React DOM reconciliation and SVG layout recalculation under heavy rendering workloads.",
     difficulty: "Advanced",
@@ -128,12 +126,8 @@ export const MOCK_RECOMMENDED_ISSUES: IssueRecommendation[] = [
     updated_at: "2026-10-27T17:00:00Z",
     language: "Go",
     match_score: 91,
-    match_reasons: [
-      "Matched primary skill: Go",
-      "Network systems programming alignment",
-    ],
-    explanation:
-      "Requires familiarity with Go's net package and sync.Pool memory reuse patterns.",
+    match_reasons: ["Matched primary skill: Go", "Network systems programming alignment"],
+    explanation: "Requires familiarity with Go's net package and sync.Pool memory reuse patterns.",
     difficulty: "Advanced",
     is_mock: true,
   },
@@ -149,10 +143,7 @@ export const MOCK_RECOMMENDED_ISSUES: IssueRecommendation[] = [
     updated_at: "2026-10-31T15:00:00Z",
     language: "Rust",
     match_score: 88,
-    match_reasons: [
-      "Matched skill: Rust",
-      "Beginner-friendly issue labeled good first issue",
-    ],
+    match_reasons: ["Matched skill: Rust", "Beginner-friendly issue labeled good first issue"],
     explanation:
       "Straightforward Rust enhancement updating clap CLI error reporting and user guide documentation.",
     difficulty: "Beginner",
@@ -170,10 +161,7 @@ export const MOCK_RECOMMENDED_ISSUES: IssueRecommendation[] = [
     updated_at: "2026-10-29T18:40:00Z",
     language: "TypeScript",
     match_score: 82,
-    match_reasons: [
-      "Matched skill: TypeScript and CSS",
-      "Utility library expansion",
-    ],
+    match_reasons: ["Matched skill: TypeScript and CSS", "Utility library expansion"],
     explanation:
       "Builds on Tailwind compiler internals to format dynamic unit values across international locales.",
     difficulty: "Intermediate",
@@ -181,39 +169,59 @@ export const MOCK_RECOMMENDED_ISSUES: IssueRecommendation[] = [
   },
 ];
 
+export interface MockIssuesOptions {
+  learningMode?: boolean;
+  targetSkills?: string[];
+}
+
 /**
  * Returns mock recommended issues filtered or prioritized by user skills.
  * Falls back to the full mock set if no skills match.
+ *
+ * When options.learningMode is true with chosen targetSkills, ranks
+ * beginner-friendly issues in the chosen skills higher.
  */
 export function getMockRecommendedIssues(
-  skills?: string[] | SkillItem[] | null
+  skills?: string[] | SkillItem[] | null,
+  options?: MockIssuesOptions
 ): IssueRecommendation[] {
+  let baseList: IssueRecommendation[];
+
   if (!skills || skills.length === 0) {
-    return MOCK_RECOMMENDED_ISSUES;
-  }
-
-  // Extract skill names in lowercase
-  const userSkillNames = new Set(
-    skills.map((s) => (typeof s === "string" ? s.toLowerCase() : s.name.toLowerCase()))
-  );
-
-  // Score mock issues based on user's skills
-  const scored = MOCK_RECOMMENDED_ISSUES.map((issue) => {
-    const langMatch = issue.language && userSkillNames.has(issue.language.toLowerCase());
-    const labelMatch = issue.labels?.some((lbl) => userSkillNames.has(lbl.toLowerCase()));
-
-    let score = issue.match_score ?? 75;
-    if (langMatch) score = Math.min(98, score + 10);
-    if (labelMatch) score = Math.min(99, score + 5);
-
-    return {
+    baseList = MOCK_RECOMMENDED_ISSUES.map((issue) => ({
       ...issue,
-      match_score: score,
       difficulty: issue.difficulty || inferIssueDifficulty(issue.labels),
       is_mock: true,
-    };
-  });
+    }));
+  } else {
+    // Extract skill names in lowercase
+    const userSkillNames = new Set(
+      skills.map((s) => (typeof s === "string" ? s.toLowerCase() : s.name.toLowerCase()))
+    );
 
-  // Sort by highest match score
-  return scored.sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0));
+    // Score mock issues based on user's skills
+    const scored = MOCK_RECOMMENDED_ISSUES.map((issue) => {
+      const langMatch = issue.language && userSkillNames.has(issue.language.toLowerCase());
+      const labelMatch = issue.labels?.some((lbl) => userSkillNames.has(lbl.toLowerCase()));
+
+      let score = issue.match_score ?? 75;
+      if (langMatch) score = Math.min(98, score + 10);
+      if (labelMatch) score = Math.min(99, score + 5);
+
+      return {
+        ...issue,
+        match_score: score,
+        difficulty: issue.difficulty || inferIssueDifficulty(issue.labels),
+        is_mock: true,
+      };
+    });
+
+    baseList = scored.sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0));
+  }
+
+  if (options?.learningMode && options?.targetSkills && options.targetSkills.length > 0) {
+    return rankIssuesForLearningMode(baseList, options.targetSkills, true);
+  }
+
+  return baseList;
 }
