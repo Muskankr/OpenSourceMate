@@ -5,6 +5,9 @@
  * - Cannot begin or end with a hyphen.
  * - Maximum of 39 characters.
  * - Cannot contain multiple consecutive hyphens.
+ *
+ * Also parses GitHub profile URLs (e.g. github.com/torvalds, https://github.com/torvalds/,
+ * www.github.com/torvalds) and rejects repository URLs or non-profile paths with clear, friendly messages.
  */
 
 export interface ValidationResult {
@@ -18,8 +21,57 @@ export interface ValidationResult {
     | "ENDS_WITH_HYPHEN"
     | "CONSECUTIVE_HYPHENS"
     | "INVALID_CHARACTERS"
+    | "REPOSITORY_URL"
+    | "NON_PROFILE_URL"
+    | "INVALID_URL_DOMAIN"
+    | "INVALID_URL"
     | null;
 }
+
+export type GitHubInputParseErrorCode =
+  "EMPTY" | "REPOSITORY_URL" | "NON_PROFILE_URL" | "INVALID_URL_DOMAIN" | "INVALID_URL";
+
+export interface GitHubInputParseResult {
+  isUrl: boolean;
+  extractedUsername: string | null;
+  error: string | null;
+  errorCode: GitHubInputParseErrorCode | null;
+}
+
+/**
+ * Reserved GitHub top-level system paths that cannot be user profile usernames.
+ */
+export const RESERVED_GITHUB_PATHS = new Set([
+  "about",
+  "account",
+  "collections",
+  "contact",
+  "customer-stories",
+  "enterprise",
+  "events",
+  "explore",
+  "features",
+  "issues",
+  "join",
+  "login",
+  "marketplace",
+  "notifications",
+  "organizations",
+  "orgs",
+  "pricing",
+  "pulls",
+  "readme",
+  "search",
+  "security",
+  "session",
+  "sessions",
+  "settings",
+  "site",
+  "sponsors",
+  "team",
+  "topics",
+  "trending",
+]);
 
 /**
  * Clean and normalize a raw username input by trimming outer whitespace,
@@ -34,19 +86,168 @@ export function sanitizeUsername(rawInput: string): string {
  * Format a canonical username for display (prefers original casing from profile data when available).
  */
 export function formatCanonicalUsername(input: string, profileLogin?: string): string {
-  if (profileLogin && profileLogin.toLowerCase() === input.toLowerCase()) {
+  if (profileLogin) {
     return profileLogin;
   }
   return sanitizeUsername(input);
 }
 
 /**
- * Validate a GitHub username against official formatting rules,
- * returning a specific human-readable error message and code.
+ * Check whether two username inputs refer to the same user (case-insensitive and sanitized).
  */
-export function validateGitHubUsername(rawInput: string): ValidationResult {
-  const cleanUsername = sanitizeUsername(rawInput);
+export function isSameUsername(userA: string, userB: string): boolean {
+  const sA = sanitizeUsername(userA);
+  const sB = sanitizeUsername(userB);
+  if (!sA || !sB) return false;
+  return sA.toLowerCase() === sB.toLowerCase();
+}
 
+/**
+ * Parse a raw input string that may be a plain username or a GitHub profile URL.
+ * Supports:
+ * - github.com/<username>
+ * - https://github.com/<username>
+ * - http://github.com/<username>
+ * - www.github.com/<username>
+ * - https://www.github.com/<username>
+ * - Trailing slashes, query parameters, hashes
+ *
+ * Rejects repository URLs and non-profile paths with clear, friendly messages.
+ */
+export function parseGitHubInput(rawInput: string): GitHubInputParseResult {
+  if (!rawInput) {
+    return {
+      isUrl: false,
+      extractedUsername: null,
+      error: "Please enter a GitHub username.",
+      errorCode: "EMPTY",
+    };
+  }
+
+  const trimmed = rawInput.trim();
+  if (!trimmed) {
+    return {
+      isUrl: false,
+      extractedUsername: null,
+      error: "Please enter a GitHub username.",
+      errorCode: "EMPTY",
+    };
+  }
+
+  const lower = trimmed.toLowerCase();
+
+  // Determine if input looks like a URL:
+  // Starts with http(s)://, starts with www., or contains github.com
+  const isUrlLike =
+    /^https?:\/\//i.test(trimmed) ||
+    lower.startsWith("www.") ||
+    lower.includes("github.com");
+
+  if (!isUrlLike) {
+    // Plain username input
+    return {
+      isUrl: false,
+      extractedUsername: trimmed,
+      error: null,
+      errorCode: null,
+    };
+  }
+
+  // Parse as URL
+  let urlString = trimmed;
+  if (!/^https?:\/\//i.test(urlString)) {
+    urlString = `https://${urlString}`;
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(urlString);
+  } catch {
+    return {
+      isUrl: true,
+      extractedUsername: null,
+      error: "Invalid URL format. Please enter a valid GitHub profile URL or username.",
+      errorCode: "INVALID_URL",
+    };
+  }
+
+  const hostname = parsed.hostname.toLowerCase();
+  if (hostname !== "github.com" && hostname !== "www.github.com") {
+    return {
+      isUrl: true,
+      extractedUsername: null,
+      error: "Only GitHub profile URLs (github.com/<username>) are supported.",
+      errorCode: "INVALID_URL_DOMAIN",
+    };
+  }
+
+  // Split path into segments, ignoring empty parts
+  const segments = parsed.pathname
+    .split("/")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (segments.length === 0) {
+    return {
+      isUrl: true,
+      extractedUsername: null,
+      error: "Please enter a GitHub username or profile URL.",
+      errorCode: "EMPTY",
+    };
+  }
+
+  const firstSegment = segments[0];
+
+  // Check if first segment is a reserved GitHub system path
+  if (RESERVED_GITHUB_PATHS.has(firstSegment.toLowerCase())) {
+    return {
+      isUrl: true,
+      extractedUsername: null,
+      error: `The URL path '/${firstSegment}' is a reserved GitHub page, not a user profile.`,
+      errorCode: "NON_PROFILE_URL",
+    };
+  }
+
+  // Check if path indicates a repository (> 1 segment)
+  if (segments.length > 1) {
+    return {
+      isUrl: true,
+      extractedUsername: null,
+      error: "Please enter a user profile URL, not a repository URL (e.g. 'github.com/torvalds').",
+      errorCode: "REPOSITORY_URL",
+    };
+  }
+
+  return {
+    isUrl: true,
+    extractedUsername: firstSegment.toLowerCase(),
+    error: null,
+    errorCode: null,
+  };
+}
+
+/**
+ * Alias for parseGitHubInput to clearly indicate URL parsing intent.
+ */
+export const parseGitHubProfileUrl = parseGitHubInput;
+
+/**
+ * Validates a GitHub username and returns a standardized result with sanitized canonical username.
+ */
+export function validateUsername(rawInput: string): {
+  isValid: boolean;
+  sanitized: string;
+  error?: string;
+} {
+  const result = validateGitHubUsername(rawInput);
+  return {
+    isValid: result.isValid,
+    sanitized: result.cleanUsername,
+    ...(result.error ? { error: result.error } : {}),
+  };
+}
+
+function validateCleanUsername(cleanUsername: string): ValidationResult {
   if (!cleanUsername) {
     return {
       isValid: false,
@@ -110,6 +311,31 @@ export function validateGitHubUsername(rawInput: string): ValidationResult {
     error: null,
     errorCode: null,
   };
+}
+
+/**
+ * Validate a GitHub username or profile URL against official formatting rules,
+ * returning a specific human-readable error message and code.
+ */
+export function validateGitHubUsername(rawInput: string): ValidationResult {
+  const parsed = parseGitHubInput(rawInput);
+
+  if (parsed.isUrl) {
+    if (!parsed.extractedUsername) {
+      return {
+        isValid: false,
+        cleanUsername: "",
+        error: parsed.error,
+        errorCode: parsed.errorCode as any,
+      };
+    }
+
+    const cleanUsername = sanitizeUsername(parsed.extractedUsername);
+    return validateCleanUsername(cleanUsername);
+  }
+
+  const cleanUsername = sanitizeUsername(rawInput);
+  return validateCleanUsername(cleanUsername);
 }
 
 /**

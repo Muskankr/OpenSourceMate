@@ -21,14 +21,15 @@ class APIException(Exception):
 class InvalidUsernameError(APIException):
     """Raised when a GitHub username fails validation rules."""
 
-    def __init__(self, username: str) -> None:
+    def __init__(self, username: str, message: str | None = None) -> None:
+        default_message = (
+            f"Invalid GitHub username '{username}'. GitHub usernames must be 1-39 characters, "
+            "contain only alphanumeric characters or single hyphens, and cannot start or end with a hyphen."
+        )
         super().__init__(
             status_code=400,
             code="INVALID_USERNAME",
-            message=(
-                f"Invalid GitHub username '{username}'. GitHub usernames must be 1-39 characters, "
-                "contain only alphanumeric characters or single hyphens, and cannot start or end with a hyphen."
-            ),
+            message=message or default_message,
             details={"username": username},
         )
 
