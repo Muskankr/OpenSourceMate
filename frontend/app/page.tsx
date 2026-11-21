@@ -718,7 +718,7 @@ export default function Home() {
                       ref={usernameInputRef}
                       id="github-username-input"
                       type="text"
-                      placeholder="Enter your GitHub username"
+                      placeholder="Enter your GitHub username or profile URL"
                       value={username}
                       onChange={(e) => {
                         setUsername(e.target.value);

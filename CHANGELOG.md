@@ -7,6 +7,7 @@ All notable changes to OpenSourceMate are recorded here. The format follows
 
 ### Added
 
+- Validation & Input Parsing: Support parsing full GitHub profile URLs (with or without `https`, `www`, query parameters, or trailing slashes) to automatically extract the developer username, while rejecting repository URLs and reserved system paths with clear, friendly error messages.
 - Frontend: Learning mode toggle and target skills picker to recommend and prioritize beginner-friendly issues in skills the user wants to learn next, with dedicated card explanations (#Issue).
 - Data: curated directory of welcoming open-source projects in `data/curated-projects.json` tagged with student and mentorship programs (GSoC, Outreachy, Hacktoberfest, LFX Mentorship), verifiable proof links, JSON schema, and a validation script (#298).
 - Tooling & Development: devcontainer configuration in `.devcontainer/devcontainer.json` and `.devcontainer/post-create.sh` for one-click GitHub Codespaces cloud development with Python 3.12, Node.js 22, automatic port forwarding (3000, 8000), and "Open in Codespaces" badges in `README.md` and `README.hi.md` (#264).
