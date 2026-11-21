@@ -212,6 +212,21 @@ async def get_user_skills(
 
 
 @router.get(
+    "/users/{username}/starred-interests",
+    summary="Get user interest signals from starred repositories (Issue #344)",
+)
+async def get_starred_interests(
+    username: str,
+    limit: int = Query(default=50, ge=1, le=100),
+    refresh: bool = Query(default=False),
+):
+    validated_username = validate_github_username(username)
+    from app.services.starred_service import get_user_starred_interests
+    data = await get_user_starred_interests(validated_username, limit=limit, refresh=refresh)
+    return data
+
+
+@router.get(
     "/users/{username}/external-prs",
     summary="Get merged PR history for other repositories (Issue #192)",
 )
