@@ -12,6 +12,7 @@ import SkillChart from "../components/SkillChart";
 import SkillProficiencyBadge from "../components/SkillProficiencyBadge";
 import SkillsToLearn from "../components/SkillsToLearn";
 import TechIcon from "../components/TechIcon";
+import SkillsEditor from "../components/SkillsEditor";
 import IssueCard from "../components/IssueCard";
 import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
 import { getMockRecommendedIssues } from "../data/mockIssues";
@@ -196,26 +197,82 @@ export default function Home() {
     };
   }, []);
 
-  const fetchMatchedIssues = async (targetUsername: string, signal?: AbortSignal) => {
+  // Custom skills state
+  const [customSkills, setCustomSkills] = useState<string[] | null>(null);
+
+  const detectedSkills = useMemo(() => {
+    return skills?.skills.map((s) => s.name) || [];
+  }, [skills]);
+
+  const activeSkills = useMemo(() => {
+    return customSkills !== null ? customSkills : detectedSkills;
+  }, [customSkills, detectedSkills]);
+
+  const isSkillsEdited = customSkills !== null;
+
+  const handleSkillsChange = (newSkills: string[]) => {
+    setCustomSkills(newSkills);
+    const target = profile?.username || username;
+    if (target) {
+      fetchMatchedIssues(target, undefined, newSkills);
+    }
+  };
+
+  const handleResetSkills = () => {
+    setCustomSkills(null);
+    const target = profile?.username || username;
+    if (target) {
+      fetchMatchedIssues(target, undefined, detectedSkills);
+    }
+  };
+
+  const fetchMatchedIssues = async (
+    targetUsername: string,
+    signal?: AbortSignal,
+    overrideSkills?: string[]
+  ) => {
     setLoadingMatching(true);
     setMatchingError("");
     setIsDemoData(false);
 
+    const skillsToUse =
+      overrideSkills !== undefined
+        ? overrideSkills
+        : customSkills !== null
+          ? customSkills
+          : skills?.skills.map((s) => s.name);
+
     try {
-      const matchData = await apiFetchMatchedIssues(targetUsername, { signal });
+      const matchData = await apiFetchMatchedIssues(targetUsername, {
+        signal,
+        skills: skillsToUse,
+      });
       if (matchData.recommendations && matchData.recommendations.length > 0) {
         setRecommendations(matchData.recommendations);
         setIsDemoData(false);
+      } else if (skillsToUse && skillsToUse.length === 0) {
+        // User explicitly removed all skills
+        setRecommendations([]);
+        setIsDemoData(false);
       } else {
-        const fallback = getMockRecommendedIssues(skills?.skills);
+        const fallback = getMockRecommendedIssues(skillsToUse, {
+          filterBySkills: customSkills !== null || overrideSkills !== undefined,
+        });
         setRecommendations(fallback);
         setIsDemoData(true);
       }
     } catch (err: unknown) {
       if (isAbortError(err)) return;
-      const fallback = getMockRecommendedIssues(skills?.skills);
-      setRecommendations(fallback);
-      setIsDemoData(true);
+      if (skillsToUse && skillsToUse.length === 0) {
+        setRecommendations([]);
+        setIsDemoData(false);
+      } else {
+        const fallback = getMockRecommendedIssues(skillsToUse, {
+          filterBySkills: customSkills !== null || overrideSkills !== undefined,
+        });
+        setRecommendations(fallback);
+        setIsDemoData(true);
+      }
     } finally {
       setLoadingMatching(false);
     }
@@ -345,6 +402,9 @@ export default function Home() {
       setProfile(null);
       setSkills(null);
       setRecommendations([]);
+      setCustomSkills(null);
+    } else {
+      setCustomSkills(null);
     }
 
     const searchSignal = createSearchSignal();
@@ -954,33 +1014,54 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {skills.skills.length === 0 ? (
+                    {/* Custom Skills Manager with Removable Chips, Add Skill, and Reset */}
+                    <SkillsEditor
+                      initialSkills={detectedSkills}
+                      currentSkills={activeSkills}
+                      onSkillsChange={handleSkillsChange}
+                      onReset={handleResetSkills}
+                      isEdited={isSkillsEdited}
+                      theme={theme}
+                      className="mt-6"
+                    />
+
+                    {activeSkills.length === 0 ? (
                       <div
-                        className={`mt-8 rounded-2xl border border-dashed p-8 text-center ${
+                        data-testid="no-skills-empty-state"
+                        className={`mt-6 rounded-2xl border border-dashed p-8 text-center ${
                           theme === "dark" ? "border-white/10" : "border-gray-300"
                         }`}
                       >
                         <p className={theme === "dark" ? "text-gray-300" : "text-gray-600"}>
-                          No public repositories with a language were found for this profile, so
-                          there are no skills to show yet.
+                          All skills have been removed. Add skills above to see matching issues.
                         </p>
                       </div>
                     ) : (
                       <>
                         <SkillChart
-                          skills={skills.skills}
+                          skills={skills.skills.filter((s) =>
+                            activeSkills.some((as) => as.toLowerCase() === s.name.toLowerCase())
+                          )}
                           totalRepositories={skills.total_repositories_analyzed}
                           theme={theme}
                           className="mt-8"
                         />
 
                         <div className="mt-8 grid gap-4 sm:grid-cols-2 sm:gap-5">
-                          {skills.skills.map((skill) => (
-                            <SkillCard key={skill.name} skill={skill} theme={theme} />
-                          ))}
+                          {activeSkills.map((skillName) => {
+                            const detectedSkill = skills.skills.find(
+                              (s) => s.name.toLowerCase() === skillName.toLowerCase()
+                            );
+                            const cardSkill: Skill = detectedSkill || {
+                              name: skillName,
+                              repository_count: 1,
+                              percentage: 100,
+                            };
+                            return <SkillCard key={skillName} skill={cardSkill} theme={theme} />;
+                          })}
                         </div>
 
-                        <SkillsToLearn skills={skills.skills} theme={theme} className="mt-8" />
+                        <SkillsToLearn skills={activeSkills} theme={theme} className="mt-8" />
                       </>
                     )}
                   </div>

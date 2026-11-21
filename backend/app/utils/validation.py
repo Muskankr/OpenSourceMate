@@ -38,3 +38,28 @@ def validate_github_username(username: str | None) -> str:
     if not is_valid_github_username(clean):
         raise InvalidUsernameError(username=username)
     return clean.lower()
+
+
+SKILL_REGEX = re.compile(r"^[a-zA-Z0-9+#.\- ]{1,50}$")
+
+
+def is_valid_skill(skill: str | None) -> bool:
+    """Check if a skill name satisfies standard naming conventions (1-50 chars, alphanumeric + symbols)."""
+    if not skill or not isinstance(skill, str):
+        return False
+    clean = skill.strip()
+    if not clean or len(clean) > 50:
+        return False
+    return bool(SKILL_REGEX.fullmatch(clean))
+
+
+def validate_skill(skill: str | None) -> str:
+    """Validate and return cleaned skill string, raising ValueError if invalid."""
+    if not skill or not isinstance(skill, str):
+        raise ValueError("Skill name cannot be empty.")
+    clean = skill.strip()
+    if not is_valid_skill(clean):
+        raise ValueError(
+            f"Invalid skill name '{skill}'. Must be 1-50 characters containing letters, numbers, +, #, ., -, or spaces."
+        )
+    return clean

@@ -93,9 +93,7 @@ describe("Typed API Client", () => {
         json: async () => ({ detail: "User not found" }),
       });
 
-      await expect(typedRequest("/api/github/users/unknown")).rejects.toThrow(
-        ApiClientError
-      );
+      await expect(typedRequest("/api/github/users/unknown")).rejects.toThrow(ApiClientError);
 
       try {
         await typedRequest("/api/github/users/unknown");
@@ -179,9 +177,9 @@ describe("Typed API Client", () => {
         json: async () => ({ detail: "Not found" }),
       });
 
-      await expect(
-        typedRequest("/api/test", { retries: 1, retryDelayMs: 10 })
-      ).rejects.toThrow(ApiClientError);
+      await expect(typedRequest("/api/test", { retries: 1, retryDelayMs: 10 })).rejects.toThrow(
+        ApiClientError
+      );
 
       expect(global.fetch).toHaveBeenCalledTimes(1);
     });
@@ -198,9 +196,9 @@ describe("Typed API Client", () => {
           })
       );
 
-      await expect(
-        typedRequest("/api/slow", { timeoutMs: 30, retries: 0 })
-      ).rejects.toThrow(ApiTimeoutError);
+      await expect(typedRequest("/api/slow", { timeoutMs: 30, retries: 0 })).rejects.toThrow(
+        ApiTimeoutError
+      );
     });
   });
 
@@ -267,6 +265,22 @@ describe("Typed API Client", () => {
       expect(result).toEqual(issues);
       expect(global.fetch).toHaveBeenCalledWith(
         "http://localhost:8000/api/matching/users/octocat/issues",
+        expect.any(Object)
+      );
+    });
+
+    it("fetchMatchedIssues appends explicit skills query parameters when provided", async () => {
+      const issues = { username: "octocat", skills: ["Rust", "Go"], recommendations: [] };
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => issues,
+      });
+
+      const result = await fetchMatchedIssues("octocat", { skills: ["Rust", "Go"] });
+      expect(result).toEqual(issues);
+      expect(global.fetch).toHaveBeenCalledWith(
+        "http://localhost:8000/api/matching/users/octocat/issues?skills=Rust&skills=Go",
         expect.any(Object)
       );
     });

@@ -127,7 +127,32 @@ export function handleMockApiRequest(url: string, method?: string): MockResponse
     const mockCheck = checkSpecialMockConditions(rawUsername);
     if (mockCheck) return mockCheck;
 
-    const issues = generateMockMatchedIssues(rawUsername);
+    const skillsParams = urlObj.searchParams.getAll("skills");
+    let explicitSkills: string[] | undefined = undefined;
+
+    if (skillsParams.length > 0 || urlObj.searchParams.has("skills")) {
+      explicitSkills = [];
+      for (const s of skillsParams) {
+        const parts = s
+          .split(",")
+          .map((p) => p.trim())
+          .filter(Boolean);
+        for (const p of parts) {
+          if (!/^[a-zA-Z0-9+#.\- ]{1,50}$/.test(p)) {
+            return {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+              body: { error: { code: "BAD_REQUEST", message: `Invalid skill: '${p}'` } },
+            };
+          }
+          if (!explicitSkills.includes(p)) {
+            explicitSkills.push(p);
+          }
+        }
+      }
+    }
+
+    const issues = generateMockMatchedIssues(rawUsername, explicitSkills);
     return {
       status: 200,
       headers: { "Content-Type": "application/json" },

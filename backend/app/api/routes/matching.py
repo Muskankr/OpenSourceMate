@@ -13,7 +13,7 @@ from app.services.github_service import (
 from app.services.issue_service import search_github_issues
 from app.services.matching_service import build_idf, calculate_issue_score
 from app.services.skill_service import analyze_skills
-from app.utils.validation import validate_github_username
+from app.utils.validation import is_valid_skill, validate_github_username
 
 router = APIRouter(
     prefix="/matching",
@@ -43,8 +43,31 @@ def _atom_element(parent: ElementTree.Element, name: str, text: str) -> None:
 async def get_matched_issues(
     username: str,
     exclude_stale: bool = Query(default=False),
+    skills: list[str] | None = Query(default=None),
 ):
     validated_username = validate_github_username(username)
+
+    explicit_skills: list[str] | None = None
+    if skills is not None:
+        explicit_skills = []
+        for s in skills:
+            parts = [p.strip() for p in s.split(",") if p.strip()]
+            for p in parts:
+                if not is_valid_skill(p):
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Invalid skill: '{p}'. Skills must be 1-50 alphanumeric characters or standard symbols (+, #, ., -, space).",
+                    )
+                if p not in explicit_skills:
+                    explicit_skills.append(p)
+
+    if explicit_skills is not None and len(explicit_skills) == 0:
+        return {
+            "username": validated_username,
+            "skills": [],
+            "recommendations": [],
+        }
+
     repositories = await get_user_repositories(validated_username)
 
     if repositories is None:
@@ -55,20 +78,30 @@ async def get_matched_issues(
 
     skill_data = analyze_skills(repositories)
 
-    user_skills = [skill["name"] for skill in skill_data["skills"]]
-
-    # Relative weight of each skill, so a main language counts for more than a side one.
-    max_count = max(
-        (skill["repository_count"] for skill in skill_data["skills"]),
-        default=1,
-    )
-    weighted_skills = [
-        {
-            "name": skill["name"],
-            "weight": skill["repository_count"] / max_count,
-        }
-        for skill in skill_data["skills"]
-    ]
+    if explicit_skills is not None:
+        user_skills = explicit_skills
+        repo_skill_map = {skill["name"].lower(): skill["repository_count"] for skill in skill_data["skills"]}
+        max_count = max(repo_skill_map.values(), default=1)
+        weighted_skills = [
+            {
+                "name": skill,
+                "weight": repo_skill_map.get(skill.lower(), max_count) / max_count,
+            }
+            for skill in user_skills
+        ]
+    else:
+        user_skills = [skill["name"] for skill in skill_data["skills"]]
+        max_count = max(
+            (skill["repository_count"] for skill in skill_data["skills"]),
+            default=1,
+        )
+        weighted_skills = [
+            {
+                "name": skill["name"],
+                "weight": skill["repository_count"] / max_count,
+            }
+            for skill in skill_data["skills"]
+        ]
 
     if not user_skills:
         return {
@@ -98,6 +131,20 @@ async def get_matched_issues(
             # One failed language search should not
             # break the entire recommendation request.
             continue
+
+    if explicit_skills is not None:
+        user_skills_lower = {s.lower() for s in user_skills}
+        found_issues = [
+            iss
+            for iss in found_issues
+            if (iss.get("language") and iss["language"].lower() in user_skills_lower)
+            or any(
+                (lbl.get("name", "").lower() if isinstance(lbl, dict) else str(lbl).lower())
+                in user_skills_lower
+                for lbl in iss.get("labels", [])
+            )
+            or any(s in (iss.get("title") or "").lower() for s in user_skills_lower)
+        ]
 
     # IDF is computed over everything fetched, so a skill that every
     # result mentions counts for less than a rare one.
@@ -169,9 +216,13 @@ async def get_matched_issues(
 
 
 @router.get("/users/{username}/feed.atom", response_class=Response)
-async def get_matched_issues_feed(username: str, request: Request) -> Response:
+async def get_matched_issues_feed(
+    username: str,
+    request: Request,
+    skills: list[str] | None = Query(default=None),
+) -> Response:
     """Expose the same ranked matches as an Atom feed for feed readers."""
-    matches = await get_matched_issues(username, exclude_stale=False)
+    matches = await get_matched_issues(username, exclude_stale=False, skills=skills)
     recommendations = matches["recommendations"]
     feed = ElementTree.Element(f"{{{ATOM_NS}}}feed")
     _atom_element(feed, "id", str(request.url))
