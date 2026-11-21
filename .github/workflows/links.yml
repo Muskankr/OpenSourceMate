@@ -1,0 +1,40 @@
+name: Link Check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "README.md"
+      - "docs/**"
+      - "lychee.toml"
+      - ".lycheeignore"
+      - ".github/workflows/links.yml"
+  schedule:
+    # Mondays 06:00 UTC, so links that rot on their own are found within a week.
+    - cron: "0 6 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  links:
+    name: Markdown links
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Check links in README.md and docs/
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          lycheeVersion: v0.24.2
+          # Options are in lychee.toml, ignored links in .lycheeignore.
+          args: --config lychee.toml README.md 'docs/**/*.md'
+          fail: true

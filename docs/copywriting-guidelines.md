@@ -17,7 +17,7 @@ These guidelines define the messaging principles for OpenSourceMate to ensure al
 ### 2. Transparent Roadmap Indicators
 - When showcasing upcoming milestones on the landing page or documentation, always accompany them with a distinct status badge:
   - `[Roadmap]` / `[In Development]` / `[Planned]`
-- Link directly to [ROADMAP.md](../../ROADMAP.md) so users and contributors can track real progress.
+- Link directly to [ROADMAP.md](../ROADMAP.md) so users and contributors can track real progress.
 
 ### 3. Clear, Jargon-Free Explanation of Metrics
 - **Skill Proficiency**: Explain how tiers are calculated (1 repo = Learning, 2–4 repos = Comfortable, 5+ repos = Strong) without claiming proprietary ML models when simple transparent heuristics are in place.
