@@ -10,7 +10,6 @@ export interface TechIconProps {
   /** Optional CSS classes for sizing and positioning (e.g., 'h-5 w-5') */
   className?: string;
 }
-
 /**
  * Normalizes input technology name into canonical identifier.
  */
@@ -689,4 +688,3 @@ export default function TechIcon({
       );
   }
 }
-

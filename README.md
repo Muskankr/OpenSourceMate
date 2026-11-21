@@ -29,6 +29,7 @@ The project is being developed with a focus on making open-source contribution d
   - [🔎 GitHub Profile Analysis](#-github-profile-analysis)
   - [🧠 Technical Skill Analysis](#-technical-skill-analysis)
   - [👥 Contributors Wall](#-contributors-wall)
+  - [📚 Open Source 101 Resources](#-open-source-101-resources)
   - [🎯 Contribution Discovery — Coming Next](#-contribution-discovery--coming-next)
 - [🖼️ Screenshots](#%EF%B8%8F-screenshots)
 - [🏗️ Project Structure](#%EF%B8%8F-project-structure)
@@ -92,6 +93,16 @@ OpenSourceMate celebrates its open-source community with a live Contributors Wal
 - Filters bot accounts, anonymous entries, and duplicates.
 - Provides loading and empty states, plus a retry option for API errors and rate limits.
 - Uses a responsive layout for mobile and desktop screens.
+
+### 📚 Open Source 101 Resources
+
+OpenSourceMate provides a curated contributor learning hub available at [`/resources`](https://open-source-mate-tawny.vercel.app/resources) designed for first-time open-source participants:
+
+- **Git Basics**: Commits, branches, and version control fundamentals.
+- **First Pull Request**: Step-by-step guides for forking, branching, and submitting clean PRs.
+- **Contributing Guidelines**: How to parse and follow a project's `CONTRIBUTING.md`.
+- **Issue Comments & Bug Reports**: Writing clear reproduction steps and respectful comments.
+- **Maintainer Etiquette**: Effective communication, review feedback, and community codes of conduct.
 
 ### 🎯 Contribution Discovery — Coming Next
 
