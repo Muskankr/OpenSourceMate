@@ -13,6 +13,7 @@ import SkillProficiencyBadge from "../components/SkillProficiencyBadge";
 import SkillsToLearn from "../components/SkillsToLearn";
 import TechIcon from "../components/TechIcon";
 import IssueCard from "../components/IssueCard";
+import JobOpportunitiesList from "../components/JobOpportunitiesList";
 import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
 import { getMockRecommendedIssues } from "../data/mockIssues";
 import { rankIssuesForLearningMode, COMMON_TARGET_SKILLS } from "../utils/learningMode";
@@ -1396,6 +1397,15 @@ export default function Home() {
                     </div>
                   )}
                 </div>
+
+                {/* Student Job & Internship Matches */}
+                <JobOpportunitiesList studentSkills={skills?.skills || []} theme={theme} />
+
+                {/* Student Job & Internship Matches */}
+                <JobOpportunitiesList
+                  studentSkills={skills?.skills || []}
+                  theme={theme}
+                />
               </div>
             </section>
           )}
