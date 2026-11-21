@@ -32,6 +32,7 @@ All notable changes to OpenSourceMate are recorded here. The format follows
   ids, OpenAPI docs under `/api/v1`, and LLM-written explanations for why an issue matches.
 - Tooling: ESLint, Prettier and pre-commit hooks, root development scripts, a welcome workflow for
   first-time contributors, a mock API (MSW) for the frontend, and a frontend test for the analyze flow.
+- Tooling: a PR title check that requires Conventional Commits titles (#176).
 - Tooling: a Security workflow (npm audit, pip-audit, Bandit and CodeQL) on pull requests and weekly, with a triage guide in `docs/security-scanning.md` (#198).
 - Tooling: a post-deployment smoke test workflow that checks the backend health endpoint and a profile and skill analysis, configured through repository variables (#199).
 - Backend: rule-based extraction of the skills an issue needs from its title, body and labels, driven by a keyword and alias dictionary in `app/data/issue_skill_keywords.json`, with hand-labelled `required_skills` in the evaluation set and a precision/recall script (#271).
