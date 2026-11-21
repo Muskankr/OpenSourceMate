@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import ExportMenu from "../components/ExportMenu";
 import GitHubLink from "../components/GitHubLink";
 import ProfileCard from "../components/ProfileCard";
@@ -35,7 +35,6 @@ import {
   isNetworkOrServerError,
   resolveServiceErrorDetails,
   sanitizeErrorMessage,
-  type ServiceErrorDetails,
 } from "../utils/errorHandling";
 import { exportAnalysisData, type ExportFormat, type ExportPayload } from "../utils/exportAnalysis";
 import {
@@ -45,6 +44,11 @@ import {
   clearRecentSearches,
 } from "../utils/recentSearches";
 import { validateGitHubUsername, resolveAnalyzerErrorMessage } from "../utils/validation";
+import {
+  analyzerReducer,
+  initialAnalyzerState,
+  type AnalyzerData,
+} from "../utils/analyzerState";
 import BuildVersionBadge from "../components/BuildVersionBadge";
 import ContributorsWall from "../components/ContributorsWall";
 export default function Home() {
@@ -136,11 +140,24 @@ export default function Home() {
   const openedFromLink = useRef(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [username, setUsername] = useState("");
-  const [loading, setLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [skills, setSkills] = useState<SkillsData | null>(null);
+  const [analyzerState, dispatchAnalyzer] = useReducer(analyzerReducer, initialAnalyzerState);
+  const requestIdRef = useRef(0);
+  const analysisData = analyzerState.status === "idle" ? undefined : analyzerState.data;
+  const profile: Profile | null = analysisData?.profile ?? null;
+  const skills: SkillsData | null = analysisData?.skills ?? null;
+  const loading = analyzerState.status === "loading";
+  const error =
+    analyzerState.status === "error" || analyzerState.status === "rate-limited"
+      ? analyzerState.message
+      : "";
+  const serviceError = analyzerState.status === "error" ? analyzerState.serviceError : undefined;
+  const lastAnalyzed = analyzerState.status === "idle" ? "" : analyzerState.username;
+  const canRetry =
+    analyzerState.status === "error" || analyzerState.status === "rate-limited"
+      ? analyzerState.canRetry
+      : false;
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loadingMatching, setLoadingMatching] = useState(false);
   const [matchingError, setMatchingError] = useState("");
@@ -161,10 +178,6 @@ export default function Home() {
     hiddenIds.includes(hiddenIssueId(issue))
   ).length;
 
-  const [error, setError] = useState("");
-  const [serviceError, setServiceError] = useState<ServiceErrorDetails | null>(null);
-  const [lastAnalyzed, setLastAnalyzed] = useState("");
-  const [canRetry, setCanRetry] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
   useEffect(() => {
@@ -324,8 +337,10 @@ export default function Home() {
     const validation = validateGitHubUsername(raw);
 
     if (!validation.isValid) {
-      setServiceError(null);
-      setError(validation.error || "Please enter a valid GitHub username.");
+      dispatchAnalyzer({
+        type: "validation-error",
+        message: validation.error || "Please enter a valid GitHub username.",
+      });
       return;
     }
 
@@ -334,16 +349,20 @@ export default function Home() {
     if (loading) return;
 
     setUsername(cleanUsername);
-    setLastAnalyzed(cleanUsername);
-    setCanRetry(false);
-    setLoading(true);
-    setError("");
-    setServiceError(null);
+    const requestId = ++requestIdRef.current;
+    const previousData =
+      profile?.username.toLowerCase() === cleanUsername.toLowerCase() && skills
+        ? ({ profile, skills } satisfies AnalyzerData)
+        : undefined;
+    dispatchAnalyzer({
+      type: "submit",
+      requestId,
+      username: cleanUsername,
+      data: previousData,
+    });
 
     // Only clear previous analysis if analyzing a different username
-    if (cleanUsername.toLowerCase() !== profile?.username?.toLowerCase()) {
-      setProfile(null);
-      setSkills(null);
+    if (!previousData) {
       setRecommendations([]);
     }
 
@@ -353,8 +372,11 @@ export default function Home() {
       const profileData = await fetchUserProfile(cleanUsername, { signal: searchSignal });
       const skillsData = await fetchUserSkills(cleanUsername, { signal: searchSignal });
 
-      setProfile(profileData);
-      setSkills(skillsData);
+      dispatchAnalyzer({
+        type: "success",
+        requestId,
+        data: { profile: profileData, skills: skillsData },
+      });
 
       // Save to recent searches on successful analysis
       const updatedSearches = saveRecentSearch(cleanUsername);
@@ -365,32 +387,49 @@ export default function Home() {
       if (isAbortError(err)) {
         return; // Prior in-flight search was aborted by a new search
       }
-      setCanRetry(true);
-
       // Detect network failure or 5xx server-side response (Issue #128)
       if (isNetworkOrServerError(err)) {
         const details = resolveServiceErrorDetails(err, {
           username: cleanUsername,
           endpoint: `/api/github/users/${cleanUsername}`,
         });
-        setServiceError(details);
-        setError(details.message);
+        dispatchAnalyzer({
+          type: "error",
+          requestId,
+          message: details.message,
+          canRetry: true,
+          serviceError: details,
+        });
         return;
       }
 
       if (err instanceof ApiClientError) {
         if (err.status === 404) {
-          setError(resolveAnalyzerErrorMessage(404, { username: cleanUsername }));
+          dispatchAnalyzer({
+            type: "error",
+            requestId,
+            message: resolveAnalyzerErrorMessage(404, { username: cleanUsername }),
+            canRetry: true,
+          });
           return;
         }
         if (err.status === 429) {
-          setError(resolveAnalyzerErrorMessage(429, { resetAt: err.resetAt }));
+          dispatchAnalyzer({
+            type: "rate-limited",
+            requestId,
+            message: resolveAnalyzerErrorMessage(429, { resetAt: err.resetAt }),
+            resetAt: err.resetAt,
+            canRetry: true,
+          });
           return;
         }
       }
-      setError(sanitizeErrorMessage(resolveAnalyzerErrorMessage(err)));
-    } finally {
-      setLoading(false);
+      dispatchAnalyzer({
+        type: "error",
+        requestId,
+        message: sanitizeErrorMessage(resolveAnalyzerErrorMessage(err)),
+        canRetry: true,
+      });
     }
   };
 
@@ -427,13 +466,26 @@ export default function Home() {
         fetchUserProfile(profile.username, { signal: searchSignal, refresh: true }),
         fetchUserSkills(profile.username, { signal: searchSignal, refresh: true }),
       ]);
-      setProfile(profileData);
-      setSkills(skillsData);
+      if (analyzerState.status !== "idle") {
+        dispatchAnalyzer({
+          type: "success",
+          requestId: analyzerState.requestId,
+          data: { profile: profileData, skills: skillsData },
+        });
+      }
       fetchMatchedIssues(profile.username, searchSignal);
     } catch (err: unknown) {
       if (isAbortError(err)) return;
       if (err instanceof ApiClientError && err.status === 429) {
-        setError(resolveAnalyzerErrorMessage(429, { resetAt: err.resetAt }));
+        if (analyzerState.status !== "idle") {
+          dispatchAnalyzer({
+            type: "rate-limited",
+            requestId: analyzerState.requestId,
+            message: resolveAnalyzerErrorMessage(429, { resetAt: err.resetAt }),
+            resetAt: err.resetAt,
+            canRetry: true,
+          });
+        }
       }
     } finally {
       setIsRefreshing(false);
@@ -722,8 +774,12 @@ export default function Home() {
                       value={username}
                       onChange={(e) => {
                         setUsername(e.target.value);
-                        if (error) setError("");
-                        if (serviceError) setServiceError(null);
+                        if (
+                          analyzerState.status === "error" ||
+                          analyzerState.status === "rate-limited"
+                        ) {
+                          dispatchAnalyzer({ type: "clear-error" });
+                        }
                       }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !loading) {
@@ -807,7 +863,7 @@ export default function Home() {
                     message={serviceError.message}
                     statusCode={serviceError.statusCode}
                     onRetry={() => analyzeProfile(lastAnalyzed || username)}
-                    onDismiss={() => setServiceError(null)}
+                    onDismiss={() => dispatchAnalyzer({ type: "clear-service-error" })}
                     reportUrl={serviceError.reportUrl}
                     theme={theme}
                     isRetrying={loading}
