@@ -8,15 +8,13 @@ from typing import Any
 
 import httpx
 
-from app.cache import TTLCache
+from app.cache import TTLCache, cache
 from app.config import get_settings
 from app.utils.logging import get_logger, sanitize_sensitive_data
 
 logger = get_logger("app.services.github")
 
 GITHUB_API_URL = "https://api.github.com"
-
-cache = TTLCache()
 
 _client: httpx.AsyncClient | None = None
 
@@ -115,9 +113,16 @@ def _is_rate_limited(response: httpx.Response) -> bool:
     )
 
 
-async def github_get(url: str, params: dict | None = None) -> httpx.Response:
-    """GET a GitHub API url with the shared client, handling timeouts, retries, and rate limits.
+async def github_get(
+    url: str,
+    params: dict | None = None,
+    use_etag: bool = True,
+) -> httpx.Response:
+    """GET a GitHub API url with the shared client, handling timeouts, retries, rate limits, and ETag conditional caching.
 
+    If use_etag=True and an ETag exists for the target resource, sends If-None-Match header.
+    When GitHub returns 304 Not Modified, constructs and returns a synthetic 200 response
+    from cached data without consuming user or IP rate-limit points.
     Retries transient 5xx errors and network drops with exponential backoff up to configured max retries.
     Raises GitHubRateLimitError when GitHub rate limits are hit.
     Raises GitHubTimeoutError when timeouts occur.
@@ -127,6 +132,16 @@ async def github_get(url: str, params: dict | None = None) -> httpx.Response:
     max_retries = max(1, settings.github_max_retries)
     backoff_factor = settings.github_retry_backoff_factor
     client = get_client()
+
+    # Build cache key for ETag lookup based on url and params
+    param_str = "&".join(f"{k}={v}" for k, v in sorted((params or {}).items()))
+    etag_cache_key = f"{url}?{param_str}" if param_str else url
+
+    request_headers: dict[str, str] = {}
+    cached_etag_entry = cache.get_etag(etag_cache_key) if use_etag else None
+    if cached_etag_entry:
+        etag_val, cached_body = cached_etag_entry
+        request_headers["If-None-Match"] = etag_val
 
     for attempt in range(1, max_retries + 1):
         try:
@@ -138,11 +153,50 @@ async def github_get(url: str, params: dict | None = None) -> httpx.Response:
                         "url": url,
                         "attempt": attempt,
                         "params": sanitize_sensitive_data(params or {}),
+                        "conditional": bool("If-None-Match" in request_headers),
                     }
                 },
             )
 
-            response = await client.get(url, params=params)
+            response = await client.get(
+                url,
+                params=params,
+                headers=request_headers if request_headers else None,
+            )
+
+            # Handle 304 Not Modified: GitHub rate limit was NOT consumed!
+            if response.status_code == 304 and cached_etag_entry:
+                logger.info(
+                    f"GitHub API 304 Not Modified for {url}; serving cached payload to preserve rate limit",
+                    extra={
+                        "structured_data": {
+                            "event": "github_etag_cache_hit",
+                            "url": url,
+                            "etag": cached_etag_entry[0],
+                        }
+                    },
+                )
+                _, cached_data = cached_etag_entry
+                # Return a synthetic 200 response loaded with cached payload
+                content_bytes = (
+                    json.dumps(cached_data).encode("utf-8")
+                    if not isinstance(cached_data, (bytes, str))
+                    else (
+                        cached_data.encode("utf-8")
+                        if isinstance(cached_data, str)
+                        else cached_data
+                    )
+                )
+                return httpx.Response(
+                    status_code=200,
+                    content=content_bytes,
+                    headers={
+                        "content-type": "application/json",
+                        "ETag": cached_etag_entry[0],
+                        "X-Cache-Lookup": "HIT_ETAG_304",
+                    },
+                    request=response.request,
+                )
 
             # Check rate limiting first
             if _is_rate_limited(response):
@@ -157,6 +211,16 @@ async def github_get(url: str, params: dict | None = None) -> httpx.Response:
                     },
                 )
                 raise GitHubRateLimitError(_rate_limit_reset(response))
+
+            # If request succeeded (200), store ETag if header present
+            if response.status_code == 200 and use_etag:
+                response_etag = response.headers.get("ETag") or response.headers.get("etag")
+                if response_etag:
+                    try:
+                        parsed_json = response.json()
+                        cache.set_etag(etag_cache_key, response_etag, parsed_json)
+                    except Exception:
+                        pass
 
             # If 5xx transient error and we have retry attempts left, backoff and retry
             if response.status_code in {500, 502, 503, 504}:

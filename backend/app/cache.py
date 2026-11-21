@@ -12,6 +12,8 @@ class TTLCache:
     def __init__(self, max_entries: int = 1000):
         self._max_entries = max_entries
         self._store: dict[str, tuple[float, Any]] = {}
+        # Stores ETags and cached payloads for conditional HTTP requests (Issue #338)
+        self._etag_store: dict[str, tuple[str, Any]] = {}
 
     def get(self, key: str) -> Any | None:
         entry = self._store.get(key)
@@ -36,8 +38,23 @@ class TTLCache:
 
         self._store[key] = (time.monotonic() + ttl, value)
 
+    def get_etag(self, url: str) -> tuple[str, Any] | None:
+        """Get cached ETag and corresponding payload for conditional HTTP requests."""
+        return self._etag_store.get(url)
+
+    def set_etag(self, url: str, etag: str, value: Any) -> None:
+        """Store ETag and response payload for conditional caching."""
+        if not etag or not url:
+            return
+        if len(self._etag_store) >= self._max_entries:
+            # Evict first item
+            first_key = next(iter(self._etag_store))
+            del self._etag_store[first_key]
+        self._etag_store[url] = (etag, value)
+
     def clear(self) -> None:
         self._store.clear()
+        self._etag_store.clear()
 
     def stats(self) -> dict[str, int]:
         now = time.monotonic()
@@ -45,6 +62,7 @@ class TTLCache:
         return {
             "active_entries": active,
             "total_keys": len(self._store),
+            "etag_entries": len(self._etag_store),
             "max_entries": self._max_entries,
         }
 
@@ -58,3 +76,7 @@ class TTLCache:
         if len(self._store) >= self._max_entries:
             oldest = min(self._store, key=lambda k: self._store[k][0])
             del self._store[oldest]
+
+
+# Shared global cache instance for GitHub responses and ETags
+cache = TTLCache()
