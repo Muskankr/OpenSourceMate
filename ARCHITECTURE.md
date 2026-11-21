@@ -93,7 +93,8 @@ OpenSourceMate/
 │   ├── workflows/                 # CI, inactive assignees manager (#265), and contributor workflows
 │   │   ├── ci.yml                 # Automated CI running tests with coverage thresholds and reporting (#269)
 │   │   └── inactive-assignees.yml # Scheduled workflow to nudge (5d) and unassign (7d) inactive assignees (#265)
-│   └── PULL_REQUEST_TEMPLATE.md   # Standard pull request description guidelines
+│   ├── CODEOWNERS                 # Subsystem ownership assignments and automated reviewers (#184)
+│   └── PULL_REQUEST_TEMPLATE.md   # Standard pull request description guidelines and reviewer checklist link (#184)
 │
 ├── backend/                       # FastAPI backend microservice
 │   ├── app/
@@ -137,7 +138,8 @@ OpenSourceMate/
 │   │   ├── error.tsx              # Error boundary component
 │   │   ├── layout.tsx             # Root HTML layout with providers and metadata
 │   │   ├── not-found.tsx          # 404 page
-│   │   └── page.tsx               # Main single-page application dashboard
+│   │   ├── page.tsx               # Main single-page application dashboard
+│   │   └── resources/             # Open Source 101 curated contributor learning hub (#187)
 │   ├── components/                # Modular React UI components
 │   │   ├── ExportMenu.tsx         # JSON/Markdown analysis exporter
 │   │   ├── FAQ.tsx                # Frequently asked questions collapsible panel
@@ -165,6 +167,9 @@ OpenSourceMate/
 │   └── issue-difficulty-labels.csv# Hand-labelled difficulty evaluation dataset
 │
 ├── docs/                          # Architectural specs, audits, and contributor guides
+│   ├── MAINTAINERS.md             # Operational triage, releases, and moderation guide for maintainers (#184)
+│   ├── REVIEWING.md               # Reviewer checklist, kind feedback guide, and merge criteria (#184)
+│   └── ...                        # Feature audits, specs, and design documentation
 ├── CONTRIBUTING.md                # Contributor setup, PR process, and code standards
 ├── GOVERNANCE.md                  # Project governance, roles, decisions, and progression (#296)
 ├── LICENSE                        # MIT License

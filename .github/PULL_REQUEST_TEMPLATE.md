@@ -21,4 +21,10 @@ Please delete options that are not relevant.
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the documentation
 - [ ] My changes generate no new warnings
-- [ ] I have verified that civic data added points to official sources (if applicable)
+- [ ] I have verified that all relevant automated tests pass and coverage thresholds are met
+- [ ] For visual changes, I have attached screenshots or screen recordings
+- [ ] I have reviewed the [Reviewer Checklist](docs/REVIEWING.md) to ensure this pull request meets all quality, accessibility, and security standards
+
+---
+
+> **Note for Reviewers**: Please refer to the [Reviewer Checklist & Review Guide](docs/REVIEWING.md) and [Maintainer Guide](docs/MAINTAINERS.md) when reviewing and merging this PR.

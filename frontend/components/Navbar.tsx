@@ -53,9 +53,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <nav
       className={`sticky top-0 z-50 backdrop-blur-md border-b transition-colors duration-200 ${
-        isDark
-          ? "bg-slate-950/80 border-slate-800"
-          : "bg-white/80 border-slate-200"
+        isDark ? "bg-slate-950/80 border-slate-800" : "bg-white/80 border-slate-200"
       }`}
       aria-label="Main Navigation"
     >
@@ -91,8 +89,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     ? "text-emerald-400"
                     : "text-emerald-600"
                   : isDark
-                  ? "text-slate-400 hover:text-slate-200"
-                  : "text-slate-600 hover:text-slate-900"
+                    ? "text-slate-400 hover:text-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Profile Analyzer
@@ -109,8 +107,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     ? "text-emerald-400"
                     : "text-emerald-600"
                   : isDark
-                  ? "text-slate-400 hover:text-slate-200"
-                  : "text-slate-600 hover:text-slate-900"
+                    ? "text-slate-400 hover:text-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
               }`}
             >
               How It Works
@@ -135,6 +133,16 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               Contribute
             </Link>
+            <Link
+              href="/resources"
+              className={`transition-colors ${
+                isDark
+                  ? "text-slate-400 hover:text-slate-200"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Resources
+            </Link>
             <a
               href="#faq"
               onClick={(e) => {
@@ -147,8 +155,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     ? "text-emerald-400"
                     : "text-emerald-600"
                   : isDark
-                  ? "text-slate-400 hover:text-slate-200"
-                  : "text-slate-600 hover:text-slate-900"
+                    ? "text-slate-400 hover:text-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
               }`}
             >
               FAQ
