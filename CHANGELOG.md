@@ -7,6 +7,8 @@ All notable changes to OpenSourceMate are recorded here. The format follows
 
 ### Added
 
+- Frontend: Repository Friendliness Score and badge on recommended issues, computing a deterministic 0–100 score from community signals (CONTRIBUTING guide, Code of Conduct, issue templates, README length, recent merged PRs) with an interactive breakdown popover and client-side caching to respect GitHub rate limits.
+
 - Frontend: Learning mode toggle and target skills picker to recommend and prioritize beginner-friendly issues in skills the user wants to learn next, with dedicated card explanations (#Issue).
 - Data: curated directory of welcoming open-source projects in `data/curated-projects.json` tagged with student and mentorship programs (GSoC, Outreachy, Hacktoberfest, LFX Mentorship), verifiable proof links, JSON schema, and a validation script (#298).
 - Tooling & Development: devcontainer configuration in `.devcontainer/devcontainer.json` and `.devcontainer/post-create.sh` for one-click GitHub Codespaces cloud development with Python 3.12, Node.js 22, automatic port forwarding (3000, 8000), and "Open in Codespaces" badges in `README.md` and `README.hi.md` (#264).

@@ -3,6 +3,7 @@ import { render, screen } from "@testing-library/react";
 import IssueCard from "../components/IssueCard";
 import type { IssueRecommendation } from "../types/api";
 import { setCachedResponsiveness, determineResponsiveness } from "../utils/repoResponsiveness";
+import { setCachedFriendlinessScore, calculateFriendlinessScore } from "../utils/repoFriendliness";
 
 describe("IssueCard Component", () => {
   beforeAll(() => {
@@ -12,6 +13,16 @@ describe("IssueCard Component", () => {
         repository: "octocat/hello-world",
         medianResponseHours: 12.0,
         sampleCount: 5,
+      })
+    );
+    setCachedFriendlinessScore(
+      "octocat/hello-world",
+      calculateFriendlinessScore("octocat/hello-world", {
+        hasContributing: true,
+        hasCodeOfConduct: true,
+        hasIssueTemplates: true,
+        readmeLength: 3000,
+        recentMergedPrs: 10,
       })
     );
   });
@@ -142,5 +153,13 @@ describe("IssueCard Component", () => {
     expect(
       screen.getByText(/beginner-friendly starter issue to help you learn and grow into Rust/i)
     ).toBeInTheDocument();
+  });
+
+  it("renders repository friendliness badge with score and tier", () => {
+    render(<IssueCard issue={sampleIssue} theme="dark" />);
+
+    const friendlinessBadge = screen.getByTestId("friendliness-badge");
+    expect(friendlinessBadge).toBeInTheDocument();
+    expect(friendlinessBadge).toHaveTextContent("100 Very Welcoming");
   });
 });
