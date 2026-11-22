@@ -319,6 +319,20 @@ http://localhost:8000
 
 प्रत्येक एंडपॉइंट के curl, Python और JavaScript उदाहरणों और Bruno अनुरोध संग्रह के लिए [API Usage Examples](docs/api-usage-examples.md) देखें।
 
+### कमांड-लाइन क्लाइंट (`osm`)
+
+अपने टर्मिनल से सीधे डेवलपर कौशल प्रोफ़ाइल का विश्लेषण करने के लिए CLI का उपयोग करें:
+
+```bash
+# कौशल प्रोफ़ाइल को तालिका के रूप में प्रिंट करें
+python scripts/osm.py analyze octocat
+
+# JSON आउटपुट या रिमोट बैकएंड निर्दिष्ट करें
+python scripts/osm.py analyze octocat --json --api-url http://localhost:8000
+```
+
+संपूर्ण इंस्टॉलेशन और कमांड विकल्पों के लिए [CLI Guide](docs/CLI.md) देखें।
+
 ### बैकएंड टेस्ट चलाएं (Run the backend tests)
 
 परीक्षण GitHub API को मॉक करते हैं, इसलिए किसी नेटवर्क कनेक्शन या टोकन की आवश्यकता नहीं है।
