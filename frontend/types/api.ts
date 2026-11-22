@@ -63,6 +63,20 @@ export interface IssueRecommendation {
   is_mock?: boolean;
   is_learning_mode?: boolean;
   learning_skill?: string;
+  is_claimed?: boolean;
+  is_stale?: boolean;
+  is_flagged?: boolean;
+  why_flagged?: string[];
+  claim_details?: {
+    has_assignee?: boolean;
+    assignees?: string[];
+    has_linked_pr?: boolean;
+    linked_prs?: string[];
+    has_claim_comment?: boolean;
+    claim_comment_snippets?: string[];
+    is_stale?: boolean;
+    days_inactive?: number | null;
+  };
 }
 
 export interface MatchedIssuesResponse {

@@ -101,6 +101,7 @@ OpenSourceMate का अगला चरण डेवलपर के तकन
 - कौशल-आधारित इश्यू मिलान (skill-based issue matching)
 - व्यक्तिगत इश्यू अनुशंसाएँ (personalized issue recommendations)
 - योगदान अनुकूलता विश्लेषण (contribution compatibility analysis)
+- क्लेम किए गए और पुराने इश्यूज़ की पहचान (claimed and stale issue detection)
 - शुरुआती-अनुकूल इश्यू खोज (beginner-friendly issue discovery)
 - रिपॉजिटरी और इश्यू का संदर्भ
 - योगदान अवसर रैंकिंग

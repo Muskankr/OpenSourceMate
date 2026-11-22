@@ -1,0 +1,129 @@
+{
+  "total_count": 6,
+  "incomplete_results": false,
+  "items": [
+    {
+      "id": 501,
+      "number": 101,
+      "title": "Build the open-issue fetcher using the GitHub Search API",
+      "repository_url": "https://api.github.com/repos/Muskankr/OpenSourceMate",
+      "html_url": "https://github.com/Muskankr/OpenSourceMate/issues/101",
+      "state": "open",
+      "user": { "login": "Muskankr" },
+      "labels": [{ "name": "good first issue" }, { "name": "python" }],
+      "assignee": null,
+      "assignees": [],
+      "pull_request": null,
+      "comments": 0,
+      "comments_data": [],
+      "created_at": "2026-11-18T10:00:00Z",
+      "updated_at": "2026-11-21T14:30:00Z",
+      "body": "Implement GitHub issue search with filters for language and label."
+    },
+    {
+      "id": 502,
+      "number": 102,
+      "title": "Build the open-issue fetcher using the GitHub Search API [Assigned]",
+      "repository_url": "https://api.github.com/repos/Muskankr/OpenSourceMate",
+      "html_url": "https://github.com/Muskankr/OpenSourceMate/issues/102",
+      "state": "open",
+      "user": { "login": "Muskankr" },
+      "labels": [{ "name": "good first issue" }, { "name": "python" }],
+      "assignee": { "login": "octocat" },
+      "assignees": [{ "login": "octocat" }],
+      "pull_request": null,
+      "comments": 1,
+      "comments_data": [
+        {
+          "user": { "login": "octocat" },
+          "body": "Taking this up!",
+          "created_at": "2026-11-20T08:00:00Z"
+        }
+      ],
+      "created_at": "2026-11-17T12:00:00Z",
+      "updated_at": "2026-11-20T08:00:00Z",
+      "body": "Search issues endpoint implementation."
+    },
+    {
+      "id": 503,
+      "number": 103,
+      "title": "Build the open-issue fetcher using the GitHub Search API [Linked PR]",
+      "repository_url": "https://api.github.com/repos/Muskankr/OpenSourceMate",
+      "html_url": "https://github.com/Muskankr/OpenSourceMate/issues/103",
+      "state": "open",
+      "user": { "login": "Muskankr" },
+      "labels": [{ "name": "good first issue" }, { "name": "python" }],
+      "assignee": null,
+      "assignees": [],
+      "pull_request": {
+        "html_url": "https://github.com/Muskankr/OpenSourceMate/pull/104",
+        "url": "https://api.github.com/repos/Muskankr/OpenSourceMate/pulls/104"
+      },
+      "comments": 1,
+      "comments_data": [],
+      "created_at": "2026-11-16T09:00:00Z",
+      "updated_at": "2026-11-19T10:00:00Z",
+      "body": "Search issues endpoint implementation. Linked PR: #104."
+    },
+    {
+      "id": 504,
+      "number": 104,
+      "title": "Build the open-issue fetcher using the GitHub Search API [Claim Comment]",
+      "repository_url": "https://api.github.com/repos/Muskankr/OpenSourceMate",
+      "html_url": "https://github.com/Muskankr/OpenSourceMate/issues/104",
+      "state": "open",
+      "user": { "login": "Muskankr" },
+      "labels": [{ "name": "good first issue" }, { "name": "python" }],
+      "assignee": null,
+      "assignees": [],
+      "pull_request": null,
+      "comments": 2,
+      "comments_data": [
+        {
+          "user": { "login": "dev_alex" },
+          "body": "Hi maintainers! I'd like to work on this, please assign me.",
+          "created_at": "2026-11-20T16:00:00Z"
+        }
+      ],
+      "created_at": "2026-11-18T11:00:00Z",
+      "updated_at": "2026-11-20T16:00:00Z",
+      "body": "Provide open-issue fetching functionality with parameters."
+    },
+    {
+      "id": 505,
+      "number": 105,
+      "title": "Build the open-issue fetcher using the GitHub Search API [Stale]",
+      "repository_url": "https://api.github.com/repos/Muskankr/OpenSourceMate",
+      "html_url": "https://github.com/Muskankr/OpenSourceMate/issues/105",
+      "state": "open",
+      "user": { "login": "Muskankr" },
+      "labels": [{ "name": "good first issue" }, { "name": "python" }],
+      "assignee": null,
+      "assignees": [],
+      "pull_request": null,
+      "comments": 0,
+      "comments_data": [],
+      "created_at": "2026-05-01T08:00:00Z",
+      "updated_at": "2026-05-10T12:00:00Z",
+      "body": "Search issues endpoint implementation inactive for months."
+    },
+    {
+      "id": 506,
+      "number": 106,
+      "title": "Add syntax highlighting to embedded code snippets in dashboard",
+      "repository_url": "https://api.github.com/repos/Muskankr/OpenSourceMate",
+      "html_url": "https://github.com/Muskankr/OpenSourceMate/issues/106",
+      "state": "open",
+      "user": { "login": "Muskankr" },
+      "labels": [{ "name": "good first issue" }, { "name": "frontend" }],
+      "assignee": null,
+      "assignees": [],
+      "pull_request": null,
+      "comments": 0,
+      "comments_data": [],
+      "created_at": "2026-11-19T10:00:00Z",
+      "updated_at": "2026-11-21T16:00:00Z",
+      "body": "Render prismjs code snippets with accessible color schemes."
+    }
+  ]
+}

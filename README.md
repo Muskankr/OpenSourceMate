@@ -102,6 +102,7 @@ Planned capabilities include:
 - Skill-based issue matching
 - Personalized issue recommendations
 - Contribution compatibility analysis
+- Claimed and stale issue detection (flags assignees, open PRs, claim comments, and inactivity)
 - Beginner-friendly issue discovery
 - Repository and issue context
 - Contribution opportunity ranking
