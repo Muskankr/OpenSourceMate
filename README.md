@@ -83,6 +83,7 @@ OpenSourceMate analyzes the user's public GitHub repositories to identify techni
 - Repository count associated with each skill
 - Skill distribution
 - Number of repositories analyzed
+- **Custom Skills & Interests**: Add technologies, coursework, or college tools GitHub cannot detect, with known skill suggestions and persistent browser storage. Added skills appear marked as "added by you" and immediately tune recommendations (see [Custom Skills Guide](docs/custom-skills-matching.md)).
 
 ### 👥 Contributors Wall
 

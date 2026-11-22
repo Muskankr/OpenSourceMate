@@ -172,12 +172,15 @@ export const MOCK_RECOMMENDED_ISSUES: IssueRecommendation[] = [
 export interface MockIssuesOptions {
   learningMode?: boolean;
   targetSkills?: string[];
+  filterBySkills?: boolean;
 }
 
 /**
  * Returns mock recommended issues filtered or prioritized by user skills.
  * Falls back to the full mock set if no skills match.
  *
+ * When options.filterBySkills is true, issues not matching any of the user's
+ * active skills are removed from the results.
  * When options.learningMode is true with chosen targetSkills, ranks
  * beginner-friendly issues in the chosen skills higher.
  */
@@ -185,39 +188,52 @@ export function getMockRecommendedIssues(
   skills?: string[] | SkillItem[] | null,
   options?: MockIssuesOptions
 ): IssueRecommendation[] {
-  let baseList: IssueRecommendation[];
+  if (options?.filterBySkills && (!skills || skills.length === 0)) {
+    return [];
+  }
 
   if (!skills || skills.length === 0) {
-    baseList = MOCK_RECOMMENDED_ISSUES.map((issue) => ({
+    return MOCK_RECOMMENDED_ISSUES.map((issue) => ({
       ...issue,
       difficulty: issue.difficulty || inferIssueDifficulty(issue.labels),
       is_mock: true,
     }));
-  } else {
-    // Extract skill names in lowercase
-    const userSkillNames = new Set(
-      skills.map((s) => (typeof s === "string" ? s.toLowerCase() : s.name.toLowerCase()))
-    );
-
-    // Score mock issues based on user's skills
-    const scored = MOCK_RECOMMENDED_ISSUES.map((issue) => {
-      const langMatch = issue.language && userSkillNames.has(issue.language.toLowerCase());
-      const labelMatch = issue.labels?.some((lbl) => userSkillNames.has(lbl.toLowerCase()));
-
-      let score = issue.match_score ?? 75;
-      if (langMatch) score = Math.min(98, score + 10);
-      if (labelMatch) score = Math.min(99, score + 5);
-
-      return {
-        ...issue,
-        match_score: score,
-        difficulty: issue.difficulty || inferIssueDifficulty(issue.labels),
-        is_mock: true,
-      };
-    });
-
-    baseList = scored.sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0));
   }
+
+  // Extract skill names in lowercase
+  const userSkillNames = new Set(
+    skills.map((s) => (typeof s === "string" ? s.toLowerCase() : s.name.toLowerCase()))
+  );
+
+  const baseIssues = options?.filterBySkills
+    ? MOCK_RECOMMENDED_ISSUES.filter((issue) => {
+        const langMatch = issue.language && userSkillNames.has(issue.language.toLowerCase());
+        const labelMatch = issue.labels?.some((lbl) => userSkillNames.has(lbl.toLowerCase()));
+        const titleMatch = Array.from(userSkillNames).some((s) =>
+          issue.title.toLowerCase().includes(s)
+        );
+        return langMatch || labelMatch || titleMatch;
+      })
+    : MOCK_RECOMMENDED_ISSUES;
+
+  // Score mock issues based on user's skills
+  const scored = baseIssues.map((issue) => {
+    const langMatch = issue.language && userSkillNames.has(issue.language.toLowerCase());
+    const labelMatch = issue.labels?.some((lbl) => userSkillNames.has(lbl.toLowerCase()));
+
+    let score = issue.match_score ?? 75;
+    if (langMatch) score = Math.min(98, score + 10);
+    if (labelMatch) score = Math.min(99, score + 5);
+
+    return {
+      ...issue,
+      match_score: score,
+      difficulty: issue.difficulty || inferIssueDifficulty(issue.labels),
+      is_mock: true,
+    };
+  });
+
+  const baseList = scored.sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0));
 
   if (options?.learningMode && options?.targetSkills && options.targetSkills.length > 0) {
     return rankIssuesForLearningMode(baseList, options.targetSkills, true);

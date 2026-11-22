@@ -206,4 +206,76 @@ describe("SkillsEditor Component", () => {
       "No active skills. Add a skill below to see matching issues."
     );
   });
+
+  it("marks user-added skills with 'added by you' badge while detected skills do not have it", () => {
+    // initialSkills = ["TypeScript", "Python", "React"]
+    // currentSkills includes detected skills + user-added "Rust" and "Docker"
+    render(
+      <SkillsEditor
+        initialSkills={initialSkills}
+        currentSkills={["TypeScript", "Python", "Rust", "Docker"]}
+        onSkillsChange={jest.fn()}
+        onReset={jest.fn()}
+        isEdited={true}
+      />
+    );
+
+    // Detected skills do NOT have the badge
+    expect(screen.queryByTestId("added-by-you-badge-TypeScript")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("added-by-you-badge-Python")).not.toBeInTheDocument();
+
+    // User-added skills DO have the badge
+    const rustBadge = screen.getByTestId("added-by-you-badge-Rust");
+    expect(rustBadge).toBeInTheDocument();
+    expect(rustBadge).toHaveTextContent("added by you");
+
+    const dockerBadge = screen.getByTestId("added-by-you-badge-Docker");
+    expect(dockerBadge).toBeInTheDocument();
+    expect(dockerBadge).toHaveTextContent("added by you");
+  });
+
+  it("renders suggestions from the known skill list and adds suggestion when clicked", () => {
+    const onSkillsChange = jest.fn();
+
+    render(
+      <SkillsEditor
+        initialSkills={initialSkills}
+        currentSkills={initialSkills}
+        onSkillsChange={onSkillsChange}
+        onReset={jest.fn()}
+        isEdited={false}
+      />
+    );
+
+    // Suggestions container should be visible
+    expect(screen.getByTestId("skill-suggestions-container")).toBeInTheDocument();
+
+    // Go is in known skills and not in initialSkills
+    const goSuggestion = screen.getByTestId("skill-suggestion-Go");
+    expect(goSuggestion).toBeInTheDocument();
+
+    fireEvent.click(goSuggestion);
+    expect(onSkillsChange).toHaveBeenCalledTimes(1);
+    expect(onSkillsChange).toHaveBeenCalledWith(["TypeScript", "Python", "React", "Go"]);
+  });
+
+  it("filters suggestions as user types into the add skill input", () => {
+    render(
+      <SkillsEditor
+        initialSkills={initialSkills}
+        currentSkills={initialSkills}
+        onSkillsChange={jest.fn()}
+        onReset={jest.fn()}
+        isEdited={false}
+      />
+    );
+
+    const input = screen.getByTestId("add-skill-input");
+
+    // Type "dock"
+    fireEvent.change(input, { target: { value: "dock" } });
+
+    expect(screen.getByTestId("skill-suggestion-Docker")).toBeInTheDocument();
+    expect(screen.queryByTestId("skill-suggestion-Go")).not.toBeInTheDocument();
+  });
 });
