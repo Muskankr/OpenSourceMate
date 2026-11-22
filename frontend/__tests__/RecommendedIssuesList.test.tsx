@@ -189,4 +189,75 @@ describe("RecommendedIssuesList Component", () => {
     const restoredCards = screen.getAllByRole("article");
     expect(restoredCards[0]).toHaveTextContent("vercel/next.js");
   });
+
+  it("filters out claimed and stale issues when filter checkboxes are toggled", () => {
+    const mixedIssues: IssueRecommendation[] = [
+      {
+        id: 901,
+        title: "Clean open issue for beginners",
+        repository: "owner/clean-repo",
+        url: "https://github.com/owner/clean-repo/issues/901",
+        state: "open",
+        labels: ["good first issue"],
+        comments: 0,
+        created_at: "2026-11-20T10:00:00Z",
+        updated_at: "2026-11-20T12:00:00Z",
+        language: "TypeScript",
+        is_claimed: false,
+        is_stale: false,
+      },
+      {
+        id: 902,
+        title: "Claimed issue with assignee",
+        repository: "owner/claimed-repo",
+        url: "https://github.com/owner/claimed-repo/issues/902",
+        state: "open",
+        labels: ["good first issue"],
+        comments: 1,
+        created_at: "2026-11-19T10:00:00Z",
+        updated_at: "2026-11-20T12:00:00Z",
+        language: "TypeScript",
+        is_claimed: true,
+        is_stale: false,
+        why_flagged: ["Assigned to @octocat"],
+      },
+      {
+        id: 903,
+        title: "Stale issue inactive for 100 days",
+        repository: "owner/stale-repo",
+        url: "https://github.com/owner/stale-repo/issues/903",
+        state: "open",
+        labels: ["good first issue"],
+        comments: 0,
+        created_at: "2026-05-01T10:00:00Z",
+        updated_at: "2026-05-01T12:00:00Z",
+        language: "TypeScript",
+        is_claimed: false,
+        is_stale: true,
+        why_flagged: ["No activity for 200 days"],
+      },
+    ];
+
+    render(<RecommendedIssuesList issues={mixedIssues} theme="dark" />);
+
+    // Initially all 3 articles rendered
+    expect(screen.getAllByRole("article")).toHaveLength(3);
+
+    // Toggle exclude claimed
+    const excludeClaimedBox = screen.getByTestId("filter-exclude-claimed");
+    fireEvent.click(excludeClaimedBox);
+
+    // Now only clean and stale remain (2)
+    expect(screen.getAllByRole("article")).toHaveLength(2);
+    expect(screen.queryByText("Claimed issue with assignee")).not.toBeInTheDocument();
+
+    // Also toggle exclude stale
+    const excludeStaleBox = screen.getByTestId("filter-exclude-stale");
+    fireEvent.click(excludeStaleBox);
+
+    // Only clean issue remains (1)
+    expect(screen.getAllByRole("article")).toHaveLength(1);
+    expect(screen.getByText("Clean open issue for beginners")).toBeInTheDocument();
+    expect(screen.queryByText("Stale issue inactive for 100 days")).not.toBeInTheDocument();
+  });
 });

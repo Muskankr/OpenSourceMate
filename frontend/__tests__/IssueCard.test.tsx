@@ -162,4 +162,45 @@ describe("IssueCard Component", () => {
     expect(friendlinessBadge).toBeInTheDocument();
     expect(friendlinessBadge).toHaveTextContent("100 Very Welcoming");
   });
+
+  it("renders claimed badge and why-flagged notice when issue is claimed", () => {
+    const claimedIssue: IssueRecommendation = {
+      ...sampleIssue,
+      is_claimed: true,
+      is_flagged: true,
+      why_flagged: ["Assigned to @octocat", "Recent claim comment: 'I would like to work on this'"],
+    };
+
+    render(<IssueCard issue={claimedIssue} theme="dark" />);
+
+    const claimedBadge = screen.getByTestId("claimed-badge");
+    expect(claimedBadge).toBeInTheDocument();
+    expect(claimedBadge).toHaveTextContent("⚠️ Claimed");
+
+    const whyFlaggedContainer = screen.getByTestId("why-flagged-container");
+    expect(whyFlaggedContainer).toBeInTheDocument();
+    expect(screen.getByText("Assigned to @octocat")).toBeInTheDocument();
+    expect(
+      screen.getByText("Recent claim comment: 'I would like to work on this'")
+    ).toBeInTheDocument();
+  });
+
+  it("renders stale badge when issue is inactive", () => {
+    const staleIssue: IssueRecommendation = {
+      ...sampleIssue,
+      is_stale: true,
+      is_flagged: true,
+      why_flagged: ["No activity for 95 days (stale threshold: 60 days)"],
+    };
+
+    render(<IssueCard issue={staleIssue} theme="dark" />);
+
+    const staleBadge = screen.getByTestId("stale-badge");
+    expect(staleBadge).toBeInTheDocument();
+    expect(staleBadge).toHaveTextContent("⏳ Inactive");
+
+    expect(
+      screen.getByText("No activity for 95 days (stale threshold: 60 days)")
+    ).toBeInTheDocument();
+  });
 });

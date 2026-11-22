@@ -146,6 +146,47 @@ export default function IssueCard({
               </span>
             )}
 
+            {/* Claimed Status Badge */}
+            {issue.is_claimed && (
+              <span
+                data-testid="claimed-badge"
+                className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold tracking-wide ${
+                  isDark
+                    ? "border-amber-500/40 bg-amber-500/10 text-amber-300"
+                    : "border-amber-300 bg-amber-50 text-amber-800"
+                }`}
+                title={
+                  issue.why_flagged?.find(
+                    (r) =>
+                      r.toLowerCase().includes("assign") ||
+                      r.toLowerCase().includes("pr") ||
+                      r.toLowerCase().includes("claim")
+                  ) || "This issue may already be claimed or assigned"
+                }
+              >
+                ⚠️ Claimed
+              </span>
+            )}
+
+            {/* Stale / Inactive Badge */}
+            {issue.is_stale && (
+              <span
+                data-testid="stale-badge"
+                className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold tracking-wide ${
+                  isDark
+                    ? "border-zinc-500/40 bg-zinc-500/10 text-zinc-300"
+                    : "border-zinc-300 bg-zinc-100 text-zinc-700"
+                }`}
+                title={
+                  issue.why_flagged?.find(
+                    (r) => r.toLowerCase().includes("activity") || r.toLowerCase().includes("stale")
+                  ) || "No recent activity on this issue"
+                }
+              >
+                ⏳ Inactive
+              </span>
+            )}
+
             {/* Demo / Coming Soon indicator */}
             {showMockBadge && (
               <span
@@ -252,6 +293,30 @@ export default function IssueCard({
                   <li key={i} className="flex items-center gap-1.5">
                     <span className="text-purple-400" aria-hidden="true">
                       ✓
+                    </span>
+                    <span>{reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Why Flagged (Claimed or Stale Activity Notice) */}
+          {issue.why_flagged && issue.why_flagged.length > 0 && (
+            <div
+              data-testid="why-flagged-container"
+              className={`mt-4 rounded-xl border p-3 text-xs ${
+                isDark
+                  ? "border-amber-500/30 bg-amber-500/10 text-amber-200"
+                  : "border-amber-300 bg-amber-50 text-amber-900"
+              }`}
+            >
+              <p className="font-semibold text-amber-400">Activity &amp; Claim Notice:</p>
+              <ul className="mt-1 space-y-1">
+                {issue.why_flagged.map((reason, i) => (
+                  <li key={i} className="flex items-center gap-1.5">
+                    <span className="text-amber-400" aria-hidden="true">
+                      ⚠️
                     </span>
                     <span>{reason}</span>
                   </li>

@@ -112,6 +112,7 @@ OpenSourceMate/
 │   │   ├── services/              # Core business logic and computational services
 │   │   │   ├── embedding_service.py # Vector embeddings and cosine similarity
 │   │   │   ├── github_service.py  # Asynchronous HTTP client for GitHub REST API
+│   │   │   ├── issue_flag_service.py # Claimed, assignee, linked PR, and stale issue detection (#345)
 │   │   │   ├── issue_service.py   # GitHub issue discovery and filtering
 │   │   │   ├── matching_service.py# TF-IDF, scoring heuristics, and ranking
 │   │   │   └── skill_service.py   # Language aggregation, noise filter, proficiency calculation

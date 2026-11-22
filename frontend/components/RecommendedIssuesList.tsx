@@ -36,6 +36,8 @@ export default function RecommendedIssuesList({
   const [labelFilter, setLabelFilter] = useState("all");
   const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
   const [minScoreFilter, setMinScoreFilter] = useState(0);
+  const [excludeClaimed, setExcludeClaimed] = useState(false);
+  const [excludeStale, setExcludeStale] = useState(false);
   const [showHidden, setShowHidden] = useState(false);
   const { hiddenIds, isHidden, hideIssue, restoreIssue } = useHiddenIssues();
   const hiddenCount = issues.filter((issue) => hiddenIds.includes(hiddenIssueId(issue))).length;
@@ -92,6 +94,14 @@ export default function RecommendedIssuesList({
         }
       }
 
+      // Claimed & Stale filters
+      if (excludeClaimed && issue.is_claimed) {
+        return false;
+      }
+      if (excludeStale && issue.is_stale) {
+        return false;
+      }
+
       // Score filter
       const score = Math.round(issue.match_score ?? issue.score ?? 0);
       if (score < minScoreFilter) {
@@ -116,6 +126,8 @@ export default function RecommendedIssuesList({
     labelFilter,
     difficultyFilter,
     minScoreFilter,
+    excludeClaimed,
+    excludeStale,
     searchQuery,
   ]);
 
@@ -124,6 +136,8 @@ export default function RecommendedIssuesList({
     labelFilter !== "all" ||
     difficultyFilter !== "all" ||
     minScoreFilter > 0 ||
+    excludeClaimed ||
+    excludeStale ||
     searchQuery.trim().length > 0;
 
   const resetFilters = () => {
@@ -131,6 +145,8 @@ export default function RecommendedIssuesList({
     setLabelFilter("all");
     setDifficultyFilter("all");
     setMinScoreFilter(0);
+    setExcludeClaimed(false);
+    setExcludeStale(false);
     setSearchQuery("");
   };
 
@@ -461,6 +477,34 @@ export default function RecommendedIssuesList({
                 className="mt-2.5 h-1.5 w-full cursor-pointer appearance-none rounded-lg bg-gray-700 accent-purple-500"
               />
             </div>
+          </div>
+
+          {/* Claimed and Stale filter checkboxes */}
+          <div className="mt-3.5 flex flex-wrap items-center gap-4 border-t border-white/5 pt-3">
+            <label className="inline-flex cursor-pointer items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                data-testid="filter-exclude-claimed"
+                checked={excludeClaimed}
+                onChange={(e) => setExcludeClaimed(e.target.checked)}
+                className="rounded border-gray-600 bg-gray-800 text-purple-600 focus:ring-purple-400"
+              />
+              <span className={isDark ? "text-gray-300" : "text-gray-700"}>
+                Hide claimed issues (assigned, PR linked, or claim comment)
+              </span>
+            </label>
+            <label className="inline-flex cursor-pointer items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                data-testid="filter-exclude-stale"
+                checked={excludeStale}
+                onChange={(e) => setExcludeStale(e.target.checked)}
+                className="rounded border-gray-600 bg-gray-800 text-purple-600 focus:ring-purple-400"
+              />
+              <span className={isDark ? "text-gray-300" : "text-gray-700"}>
+                Hide stale issues (&gt;60 days inactive)
+              </span>
+            </label>
           </div>
 
           {hasActiveFilters && (

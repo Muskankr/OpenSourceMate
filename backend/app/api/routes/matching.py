@@ -43,6 +43,8 @@ def _atom_element(parent: ElementTree.Element, name: str, text: str) -> None:
 async def get_matched_issues(
     username: str,
     exclude_stale: bool = Query(default=False),
+    exclude_claimed: bool = Query(default=False),
+    stale_days: int = Query(default=60, ge=1, le=365),
     skills: list[str] | None = Query(default=None),
 ):
     validated_username = validate_github_username(username)
@@ -119,6 +121,9 @@ async def get_matched_issues(
                 language=skill,
                 label="good first issue",
                 per_page=10,
+                exclude_claimed=exclude_claimed,
+                exclude_stale=exclude_stale,
+                stale_days=stale_days,
             )
 
             found_issues.extend(result["issues"])
@@ -186,12 +191,21 @@ async def get_matched_issues(
 
     recommendations = list(unique_issues.values())
 
+    # Optionally exclude claimed issues (assigned, PR linked, claim comment)
+    if exclude_claimed:
+        recommendations = [
+            iss for iss in recommendations if not iss.get("is_claimed", False)
+        ]
+
     # Optionally exclude stale issues (>60 days inactive)
     if exclude_stale:
         recommendations = [
             iss
             for iss in recommendations
-            if not (iss.get("freshness") and iss["freshness"].get("is_stale"))
+            if not (
+                iss.get("is_stale", False)
+                or (iss.get("freshness") and iss["freshness"].get("is_stale"))
+            )
         ]
 
     # Highest compatibility first.

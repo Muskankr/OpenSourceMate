@@ -23,10 +23,13 @@ fixtures/
 │   ├── languages_multi.json                  # Real multi-language + noise bytes (Muskankr/OpenSourceMate)
 │   ├── languages_single.json                 # Real single-language bytes (sindresorhus/is)
 │   └── languages_empty.json                  # Real empty languages map (octocat/Hello-World)
-└── events/
-    ├── events_active.json                    # Real 30 sanitized public events (@sindresorhus, >= 15 tier)
-    ├── events_occasional.json                # Derived 4-event subset from events_active.json (1-14 tier)
-    └── events_empty.json                     # Real empty public events list (@octocat, 0 events tier)
+├── events/
+│   ├── events_active.json                    # Real 30 sanitized public events (@sindresorhus, >= 15 tier)
+│   ├── events_occasional.json                # Derived 4-event subset from events_active.json (1-14 tier)
+│   └── events_empty.json                     # Real empty public events list (@octocat, 0 events tier)
+└── issues/
+    ├── posted_issue_fetcher.json             # Baseline issue "Build the open-issue fetcher using the GitHub Search API" (#345)
+    └── search_issues_mixed.json              # Mixed search items covering assignee, PR, claim comment, and stale signals (#345)
 ```
 
 ## Fixture Catalog & Provenance
@@ -66,6 +69,13 @@ fixtures/
 | `events_active.json`     | Active contributor (`>= 15` events tier, `30` items)   | **Real (sanitized)** | `GET /users/sindresorhus/events/public?per_page=30` (`2026-11-10`)        | Contains `PushEvent`, `PullRequestEvent`, `IssuesEvent`, `CreateEvent`, `DeleteEvent`, `IssueCommentEvent` |
 | `events_occasional.json` | Occasional contributor (`1–14` events tier, `4` items) | **Derived subset**   | Deterministic slice of `events_active.json` (`2` Push, `1` PR, `1` Issue) | Keeps event distribution compact & deterministic                                                           |
 | `events_empty.json`      | Inactive / zero public events (`0` items)              | **Real**             | `GET /users/octocat/events/public` (`2026-11-10`)                         | Evaluates to `"Inactive"` activity tier                                                                    |
+
+### Issues (`fixtures/issues/`)
+
+| Fixture File               | Scenario                                                                   | Origin Type   | Exact Provenance / Retrieval                                                       | Notes                                                                              |
+| :------------------------- | :------------------------------------------------------------------------- | :------------ | :--------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------- |
+| `posted_issue_fetcher.json`| Baseline unassigned issue "Build the open-issue fetcher using GitHub API" | **Synthetic** | Authored from MVP issue specification                                              | Deterministic active, unassigned issue (`is_flagged: false`, `#345`)              |
+| `search_issues_mixed.json` | 6-issue search dataset with assignees, linked PRs, comments, and staleness | **Synthetic** | Derived from real GitHub search payload schema                                     | Tests `exclude_claimed` and `exclude_stale` filters and why-flagged reasons (#345) |
 
 ## Real vs. Synthetic Responses
 

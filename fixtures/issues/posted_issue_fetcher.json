@@ -1,0 +1,25 @@
+{
+  "id": 1042,
+  "number": 42,
+  "title": "Build the open-issue fetcher using the GitHub Search API",
+  "repository_url": "https://api.github.com/repos/Muskankr/OpenSourceMate",
+  "html_url": "https://github.com/Muskankr/OpenSourceMate/issues/42",
+  "state": "open",
+  "user": {
+    "login": "Muskankr",
+    "id": 1
+  },
+  "labels": [
+    { "name": "good first issue" },
+    { "name": "backend" },
+    { "name": "python" }
+  ],
+  "assignee": null,
+  "assignees": [],
+  "pull_request": null,
+  "comments": 0,
+  "comments_data": [],
+  "created_at": "2026-11-15T10:00:00Z",
+  "updated_at": "2026-11-20T12:00:00Z",
+  "body": "Build the open-issue fetcher using the GitHub Search API to find beginner-friendly open issues for contributors."
+}

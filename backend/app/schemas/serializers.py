@@ -250,6 +250,26 @@ class IssueItemSerializer(BaseModel):
     created_at: str = Field(..., description="Created ISO timestamp")
     updated_at: str = Field(..., description="Updated ISO timestamp")
     state: str = Field(default="open", description="Issue state")
+    is_claimed: bool = Field(
+        default=False,
+        description="Whether the issue has an assignee, linked PR, or claim intent comment",
+    )
+    is_stale: bool = Field(
+        default=False,
+        description="Whether the issue has been inactive beyond the configured stale threshold",
+    )
+    is_flagged: bool = Field(
+        default=False,
+        description="True if the issue is either claimed or stale",
+    )
+    why_flagged: list[str] = Field(
+        default_factory=list,
+        description="List of human-readable reasons explaining why the issue is flagged",
+    )
+    claim_details: dict[str, Any] | None = Field(
+        default=None,
+        description="Detailed signal breakdown for assignee, PR, claim comment, and staleness",
+    )
 
 
 class IssueSearchResponseSerializer(BaseModel):
@@ -281,6 +301,26 @@ class MatchedIssueRecommendationSerializer(BaseModel):
     )
     ai_explanation: str | None = Field(
         default=None, description="Optional AI explanation"
+    )
+    is_claimed: bool = Field(
+        default=False,
+        description="Whether the issue has an assignee, linked PR, or claim intent comment",
+    )
+    is_stale: bool = Field(
+        default=False,
+        description="Whether the issue has been inactive beyond the configured stale threshold",
+    )
+    is_flagged: bool = Field(
+        default=False,
+        description="True if the issue is either claimed or stale",
+    )
+    why_flagged: list[str] = Field(
+        default_factory=list,
+        description="List of human-readable reasons explaining why the issue is flagged",
+    )
+    claim_details: dict[str, Any] | None = Field(
+        default=None,
+        description="Detailed signal breakdown for assignee, PR, claim comment, and staleness",
     )
 
 
