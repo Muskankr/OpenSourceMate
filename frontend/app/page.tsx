@@ -13,6 +13,11 @@ import SkillProficiencyBadge from "../components/SkillProficiencyBadge";
 import SkillsToLearn from "../components/SkillsToLearn";
 import TechIcon from "../components/TechIcon";
 import SkillsEditor from "../components/SkillsEditor";
+import {
+  loadCustomSkills,
+  saveCustomSkills,
+  clearCustomSkills,
+} from "../utils/customSkillsStorage";
 import IssueCard from "../components/IssueCard";
 import JobOpportunitiesList from "../components/JobOpportunitiesList";
 import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
@@ -46,11 +51,7 @@ import {
   clearRecentSearches,
 } from "../utils/recentSearches";
 import { validateGitHubUsername, resolveAnalyzerErrorMessage } from "../utils/validation";
-import {
-  analyzerReducer,
-  initialAnalyzerState,
-  type AnalyzerData,
-} from "../utils/analyzerState";
+import { analyzerReducer, initialAnalyzerState, type AnalyzerData } from "../utils/analyzerState";
 import BuildVersionBadge from "../components/BuildVersionBadge";
 import ContributorsWall from "../components/ContributorsWall";
 export default function Home() {
@@ -228,6 +229,7 @@ export default function Home() {
     setCustomSkills(newSkills);
     const target = profile?.username || username;
     if (target) {
+      saveCustomSkills(target, newSkills);
       fetchMatchedIssues(target, undefined, newSkills);
     }
   };
@@ -236,6 +238,7 @@ export default function Home() {
     setCustomSkills(null);
     const target = profile?.username || username;
     if (target) {
+      clearCustomSkills(target);
       fetchMatchedIssues(target, undefined, detectedSkills);
     }
   };
@@ -443,7 +446,15 @@ export default function Home() {
       const updatedSearches = saveRecentSearch(cleanUsername);
       setRecentSearches(updatedSearches);
 
-      fetchMatchedIssues(cleanUsername, searchSignal);
+      // Check for user-added/customized skills stored in the browser (Issue #341)
+      const storedSkills = loadCustomSkills(cleanUsername);
+      if (storedSkills !== null) {
+        setCustomSkills(storedSkills);
+        fetchMatchedIssues(cleanUsername, searchSignal, storedSkills);
+      } else {
+        setCustomSkills(null);
+        fetchMatchedIssues(cleanUsername, searchSignal);
+      }
     } catch (err: unknown) {
       if (isAbortError(err)) {
         return; // Prior in-flight search was aborted by a new search
@@ -1539,10 +1550,7 @@ export default function Home() {
                 <JobOpportunitiesList studentSkills={skills?.skills || []} theme={theme} />
 
                 {/* Student Job & Internship Matches */}
-                <JobOpportunitiesList
-                  studentSkills={skills?.skills || []}
-                  theme={theme}
-                />
+                <JobOpportunitiesList studentSkills={skills?.skills || []} theme={theme} />
               </div>
             </section>
           )}

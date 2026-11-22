@@ -149,11 +149,13 @@ OpenSourceMate/
 │   │   ├── SkillProficiencyBadge.tsx # Beginner, Intermediate, Advanced indicator
 │   │   ├── StarterCommentModal.tsx# One-click starter issue claim comment generator
 │   │   ├── TechIcon.tsx           # Inline SVG technology icons with fallback (#299)
+│   │   ├── SkillsEditor.tsx       # Custom skills manager with known skill suggestions and 'added by you' tags (#341)
 │   │   └── icons/LICENSE.md       # Permissive license notices for SVG icons (CC0 1.0, MIT)
 │   ├── hooks/                     # Custom React hooks (e.g., useBookmarkedIssues)
 │   ├── types/                     # TypeScript interface definitions (api.ts)
 │   └── utils/                     # Frontend client utilities
 │       ├── apiClient.ts           # Fetch client with base URL resolution and error handling
+│       ├── customSkillsStorage.ts # LocalStorage persistence for user-added and customized skills (#341)
 │       ├── exportAnalysis.ts      # Markdown/JSON export formatting logic
 │       ├── proficiency.ts         # Visual badges and tier mapping
 │       ├── recentSearches.ts      # LocalStorage manager for search history

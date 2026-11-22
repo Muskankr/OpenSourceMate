@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import TechIcon from "./TechIcon";
 
 export interface SkillsEditorProps {
@@ -14,6 +14,45 @@ export interface SkillsEditorProps {
 }
 
 const SKILL_REGEX = /^[a-zA-Z0-9+#.\- ]{1,50}$/;
+
+/**
+ * Curated list of known programming languages, frameworks, and tools
+ * suggested when users add custom skills and interests.
+ */
+export const KNOWN_SKILL_SUGGESTIONS: string[] = [
+  "Python",
+  "JavaScript",
+  "TypeScript",
+  "React",
+  "Next.js",
+  "Vue.js",
+  "Angular",
+  "Node.js",
+  "Go",
+  "Rust",
+  "Java",
+  "Kotlin",
+  "C",
+  "C++",
+  "C#",
+  "Ruby",
+  "PHP",
+  "Swift",
+  "Dart",
+  "Flutter",
+  "SQL",
+  "PostgreSQL",
+  "MongoDB",
+  "Redis",
+  "Docker",
+  "Kubernetes",
+  "GraphQL",
+  "HTML",
+  "CSS",
+  "Tailwind CSS",
+  "Linux",
+  "Git",
+];
 
 export default function SkillsEditor({
   initialSkills,
@@ -29,9 +68,33 @@ export default function SkillsEditor({
 
   const isDark = theme === "dark";
 
-  const handleAddSkill = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const trimmed = newSkill.trim();
+  // Fast lookup set of repository-detected skills (case-insensitive)
+  const initialSkillsSet = useMemo(() => {
+    return new Set(initialSkills.map((s) => s.trim().toLowerCase()));
+  }, [initialSkills]);
+
+  // Current active skills set (case-insensitive)
+  const currentSkillsSet = useMemo(() => {
+    return new Set(currentSkills.map((s) => s.trim().toLowerCase()));
+  }, [currentSkills]);
+
+  // Dynamic suggestions filtered from known skills list
+  const filteredSuggestions = useMemo(() => {
+    const query = newSkill.trim().toLowerCase();
+    if (!query) {
+      // Suggest up to 6 popular skills not already added
+      return KNOWN_SKILL_SUGGESTIONS.filter((s) => !currentSkillsSet.has(s.toLowerCase())).slice(
+        0,
+        6
+      );
+    }
+    return KNOWN_SKILL_SUGGESTIONS.filter(
+      (s) => s.toLowerCase().includes(query) && !currentSkillsSet.has(s.toLowerCase())
+    ).slice(0, 8);
+  }, [newSkill, currentSkillsSet]);
+
+  const addSkillValue = (skillName: string) => {
+    const trimmed = skillName.trim();
 
     if (!trimmed) {
       setError("Please enter a skill name.");
@@ -50,9 +113,7 @@ export default function SkillsEditor({
       return;
     }
 
-    const alreadyExists = currentSkills.some((s) => s.toLowerCase() === trimmed.toLowerCase());
-
-    if (alreadyExists) {
+    if (currentSkillsSet.has(trimmed.toLowerCase())) {
       setError(`"${trimmed}" is already in your skills list.`);
       return;
     }
@@ -60,6 +121,11 @@ export default function SkillsEditor({
     setError(null);
     onSkillsChange([...currentSkills, trimmed]);
     setNewSkill("");
+  };
+
+  const handleAddSkill = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    addSkillValue(newSkill);
   };
 
   const handleRemoveSkill = (skillToRemove: string) => {
@@ -80,7 +146,8 @@ export default function SkillsEditor({
         <div>
           <h4 className="text-sm font-semibold tracking-wide">Manage Custom Skills</h4>
           <p className={`mt-0.5 text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-            Remove detected technologies or add new skills to customize your issue recommendations.
+            Add skills, coursework, or college tools GitHub cannot detect, or remove technologies to
+            tune your recommendations.
           </p>
         </div>
 
@@ -131,33 +198,56 @@ export default function SkillsEditor({
           </p>
         ) : (
           <div className="flex flex-wrap gap-2" role="group" aria-label="Active skills chips">
-            {currentSkills.map((skill) => (
-              <span
-                key={skill}
-                data-testid={`skill-chip-${skill}`}
-                className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition ${
-                  isDark
-                    ? "border-white/10 bg-white/5 text-gray-200"
-                    : "border-gray-300 bg-white text-gray-800 shadow-xs"
-                }`}
-              >
-                <TechIcon name={skill} theme={theme} className="h-3.5 w-3.5 shrink-0" />
-                <span>{skill}</span>
-                <button
-                  type="button"
-                  data-testid={`remove-skill-${skill}`}
-                  aria-label={`Remove skill ${skill}`}
-                  onClick={() => handleRemoveSkill(skill)}
-                  className={`ml-1 flex h-4 w-4 items-center justify-center rounded-full text-xs font-bold transition ${
-                    isDark
-                      ? "text-gray-400 hover:bg-white/10 hover:text-white"
-                      : "text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+            {currentSkills.map((skill) => {
+              const isAddedByUser = !initialSkillsSet.has(skill.toLowerCase().trim());
+              return (
+                <span
+                  key={skill}
+                  data-testid={`skill-chip-${skill}`}
+                  className={`inline-flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition ${
+                    isAddedByUser
+                      ? isDark
+                        ? "border-purple-500/40 bg-purple-500/10 text-purple-200"
+                        : "border-purple-400 bg-purple-50 text-purple-900 shadow-xs"
+                      : isDark
+                        ? "border-white/10 bg-white/5 text-gray-200"
+                        : "border-gray-300 bg-white text-gray-800 shadow-xs"
                   }`}
                 >
-                  ×
-                </button>
-              </span>
-            ))}
+                  <TechIcon name={skill} theme={theme} className="h-3.5 w-3.5 shrink-0" />
+                  <span>{skill}</span>
+
+                  {/* Mark as "added by you" */}
+                  {isAddedByUser && (
+                    <span
+                      data-testid={`added-by-you-badge-${skill}`}
+                      className={`rounded-md border px-1.5 py-0.2 text-[10px] font-semibold tracking-wide ${
+                        isDark
+                          ? "border-purple-400/30 bg-purple-400/20 text-purple-300"
+                          : "border-purple-300 bg-purple-100 text-purple-800"
+                      }`}
+                      title="Added by you (not detected in public repositories)"
+                    >
+                      added by you
+                    </span>
+                  )}
+
+                  <button
+                    type="button"
+                    data-testid={`remove-skill-${skill}`}
+                    aria-label={`Remove skill ${skill}`}
+                    onClick={() => handleRemoveSkill(skill)}
+                    className={`ml-1 flex h-4 w-4 items-center justify-center rounded-full text-xs font-bold transition ${
+                      isDark
+                        ? "text-gray-400 hover:bg-white/10 hover:text-white"
+                        : "text-gray-500 hover:bg-gray-200 hover:text-gray-900"
+                    }`}
+                  >
+                    ×
+                  </button>
+                </span>
+              );
+            })}
           </div>
         )}
       </div>
@@ -170,13 +260,14 @@ export default function SkillsEditor({
         <div className="relative flex-1">
           <input
             type="text"
+            list="known-skills-suggestions-datalist"
             data-testid="add-skill-input"
             value={newSkill}
             onChange={(e) => {
               setNewSkill(e.target.value);
               if (error) setError(null);
             }}
-            placeholder="Add a skill (e.g. Rust, Go, Docker, React)..."
+            placeholder="Add skills (e.g. Rust, Go, Docker, React)..."
             aria-label="Add a custom skill"
             className={`w-full rounded-xl border px-3 py-2 text-xs outline-none transition ${
               isDark
@@ -184,6 +275,11 @@ export default function SkillsEditor({
                 : "border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-purple-600"
             }`}
           />
+          <datalist id="known-skills-suggestions-datalist">
+            {KNOWN_SKILL_SUGGESTIONS.map((s) => (
+              <option key={s} value={s} />
+            ))}
+          </datalist>
         </div>
 
         <button
@@ -194,6 +290,33 @@ export default function SkillsEditor({
           + Add skill
         </button>
       </form>
+
+      {/* Suggestions from the known skill list */}
+      {filteredSuggestions.length > 0 && (
+        <div
+          data-testid="skill-suggestions-container"
+          className="mt-3 flex flex-wrap items-center gap-1.5 text-xs"
+        >
+          <span className={`text-[11px] font-medium ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+            Suggestions:
+          </span>
+          {filteredSuggestions.map((suggestion) => (
+            <button
+              key={suggestion}
+              type="button"
+              data-testid={`skill-suggestion-${suggestion}`}
+              onClick={() => addSkillValue(suggestion)}
+              className={`inline-flex items-center gap-1 rounded-lg border px-2 py-0.5 text-[11px] font-medium transition ${
+                isDark
+                  ? "border-white/10 bg-white/5 text-gray-300 hover:border-purple-400/50 hover:bg-purple-500/10 hover:text-purple-300"
+                  : "border-gray-200 bg-white text-gray-700 hover:border-purple-300 hover:bg-purple-50 hover:text-purple-800"
+              }`}
+            >
+              <span>+ {suggestion}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Error message */}
       {error && (
