@@ -1,0 +1,62 @@
+name: Sync Repository Labels
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/labels.yml"
+      - ".github/workflows/labels.yml"
+      - ".github/scripts/sync-labels.js"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run in dry-run mode (preview without applying changes)"
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: sync-repository-labels
+  cancel-in-progress: false
+
+jobs:
+  sync-labels:
+    name: Sync Labels from labels.yml
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set Up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Validate scripts and run unit tests
+        run: |
+          node --test .github/scripts/sync-labels.test.js
+          node .github/scripts/sync-labels.js .github/labels.yml
+
+      - name: Synchronize repository labels
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { syncLabels } = require('./.github/scripts/sync-labels.js');
+            const dryRun = context.payload.inputs ? (context.payload.inputs.dry_run === true || context.payload.inputs.dry_run === 'true') : false;
+
+            console.log(`Starting label synchronization for ${context.repo.owner}/${context.repo.repo} (dryRun: ${dryRun})...`);
+
+            const result = await syncLabels({
+              github,
+              context,
+              dryRun
+            });
+
+            console.log(`Synchronization completed successfully.`);

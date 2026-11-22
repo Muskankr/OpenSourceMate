@@ -90,9 +90,14 @@ OpenSourceMate/
 │   └── post-create.sh             # Automated dependency installation and environment setup
 ├── .github/                       # GitHub actions workflows, issue and PR templates
 │   ├── ISSUE_TEMPLATE/            # Templates for bug reports, feature requests, and RFC proposals (#295)
-│   ├── workflows/                 # CI, inactive assignees manager (#265), and contributor workflows
+│   ├── scripts/                   # Workflow helper scripts (inactive assignees, label syncer)
+│   │   ├── check-inactive-assignees.js # Nudge and unassign inactive assignees logic (#265)
+│   │   └── sync-labels.js         # Non-destructive repository label synchronizer (#353)
+│   ├── workflows/                 # CI, label syncer (#353), inactive assignees manager (#265)
 │   │   ├── ci.yml                 # Automated CI running tests with coverage thresholds and reporting (#269)
-│   │   └── inactive-assignees.yml # Scheduled workflow to nudge (5d) and unassign (7d) inactive assignees (#265)
+│   │   ├── inactive-assignees.yml # Scheduled workflow to nudge (5d) and unassign (7d) inactive assignees (#265)
+│   │   └── labels.yml             # Automated label synchronization from .github/labels.yml (#353)
+│   ├── labels.yml                 # Declarative repository label names, colors, and descriptions (#353)
 │   └── PULL_REQUEST_TEMPLATE.md   # Standard pull request description guidelines
 │
 ├── backend/                       # FastAPI backend microservice
