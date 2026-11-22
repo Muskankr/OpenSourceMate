@@ -83,6 +83,7 @@ OpenSourceMate analyzes the user's public GitHub repositories to identify techni
 - Repository count associated with each skill
 - Skill distribution
 - Number of repositories analyzed
+- **Embeddable Skill Badge**: Compact SVG skill badge (`/api/badge/{username}.svg`) for GitHub profile READMEs with a 1-click copy button on the results page (see [Skill Badge Guide](docs/skill-badge.md)).
 
 ### 👥 Contributors Wall
 
@@ -381,6 +382,15 @@ GET /api/health/diagnostics
 ```
 
 Returns detailed diagnostic metrics including GitHub API connectivity and cache performance.
+
+### Embeddable Skill Badge
+
+```http
+GET /api/badge/{username}.svg
+GET /api/v1/badge/{username}.svg
+```
+
+Returns a compact SVG badge displaying the developer's top 3 skills, formatted for GitHub profile READMEs with `Cache-Control` headers and neutral fallback badges on errors or rate limits. See [docs/skill-badge.md](docs/skill-badge.md).
 
 ### Unified Error Format
 
