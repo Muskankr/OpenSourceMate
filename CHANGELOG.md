@@ -7,6 +7,7 @@ All notable changes to OpenSourceMate are recorded here. The format follows
 
 ### Added
 
+- Automation & Tooling: repository label synchronization from `.github/labels.yml` via `.github/workflows/labels.yml` and `.github/scripts/sync-labels.js`, with strict non-destructive preservation of existing labels (`NSoC`, `NSoC-L1/L2/L3`, `good first issue`), automated unit test suite, and dry-run dispatch support (#353).
 - Frontend: Repository Friendliness Score and badge on recommended issues, computing a deterministic 0–100 score from community signals (CONTRIBUTING guide, Code of Conduct, issue templates, README length, recent merged PRs) with an interactive breakdown popover and client-side caching to respect GitHub rate limits.
 
 - Frontend: Learning mode toggle and target skills picker to recommend and prioritize beginner-friendly issues in skills the user wants to learn next, with dedicated card explanations (#Issue).

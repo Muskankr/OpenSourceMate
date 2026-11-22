@@ -1,0 +1,155 @@
+# OpenSourceMate Repository Labels Configuration
+# Managed by .github/workflows/labels.yml and synced via .github/scripts/sync-labels.js
+# References Issue #353 and docs/LABELS.md (Round 2 #30)
+#
+# Rules:
+# - Existing labels in the repository are strictly preserved and never deleted.
+# - Hex colors can be formatted with or without the leading '#' symbol.
+# - Descriptions provide helpful guidance to contributors and maintainers.
+
+# ==============================================================================
+# Difficulty Labels (docs/LABELS.md)
+# ==============================================================================
+- name: "beginner"
+  color: "0e8a16"
+  description: "Small, clear tasks. Great for first-time contributors."
+
+- name: "intermediate"
+  color: "fbca04"
+  description: "Needs some understanding of the codebase."
+
+- name: "hard"
+  color: "d93f0b"
+  description: "Bigger changes that touch several parts of the project."
+
+- name: "good first issue"
+  color: "7057ff"
+  description: "Specially chosen for newcomers."
+
+# ==============================================================================
+# Mentorship & Program Labels (NWOC'26, NSoC - kept per #353)
+# ==============================================================================
+- name: "level1"
+  color: "0e8a16"
+  description: "NWOC'26 Level 1: Beginner tasks, minor bug fixes, docs (10 pts)"
+
+- name: "level2"
+  color: "fbca04"
+  description: "NWOC'26 Level 2: Intermediate features, tests, API routes (25–30 pts)"
+
+- name: "level3"
+  color: "d93f0b"
+  description: "NWOC'26 Level 3: Advanced architecture, core algorithms, ML (45–50 pts)"
+
+- name: "NSoC"
+  color: "1d76db"
+  description: "NJACK Season of Code / Winter of Code participant issue"
+
+- name: "NSoC-L1"
+  color: "0e8a16"
+  description: "NSoC Level 1: Beginner starter task"
+
+- name: "NSoC-L2"
+  color: "fbca04"
+  description: "NSoC Level 2: Intermediate task"
+
+- name: "NSoC-L3"
+  color: "d93f0b"
+  description: "NSoC Level 3: Advanced architecture task"
+
+# ==============================================================================
+# Area / Subsystem Labels (docs/LABELS.md & .github/labeler.yml)
+# ==============================================================================
+- name: "frontend"
+  color: "1d76db"
+  description: "UI, styling and client-side code"
+
+- name: "backend"
+  color: "5319e7"
+  description: "Server logic, APIs and databases"
+
+- name: "docs"
+  color: "0075ca"
+  description: "README, guides and other documentation"
+
+- name: "testing"
+  color: "006b75"
+  description: "Writing or fixing tests"
+
+- name: "devops"
+  color: "6e5494"
+  description: "CI/CD, build and deployment"
+
+- name: "ai-ml"
+  color: "8a2be2"
+  description: "AI and machine learning features"
+
+- name: "accessibility"
+  color: "b60205"
+  description: "Accessibility, keyboard navigation, and WCAG AA compliance"
+
+- name: "security"
+  color: "e11d48"
+  description: "Security scanning, vulnerability fixes, and auth policies"
+
+# ==============================================================================
+# Status / Workflow Labels (docs/LABELS.md)
+# ==============================================================================
+- name: "needs-triage"
+  color: "ededed"
+  description: "New issue that maintainers have not reviewed yet"
+
+- name: "in-progress"
+  color: "fef2c0"
+  description: "Someone is already working on it. Please pick another issue."
+
+- name: "on-hold"
+  color: "c5def5"
+  description: "Temporarily paused by contributor request; exempt from unassignment"
+
+- name: "stale-assignment"
+  color: "f9d0c4"
+  description: "Inactive for 5 days; awaiting update before automated unassignment"
+
+- name: "blocked"
+  color: "d4c5f9"
+  description: "Blocked by an external dependency, PR, or architectural decision"
+
+# ==============================================================================
+# Issue & Pull Request Types (.github/release.yml & standard GitHub labels)
+# ==============================================================================
+- name: "bug"
+  color: "d73a4a"
+  description: "Something isn't working as expected"
+
+- name: "enhancement"
+  color: "a2eeef"
+  description: "New feature or request"
+
+- name: "feature"
+  color: "a2eeef"
+  description: "New functionality or enhancement"
+
+- name: "documentation"
+  color: "0075ca"
+  description: "Improvements or additions to documentation"
+
+- name: "duplicate"
+  color: "cfd3d7"
+  description: "This issue or pull request already exists"
+
+- name: "help wanted"
+  color: "008672"
+  description: "Extra attention or community contribution needed"
+
+- name: "invalid"
+  color: "e4e669"
+  description: "This doesn't seem right or reproducible"
+
+- name: "question"
+  color: "d876e3"
+  description: "Further information is requested"
+
+- name: "wontfix"
+  color: "ffffff"
+  description: "This will not be worked on"
