@@ -14,6 +14,7 @@ export interface IssueCardProps {
   isHidden?: boolean;
   onHide?: () => void;
   onRestore?: () => void;
+  onSelect?: (issue: IssueRecommendation) => void;
 }
 
 export default function IssueCard({
@@ -24,6 +25,7 @@ export default function IssueCard({
   isHidden = false,
   onHide,
   onRestore,
+  onSelect,
 }: IssueCardProps) {
   const isDark = theme === "dark";
 
@@ -273,6 +275,23 @@ export default function IssueCard({
             <span className="text-sm font-bold sm:text-base">{score}%</span>
             <span className="block text-[10px] uppercase tracking-wider text-gray-400">Match</span>
           </div>
+
+          {/* View Details Button (Issue #340 Drawer) */}
+          {onSelect && (
+            <button
+              type="button"
+              onClick={() => onSelect(issue)}
+              data-testid="view-details-button"
+              aria-label={`View details for "${issue.title}"`}
+              className={`w-full sm:w-auto rounded-xl border px-4 py-2 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
+                isDark
+                  ? "border-purple-500/30 bg-purple-500/10 text-purple-300 hover:bg-purple-500/20"
+                  : "border-purple-300 bg-purple-50 text-purple-700 hover:bg-purple-100"
+              }`}
+            >
+              View details
+            </button>
+          )}
 
           {/* Link to GitHub */}
           <a

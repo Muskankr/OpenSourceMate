@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from "react";
 import type { IssueRecommendation } from "../types/api";
 import IssueCard from "./IssueCard";
+import IssueDetailDrawer from "./IssueDetailDrawer";
 import { inferIssueDifficulty, type IssueDifficulty } from "../data/mockIssues";
 import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
 import { rankIssuesForLearningMode, COMMON_TARGET_SKILLS } from "../utils/learningMode";
@@ -29,6 +30,9 @@ export default function RecommendedIssuesList({
   // Learning mode states
   const [isLearningMode, setIsLearningMode] = useState<boolean>(initialLearningMode);
   const [targetSkills, setTargetSkills] = useState<string[]>(initialTargetSkills);
+
+  // Selected issue for detail drawer (Issue #340)
+  const [selectedIssue, setSelectedIssue] = useState<IssueRecommendation | null>(null);
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
@@ -538,10 +542,19 @@ export default function RecommendedIssuesList({
               isHidden={isHidden(issue)}
               onHide={() => hideIssue(issue)}
               onRestore={() => restoreIssue(issue)}
+              onSelect={(selected) => setSelectedIssue(selected)}
             />
           ))}
         </div>
       )}
+
+      {/* Issue Detail Drawer (Issue #340) */}
+      <IssueDetailDrawer
+        issue={selectedIssue}
+        isOpen={!!selectedIssue}
+        onClose={() => setSelectedIssue(null)}
+        theme={theme}
+      />
     </section>
   );
 }

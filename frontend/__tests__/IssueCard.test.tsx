@@ -162,4 +162,17 @@ describe("IssueCard Component", () => {
     expect(friendlinessBadge).toBeInTheDocument();
     expect(friendlinessBadge).toHaveTextContent("100 Very Welcoming");
   });
+
+  it("renders View details button when onSelect is provided and calls it on click", () => {
+    const handleSelect = jest.fn();
+    render(<IssueCard issue={sampleIssue} onSelect={handleSelect} theme="dark" />);
+
+    const viewDetailsBtn = screen.getByTestId("view-details-button");
+    expect(viewDetailsBtn).toBeInTheDocument();
+    expect(viewDetailsBtn).toHaveTextContent("View details");
+
+    viewDetailsBtn.click();
+    expect(handleSelect).toHaveBeenCalledTimes(1);
+    expect(handleSelect).toHaveBeenCalledWith(sampleIssue);
+  });
 });
