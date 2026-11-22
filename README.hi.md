@@ -575,7 +575,7 @@ git push origin feature/your-feature
 - आपने इसका परीक्षण कैसे किया
 - कोई प्रासंगिक स्क्रीनशॉट या उदाहरण
 
-सेटअप, ब्रांच नामकरण, PR सम्मेलनों और कोडिंग मानकों पर विस्तृत दिशा-निर्देशों के लिए [CONTRIBUTING.md](CONTRIBUTING.md) देखें।
+सेटअप, ब्रांच नामकरण, PR सम्मेलनों, स्वचालित रिलीज़ और कोडिंग मानकों पर विस्तृत दिशा-निर्देशों के लिए [CONTRIBUTING.md](CONTRIBUTING.md) और [docs/RELEASES.md](docs/RELEASES.md) देखें।
 
 ---
 

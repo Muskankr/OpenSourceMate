@@ -41,7 +41,7 @@ We recognize three primary roles in the community:
 - **Responsibilities**:
   - Make final decisions on architecture, features, and breaking changes.
   - Approve and merge pull requests into `main`.
-  - Maintain CI/CD pipelines, release management, and package deployments.
+  - Maintain CI/CD pipelines, release management ([docs/RELEASES.md](docs/RELEASES.md)), and package deployments.
   - Enforce the [Code of Conduct](CODE_OF_CONDUCT.md) and handle reported security vulnerabilities ([SECURITY.md](SECURITY.md)).
   - Nominate and onboard new Reviewers and Maintainers.
 

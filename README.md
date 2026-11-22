@@ -574,7 +574,7 @@ Then open a pull request describing:
 - How you tested it
 - Any relevant screenshots or examples
 
-For detailed guidelines on setup, branch naming, PR conventions, and coding standards, see [CONTRIBUTING.md](CONTRIBUTING.md).
+For detailed guidelines on setup, branch naming, PR conventions, automated releases, and coding standards, see [CONTRIBUTING.md](CONTRIBUTING.md) and [docs/RELEASES.md](docs/RELEASES.md).
 
 > ❄️ **Participating in NWOC'26 (NJACK Winter of Code)?** Read the [NWOC'26 Program Guide](PROGRAM_GUIDE.md) for details on issue difficulty levels (L1/L2/L3), scoring, assignment windows, and program FAQs.
 

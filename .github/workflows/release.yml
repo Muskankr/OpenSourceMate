@@ -1,0 +1,36 @@
+name: Release Automation (release-please)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: release-automation
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    name: Run Release Please
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run release-please
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: .github/release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      - name: Output Release Summary
+        if: ${{ steps.release.outputs.release_created }}
+        run: |
+          echo "### 🚀 New Release Published!" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag**: ${{ steps.release.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ steps.release.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release URL**: [View GitHub Release](${{ steps.release.outputs.html_url }})" >> $GITHUB_STEP_SUMMARY
