@@ -362,21 +362,23 @@ Examples:
    git push origin feat/your-feature-name
    ```
 2. Open a Pull Request from your branch to `Muskankr/OpenSourceMate:main`.
-3. Provide a clear and detailed PR description:
+3. Give your pull request a title in Conventional Commits format (e.g. `feat(matching): add skill ranking` or `fix(ui): resolve theme flicker`).
+4. Provide a clear and detailed PR description:
    - What changes were made and why
    - Related issues (use keywords like `Fixes #123` or `Closes #456`)
    - How the changes were tested locally
    - Screenshots or GIFs for any UI changes
-4. Respond to feedback and make any requested revisions.
+5. Respond to feedback and make any requested revisions.
 
-### Updating the changelog
+### Automated Changelog & Releases
 
-Add a line to the `Unreleased` section of [CHANGELOG.md](CHANGELOG.md) when your pull request changes
-what users or contributors see: a new feature, a behaviour change, a bug fix, or a new setup step.
-Put it under `Added`, `Changed` or `Fixed` and keep it to one line. Typo fixes, refactors with no visible
-change and dependency bumps do not need an entry. Maintainers move the `Unreleased` entries under a
-version heading when a release is cut. Releases use the categories in [.github/release.yml](.github/release.yml),
-which GitHub reads from your issue and PR labels.
+Changelog entries and release versions are **automatically maintained** by [release-please](docs/RELEASES.md) based on your pull request title.
+
+- **You do NOT need to manually edit `CHANGELOG.md` in your PR.**
+- Ensure your PR title adheres to [Conventional Commits](#commit-message-guidelines) format (`type(scope): summary`).
+- Our automated **PR Title** workflow (`.github/workflows/pr-title.yml`) verifies this format on every PR.
+- When maintainers merge a PR into `main`, release-please automatically aggregates the changelog entries, bumps package versions, and opens or updates an automated Release PR.
+- For complete maintainer release documentation, see our [Automated Releases Guide](docs/RELEASES.md).
 
 ---
 

@@ -90,10 +90,14 @@ OpenSourceMate/
 │   └── post-create.sh             # Automated dependency installation and environment setup
 ├── .github/                       # GitHub actions workflows, issue and PR templates
 │   ├── ISSUE_TEMPLATE/            # Templates for bug reports, feature requests, and RFC proposals (#295)
-│   ├── workflows/                 # CI, inactive assignees manager (#265), and contributor workflows
+│   ├── release-please-config.json # Automated release generator configuration (#351)
+│   ├── workflows/                 # CI, release automation (#351), inactive assignees manager (#265)
 │   │   ├── ci.yml                 # Automated CI running tests with coverage thresholds and reporting (#269)
-│   │   └── inactive-assignees.yml # Scheduled workflow to nudge (5d) and unassign (7d) inactive assignees (#265)
+│   │   ├── inactive-assignees.yml # Scheduled workflow to nudge (5d) and unassign (7d) inactive assignees (#265)
+│   │   ├── pr-title.yml           # Conventional Commits PR title checker (#351)
+│   │   └── release.yml            # Automated release and changelog manager via release-please (#351)
 │   └── PULL_REQUEST_TEMPLATE.md   # Standard pull request description guidelines
+├── .release-please-manifest.json  # Release version manifest tracking repository version (#351)
 │
 ├── backend/                       # FastAPI backend microservice
 │   ├── app/
