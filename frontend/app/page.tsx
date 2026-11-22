@@ -1670,6 +1670,13 @@ export default function Home() {
             <p>© {new Date().getFullYear()} OpenSourceMate</p>
             <div className="flex flex-wrap items-center gap-3 sm:gap-4">
               <Link
+                href="/accessibility"
+                className="transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded"
+              >
+                Accessibility
+              </Link>
+              <span>•</span>
+              <Link
                 href="/privacy"
                 className="transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded"
               >
