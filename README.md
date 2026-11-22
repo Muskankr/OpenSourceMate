@@ -320,6 +320,20 @@ Interactive OpenAPI documentation (Swagger UI) is accessible at `http://localhos
 
 For curl, Python and JavaScript examples of every endpoint, plus a Bruno request collection, see [API Usage Examples](docs/api-usage-examples.md).
 
+### Command-Line Client (`osm`)
+
+Query developer skill profiles directly from your terminal using the built-in CLI:
+
+```bash
+# Print skill profile as a table
+python scripts/osm.py analyze octocat
+
+# Print as JSON or specify a remote backend
+python scripts/osm.py analyze octocat --json --api-url http://localhost:8000
+```
+
+For full installation and command options, see the [CLI Guide](docs/CLI.md).
+
 ### Run the backend tests
 
 The tests mock the GitHub API, so no network or token is needed.

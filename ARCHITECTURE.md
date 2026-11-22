@@ -121,6 +121,10 @@ OpenSourceMate/
 │   │   ├── config.py              # Environment settings, secrets validation, production assertions
 │   │   ├── exceptions.py          # Custom domain exceptions (e.g. GitHubRateLimitError)
 │   │   └── main.py                # FastAPI entry point, middleware stack, error handlers
+│   ├── osm/                       # OpenSourceMate CLI package (`osm analyze`) (#348)
+│   │   ├── api_client.py          # HTTP client communicating with backend API (#348)
+│   │   ├── cli.py                 # Argparse CLI entry point and commands (#348)
+│   │   └── formatter.py           # Table and JSON output formatters (#348)
 │   ├── evaluation/                # Offline evaluation harness for matching algorithms
 │   │   ├── build_dataset.py       # Script to harvest labeled issue-contributor datasets
 │   │   ├── evaluate.py            # Precision/Recall/NDCG evaluation metrics runner
@@ -164,7 +168,8 @@ OpenSourceMate/
 │   ├── curated-projects.schema.json # JSON Schema for curated projects
 │   └── issue-difficulty-labels.csv# Hand-labelled difficulty evaluation dataset
 │
-├── docs/                          # Architectural specs, audits, and contributor guides
+├── docs/                          # Architectural specs, audits, and contributor guides (including CLI.md)
+├── scripts/                       # Dev, validation, and CLI scripts (scripts/osm.py)
 ├── CONTRIBUTING.md                # Contributor setup, PR process, and code standards
 ├── GOVERNANCE.md                  # Project governance, roles, decisions, and progression (#296)
 ├── LICENSE                        # MIT License
