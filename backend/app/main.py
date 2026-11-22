@@ -12,6 +12,7 @@ from app.api.routes.issues import router as issues_router
 from app.api.routes.matching import router as matching_router
 from app.api.routes.friendliness import router as friendliness_router
 from app.api.routes.text_skills import router as text_skills_router
+from app.api.routes.badge import router as badge_router
 from app.config import get_settings
 from app.exceptions import APIException
 from app.schemas.openapi_serializers import (
@@ -378,6 +379,7 @@ app.include_router(ai_router, prefix="/api/v1", include_in_schema=True)
 app.include_router(matching_router, prefix="/api/v1", include_in_schema=True)
 app.include_router(friendliness_router, prefix="/api/v1", include_in_schema=True)
 app.include_router(text_skills_router, prefix="/api/v1", include_in_schema=True)
+app.include_router(badge_router, prefix="/api/v1", include_in_schema=True)
 
 # Legacy /api/ Routers (Backward Compatibility)
 app.include_router(github_router, prefix="/api", include_in_schema=False)
@@ -386,3 +388,4 @@ app.include_router(ai_router, prefix="/api", include_in_schema=False)
 app.include_router(matching_router, prefix="/api", include_in_schema=False)
 app.include_router(friendliness_router, prefix="/api", include_in_schema=False)
 app.include_router(text_skills_router, prefix="/api", include_in_schema=False)
+app.include_router(badge_router, prefix="/api", include_in_schema=False)

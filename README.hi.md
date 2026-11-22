@@ -82,6 +82,7 @@ OpenSourceMate यूज़र की सार्वजनिक GitHub रि�
 - प्रत्येक कौशल से जुड़ी रिपॉजिटरी संख्या
 - कौशल वितरण (skill distribution)
 - विश्लेषित रिपॉजिटरी की कुल संख्या
+- **एम्बेडेबल स्किल बैज (Embeddable Skill Badge)**: अपने GitHub प्रोफ़ाइल README के लिए कॉम्पैक्ट SVG स्किल बैज (`/api/badge/{username}.svg`) और 1-क्लिक कॉपी बटन (देखें [स्किल बैज गाइड](docs/skill-badge.md))।
 
 ### 👥 योगदानकर्ता दीवार (Contributors Wall)
 
@@ -380,6 +381,15 @@ GET /api/health/diagnostics
 ```
 
 GitHub API कनेक्टिविटी और कैश प्रदर्शन सहित विस्तृत डायग्नोस्टिक मेट्रिक्स लौटाता है।
+
+### एम्बेडेबल स्किल बैज (Embeddable Skill Badge)
+
+```http
+GET /api/badge/{username}.svg
+GET /api/v1/badge/{username}.svg
+```
+
+डेवलपर के शीर्ष 3 कौशल (top 3 skills) प्रदर्शित करने वाला कॉम्पैक्ट SVG बैज लौटाता है, जो GitHub प्रोफ़ाइल README के लिए उपयुक्त है। देखें [docs/skill-badge.md](docs/skill-badge.md)।
 
 ### एकीकृत एरर प्रारूप (Unified Error Format)
 

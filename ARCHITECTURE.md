@@ -102,6 +102,7 @@ OpenSourceMate/
 │   │   ├── api/                   # REST API routes and endpoints
 │   │   │   └── routes/
 │   │   │       ├── ai.py          # /api/ai endpoints (issue analysis)
+│   │   │       ├── badge.py       # /api/badge endpoints (embeddable SVG skill badges #347)
 │   │   │       ├── github.py      # /api/github endpoints (profile, repos, skills)
 │   │   │       ├── issues.py      # /api/issues endpoints (issue search)
 │   │   │       └── matching.py    # /api/matching endpoints (contributor recommendations)
@@ -110,6 +111,7 @@ OpenSourceMate/
 │   │   ├── schemas/               # Request/response schemas and serializers
 │   │   │   └── serializers.py     # Pydantic data models for typed serialization
 │   │   ├── services/              # Core business logic and computational services
+│   │   │   ├── badge_service.py   # SVG badge generator, XML escaping, neutral fallbacks (#347)
 │   │   │   ├── embedding_service.py # Vector embeddings and cosine similarity
 │   │   │   ├── github_service.py  # Asynchronous HTTP client for GitHub REST API
 │   │   │   ├── issue_service.py   # GitHub issue discovery and filtering
@@ -139,6 +141,7 @@ OpenSourceMate/
 │   │   ├── not-found.tsx          # 404 page
 │   │   └── page.tsx               # Main single-page application dashboard
 │   ├── components/                # Modular React UI components
+│   │   ├── CopyBadgeButton.tsx    # "Copy badge Markdown" button for GitHub profile READMEs (#347)
 │   │   ├── ExportMenu.tsx         # JSON/Markdown analysis exporter
 │   │   ├── FAQ.tsx                # Frequently asked questions collapsible panel
 │   │   ├── GitHubLink.tsx         # External link widget with safety attributes
