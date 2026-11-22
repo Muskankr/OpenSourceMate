@@ -145,6 +145,20 @@ function CompareContent() {
             OpenSourceMate Developer Comparison • Built with Next.js &amp; Tailwind CSS
           </p>
           <span className="hidden sm:inline">•</span>
+          <Link
+            href="/accessibility"
+            className="transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded"
+          >
+            Accessibility
+          </Link>
+          <span className="hidden sm:inline">•</span>
+          <Link
+            href="/privacy"
+            className="transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded"
+          >
+            Privacy
+          </Link>
+          <span className="hidden sm:inline">•</span>
           <BuildVersionBadge theme={theme} />
         </div>
       </footer>

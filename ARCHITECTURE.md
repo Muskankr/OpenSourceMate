@@ -467,6 +467,9 @@ Defined in `backend/app/config.py` using Pydantic `BaseSettings`:
 * Located under `frontend/app/`.
 * `layout.tsx`: Configures viewport metadata, fonts, and dark mode theme classes.
 * `page.tsx`: Single-page dashboard orchestrating user state, profile queries, skill cards, issue modals, and export utilities.
+* `accessibility/page.tsx`: Accessibility statement page detailing WCAG 2.2 AA target standards, keyboard operability, color-blind safe palettes, known audit limitations, and feedback reporting (#334).
+* `privacy/page.tsx`: Privacy policy and public data handling disclosures.
+* `compare/page.tsx`: Side-by-side comparison of two GitHub developer skill profiles.
 * `error.tsx` & `global-error.tsx`: React error boundaries capturing unexpected client-side runtime errors.
 * `not-found.tsx`: Accessible custom 404 page.
 

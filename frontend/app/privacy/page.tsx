@@ -165,6 +165,21 @@ export default function PrivacyPage() {
             </a>
             .
           </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-gray-500">
+            <Link
+              href="/"
+              className="text-purple-400 underline hover:text-purple-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded"
+            >
+              Back to Home
+            </Link>
+            <span>•</span>
+            <Link
+              href="/accessibility"
+              className="text-purple-400 underline hover:text-purple-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded"
+            >
+              Accessibility Statement
+            </Link>
+          </div>
         </div>
       </main>
     </div>
