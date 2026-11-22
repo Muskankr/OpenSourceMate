@@ -189,4 +189,25 @@ describe("RecommendedIssuesList Component", () => {
     const restoredCards = screen.getAllByRole("article");
     expect(restoredCards[0]).toHaveTextContent("vercel/next.js");
   });
+
+  it("opens the IssueDetailDrawer when View details is clicked and closes on Escape", () => {
+    render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} />);
+
+    // Initially no drawer dialog is open
+    expect(screen.queryByRole("dialog")).toBeNull();
+
+    // Click "View details" on the first issue
+    const viewDetailsButtons = screen.getAllByTestId("view-details-button");
+    expect(viewDetailsButtons.length).toBeGreaterThan(0);
+    fireEvent.click(viewDetailsButtons[0]);
+
+    // Drawer is now open with dialog role
+    const dialog = screen.getByRole("dialog");
+    expect(dialog).toBeInTheDocument();
+    expect(screen.getByText("Issue Description")).toBeInTheDocument();
+
+    // Close on Escape key
+    fireEvent.keyDown(window, { key: "Escape" });
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
 });

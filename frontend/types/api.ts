@@ -52,6 +52,9 @@ export interface IssueRecommendation {
   comments: number;
   created_at: string;
   updated_at: string;
+  body?: string;
+  author?: string;
+  number?: number;
   language?: string;
   match_score?: number;
   score?: number;

@@ -478,6 +478,7 @@ Defined in `backend/app/config.py` using Pydantic `BaseSettings`:
 * **RecentSearches (`components/RecentSearches.tsx`)**: Displays clickable pills for previous searches stored in browser `localStorage`.
 * **StarterCommentModal (`components/StarterCommentModal.tsx`)**: Generates polite, customizable markdown comments for claiming GitHub issues, with a one-click copy button.
 * **TechIcon (`components/TechIcon.tsx`)**: Renders inline SVG icons for 25+ common languages and frameworks with a neutral fallback icon. Fully compliant with CSP (zero external network requests) and accessibility standards (`aria-hidden="true"`), with seamless light and dark mode contrast (#299).
+* **IssueDetailDrawer (`components/IssueDetailDrawer.tsx`)**: Accessible slide-over drawer displaying issue details, comment counts, labels, metadata, and body rendered with zero-dependency safe Markdown and XSS protection (#340).
 * **SavedIssuesModal (`components/SavedIssuesModal.tsx`)**: Slide-out drawer displaying issues bookmarked by the user.
 * **ExportMenu (`components/ExportMenu.tsx`)**: One-click download of profile and skill analysis in JSON or Markdown format.
 
