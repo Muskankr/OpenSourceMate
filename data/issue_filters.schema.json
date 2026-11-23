@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "IssueFiltersConfig",
+  "description": "Configuration schema for filtering assigned, archived, and inactive repository issues",
+  "type": "object",
+  "properties": {
+    "skip_assigned": {
+      "type": "boolean",
+      "description": "Skip issues that already have one or more assignees assigned"
+    },
+    "skip_archived": {
+      "type": "boolean",
+      "description": "Skip issues belonging to archived repositories"
+    },
+    "max_repo_inactive_days": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Maximum days of repository inactivity allowed before issues are skipped (0 to disable)"
+    }
+  },
+  "required": ["skip_assigned", "skip_archived", "max_repo_inactive_days"],
+  "additionalProperties": false
+}

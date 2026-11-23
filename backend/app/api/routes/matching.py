@@ -44,6 +44,9 @@ async def get_matched_issues(
     username: str,
     exclude_stale: bool = Query(default=False),
     skills: list[str] | None = Query(default=None),
+    skip_assigned: bool | None = Query(default=None),
+    skip_archived: bool | None = Query(default=None),
+    max_repo_inactive_days: int | None = Query(default=None),
 ):
     validated_username = validate_github_username(username)
 
@@ -119,6 +122,9 @@ async def get_matched_issues(
                 language=skill,
                 label="good first issue",
                 per_page=10,
+                skip_assigned=skip_assigned,
+                skip_archived=skip_archived,
+                max_repo_inactive_days=max_repo_inactive_days,
             )
 
             found_issues.extend(result["issues"])

@@ -1,0 +1,5 @@
+{
+  "skip_assigned": true,
+  "skip_archived": true,
+  "max_repo_inactive_days": 90
+}

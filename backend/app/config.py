@@ -93,6 +93,18 @@ class Settings(BaseSettings):
     api_rate_limit_burst: int = 25
 
     # -------------------------------------------------------------------------
+    # Issue Filtering Configuration (Issue #25 extension)
+    # -------------------------------------------------------------------------
+    # Skip issues that already have one or more assignees assigned
+    issue_filter_skip_assigned: bool = True
+    # Skip issues belonging to archived repositories
+    issue_filter_skip_archived: bool = True
+    # Maximum days of repository inactivity allowed before issues are skipped (0 to disable)
+    issue_filter_max_repo_inactive_days: int = 90
+    # Optional path to JSON configuration file overriding filter thresholds
+    issue_filter_config_path: str = "data/issue_filters.json"
+
+    # -------------------------------------------------------------------------
     # AI Analysis Configuration
     # -------------------------------------------------------------------------
     ai_api_key: str | None = None
