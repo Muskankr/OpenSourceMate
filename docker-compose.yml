@@ -1,0 +1,78 @@
+# ==============================================================================
+# OpenSourceMate Docker Compose
+# Starts both frontend (Next.js) and backend (FastAPI) with a single command:
+#   docker compose up
+# ==============================================================================
+name: opensourcemate
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: opensourcemate-backend
+    ports:
+      - "8000:8000"
+    # Reads environment variables if .env files exist (safe on clean clone)
+    env_file:
+      - path: ./.env
+        required: false
+      - path: ./backend/.env
+        required: false
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      - DEBUG=${DEBUG:-True}
+      - SECRET_KEY=${SECRET_KEY:-dev-insecure-secret-key-change-in-production}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-["*"]}
+      - CORS_ORIGINS=${CORS_ORIGINS:-["http://localhost:3000","http://127.0.0.1:3000","https://open-source-mate-tawny.vercel.app"]}
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+      - AI_API_KEY=${AI_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
+      - PORT=8000
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    networks:
+      - osm-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: opensourcemate-frontend
+    ports:
+      - "3000:3000"
+    # Reads environment variables if .env files exist (safe on clean clone)
+    env_file:
+      - path: ./.env
+        required: false
+      - path: ./frontend/.env
+        required: false
+      - path: ./frontend/.env.local
+        required: false
+    environment:
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://localhost:8000}
+      - NEXT_PUBLIC_USE_MOCKS=${NEXT_PUBLIC_USE_MOCKS:-false}
+      - HOSTNAME=0.0.0.0
+      - PORT=3000
+    depends_on:
+      backend:
+        condition: service_started
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    networks:
+      - osm-network
+
+networks:
+  osm-network:
+    name: opensourcemate-network
+    driver: bridge

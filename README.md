@@ -35,6 +35,7 @@ The project is being developed with a focus on making open-source contribution d
 - [🛠️ Tech Stack](#%EF%B8%8F-tech-stack)
 - [🚀 Getting Started](#-getting-started)
   - [Develop in GitHub Codespaces](#develop-in-github-codespaces)
+  - [🐳 Run with Docker Compose (Single Command)](#-run-with-docker-compose-single-command)
   - [Prerequisites](#prerequisites)
   - [1. Clone the repository](#1-clone-the-repository)
   - [2. Run the frontend](#2-run-the-frontend)
@@ -205,6 +206,54 @@ You can develop OpenSourceMate entirely in your browser or through VS Code with 
 
 ---
 
+### 🐳 Run with Docker Compose (Single Command)
+
+Contributors can run both the frontend and backend with a single command from a clean clone, without needing to install or configure Python, Node.js, or virtual environments locally:
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/Muskankr/OpenSourceMate.git
+cd OpenSourceMate
+
+# 2. Start all services
+docker compose up
+```
+
+Both services start automatically:
+
+- **Frontend UI:** [`http://localhost:3000`](http://localhost:3000)
+- **Backend API:** [`http://localhost:8000`](http://localhost:8000)
+- **Interactive OpenAPI Docs:** [`http://localhost:8000/docs`](http://localhost:8000/docs)
+
+The entire profile analysis and issue recommendation flow works out of the box with zero setup required.
+
+#### Environment Settings & Keeping Secrets Out of Images
+
+- **Clean-clone defaults:** Both containers boot with safe local development defaults. No API keys or credentials are required for local analysis.
+- **Configuring optional settings:** To elevate GitHub rate limits or enable AI-powered analysis, create a root `.env` or service-specific `backend/.env` file:
+  ```bash
+  # Windows PowerShell
+  Copy-Item .env.example .env
+  # macOS / Linux
+  cp .env.example .env
+  ```
+  Set your `GITHUB_TOKEN` or `AI_API_KEY`. Docker Compose automatically forwards these settings into the containers at runtime.
+- **Keeping secrets out of images:** Secrets and tokens are **never baked into image layers**. `.dockerignore` files for both root and individual services strictly exclude `.env`, `.env.*`, certificates, and private credentials.
+
+#### Common Docker Compose Commands
+
+| Command                           | Description                                         |
+| --------------------------------- | --------------------------------------------------- |
+| `docker compose up`               | Build (if necessary) and start frontend and backend |
+| `docker compose up -d`            | Start services in the background (detached mode)    |
+| `docker compose up --build`       | Rebuild images after changing code or dependencies  |
+| `docker compose down`             | Stop and remove running containers and network      |
+| `docker compose logs -f`          | Follow live aggregated logs from both services      |
+| `docker compose logs -f backend`  | Follow live logs from the backend only              |
+| `docker compose logs -f frontend` | Follow live logs from the frontend only             |
+
+---
+
 ### Prerequisites
 
 Make sure you have the following installed:
@@ -339,17 +388,20 @@ A minimum 80% coverage threshold is enforced by CI.
 
 For developer convenience, common tasks can be run directly from the repository root using `make` (macOS/Linux) or the PowerShell helper script (Windows):
 
-| Task | macOS / Linux (`make`) | Windows PowerShell (`.\scripts\dev.ps1`) |
-|---|---|---|
-| **Install all dependencies** | `make install` | `.\scripts\dev.ps1 install` |
-| **Run frontend dev server** | `make dev-frontend` | `.\scripts\dev.ps1 dev-frontend` |
-| **Run backend dev server** | `make dev-backend` | `.\scripts\dev.ps1 dev-backend` |
-| **Run all linters** | `make lint` | `.\scripts\dev.ps1 lint` |
-| **Run code formatters** | `make format` | `.\scripts\dev.ps1 format` |
-| **Run all tests** | `make test` | `.\scripts\dev.ps1 test` |
-| **Run backend tests** | `make test-backend` | `.\scripts\dev.ps1 test-backend` |
-| **Run frontend tests** | `make test-frontend` | `.\scripts\dev.ps1 test-frontend` |
-| **Clean cache files** | `make clean` | `.\scripts\dev.ps1 clean` |
+| Task                            | macOS / Linux (`make`) | Windows PowerShell (`.\scripts\dev.ps1`) |
+| ------------------------------- | ---------------------- | ---------------------------------------- |
+| **Run all with Docker Compose** | `make docker-up`       | `.\scripts\dev.ps1 docker-up`            |
+| **Stop Docker Compose**         | `make docker-down`     | `.\scripts\dev.ps1 docker-down`          |
+| **Build Docker images**         | `make docker-build`    | `.\scripts\dev.ps1 docker-build`         |
+| **Install all dependencies**    | `make install`         | `.\scripts\dev.ps1 install`              |
+| **Run frontend dev server**     | `make dev-frontend`    | `.\scripts\dev.ps1 dev-frontend`         |
+| **Run backend dev server**      | `make dev-backend`     | `.\scripts\dev.ps1 dev-backend`          |
+| **Run all linters**             | `make lint`            | `.\scripts\dev.ps1 lint`                 |
+| **Run code formatters**         | `make format`          | `.\scripts\dev.ps1 format`               |
+| **Run all tests**               | `make test`            | `.\scripts\dev.ps1 test`                 |
+| **Run backend tests**           | `make test-backend`    | `.\scripts\dev.ps1 test-backend`         |
+| **Run frontend tests**          | `make test-frontend`   | `.\scripts\dev.ps1 test-frontend`        |
+| **Clean cache files**           | `make clean`           | `.\scripts\dev.ps1 clean`                |
 
 ---
 
@@ -400,6 +452,7 @@ All error responses across all API endpoints return a standardized JSON structur
 ```
 
 Common error codes:
+
 - `INVALID_USERNAME` (HTTP 400): Username violates GitHub format constraints.
 - `NOT_FOUND` (HTTP 404): Requested GitHub user or resource not found.
 - `VALIDATION_ERROR` (HTTP 422): Request parameters or body payload failed schema validation.
@@ -428,7 +481,7 @@ To configure your local environment:
 2. **Copy `frontend/.env.example` to `frontend/.env.local`:**
    - Windows (PowerShell): `Copy-Item frontend\.env.example frontend\.env.local`
    - macOS / Linux: `cp frontend/.env.example frontend/.env.local`
-   *(Note: Next.js loads environment variables from `.env`, `.env.development`, and `.env.local`. For local development, copying to `.env.local` is recommended because it takes precedence and is excluded from source control by default).*
+     _(Note: Next.js loads environment variables from `.env`, `.env.development`, and `.env.local`. For local development, copying to `.env.local` is recommended because it takes precedence and is excluded from source control by default)._
 3. **Replace placeholder values with your own credentials:**
    - Edit the newly created `.env` files and replace placeholder values with your own API keys or tokens (e.g., `GITHUB_TOKEN` for higher rate limits or `AI_API_KEY` for AI analysis).
 4. **Configure the correct backend API URL:**
@@ -438,29 +491,30 @@ To configure your local environment:
 
 ### Supported Environment Variables
 
-| Variable | Location | Required | Description |
-|---|---|---|---|
-| `ENVIRONMENT` | `backend/.env` | Dev: No, Prod: No | Target runtime environment: `development` (default), `production`, or `testing`. Controls security assertions and defaults. |
-| `DEBUG` | `backend/.env` | Dev: No, Prod: No | Enables FastAPI debug mode. In development, defaults to `True`. In production, strictly defaults to `False` (setting `True` in production fails loudly). |
-| `SECRET_KEY` | `backend/.env` | Dev: No, Prod: **Yes** | Cryptographic secret key for signing and security. In development, a default dev key is used. In production, **strictly required** (minimum 16 characters); startup fails loudly if unset or default. |
-| `ALLOWED_HOSTS` | `backend/.env` | Dev: No, Prod: No | Comma-separated list or JSON array of allowed HTTP Host headers for `TrustedHostMiddleware`. Safe default: `["*"]` (permits all hosts). In production, configure exact domain names. |
-| `CORS_ORIGINS` | `backend/.env` | Dev: No, Prod: No | Comma-separated list or JSON array of allowed frontend origins. Default: `["http://localhost:3000", "http://127.0.0.1:3000", "https://open-source-mate-tawny.vercel.app"]`. |
-| `CORS_ALLOW_CREDENTIALS` | `backend/.env` | Dev: No, Prod: No | Boolean indicating whether cross-origin cookies and authorization headers are supported. Safe default: `False`. |
-| `CORS_ALLOW_METHODS` | `backend/.env` | Dev: No, Prod: No | Comma-separated list or JSON array of permitted HTTP methods. Default: `["*"]`. |
-| `CORS_ALLOW_HEADERS` | `backend/.env` | Dev: No, Prod: No | Comma-separated list or JSON array of permitted HTTP headers. Default: `["*"]`. |
-| `GITHUB_TOKEN` | `backend/.env` | Dev: No, Prod: No | GitHub Personal Access Token (classic or fine-grained). Raises GitHub REST API rate limits from 60 to 5,000 requests/hour. Safe default: empty (unauthenticated requests). To obtain one, navigate to GitHub **Settings > Developer Settings > Personal access tokens** and generate a token (public read-only access is sufficient). |
-| `GITHUB_CACHE_TTL` | `backend/.env` | Dev: No, Prod: No | In-memory cache duration (in seconds) for GitHub profile and repository API responses. Safe default: `300` (5 minutes). Set to `0` to disable in-memory caching during development. |
-| `GITHUB_MAX_REPO_PAGES` | `backend/.env` | Dev: No, Prod: No | Maximum number of pagination calls permitted per user profile fetch. Safe default: `3`. |
-| `GITHUB_REPOS_PER_PAGE` | `backend/.env` | Dev: No, Prod: No | Number of repositories requested per page from the GitHub API (maximum allowed by GitHub is 100). Safe default: `100`. |
-| `GITHUB_MAX_REPOS_CAP` | `backend/.env` | Dev: No, Prod: No | Sensible ceiling for total repositories analyzed per user profile. Safe default: `300`. |
-| `AI_API_KEY` | `backend/.env` | Dev: No, Prod: No | OpenAI API key used for optional AI-powered issue analysis (`/api/ai/analyze-issue`). Safe default: empty (AI analysis endpoints return graceful fallback recommendations without errors). To obtain one, generate an API key at [platform.openai.com](https://platform.openai.com/). |
-| `AI_MODEL` | `backend/.env` | Dev: No, Prod: No | Model name passed to OpenAI when `AI_API_KEY` is set. Safe default: `gpt-4o-mini`. |
-| `GEMINI_API_KEY` | `backend/.env` | Dev: No, Prod: No | Optional Google Gemini API key supported by `AISettings`. Safe default: empty. |
-| `OSM_MAX_EXPLANATION_WORDS` | `backend/.env` | Dev: No, Prod: No | Maximum word count for AI-generated issue match explanations. Safe default: `50`. |
-| `OSM_USE_EMBEDDINGS` | `backend/.env` | Dev: No, Prod: No | Flag (`true`/`false`) to enable optional semantic sentence-transformers embeddings for issue matching. Safe default: `false`. |
-| `NEXT_PUBLIC_API_URL` | `frontend/.env.local` | Dev: No, Prod: **Yes** | Base URL of the FastAPI backend server accessed by the Next.js frontend. Safe default: `http://localhost:8000`. In production, set to your deployed backend API URL. |
+| Variable                    | Location              | Required               | Description                                                                                                                                                                                                                                                                                                                           |
+| --------------------------- | --------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ENVIRONMENT`               | `backend/.env`        | Dev: No, Prod: No      | Target runtime environment: `development` (default), `production`, or `testing`. Controls security assertions and defaults.                                                                                                                                                                                                           |
+| `DEBUG`                     | `backend/.env`        | Dev: No, Prod: No      | Enables FastAPI debug mode. In development, defaults to `True`. In production, strictly defaults to `False` (setting `True` in production fails loudly).                                                                                                                                                                              |
+| `SECRET_KEY`                | `backend/.env`        | Dev: No, Prod: **Yes** | Cryptographic secret key for signing and security. In development, a default dev key is used. In production, **strictly required** (minimum 16 characters); startup fails loudly if unset or default.                                                                                                                                 |
+| `ALLOWED_HOSTS`             | `backend/.env`        | Dev: No, Prod: No      | Comma-separated list or JSON array of allowed HTTP Host headers for `TrustedHostMiddleware`. Safe default: `["*"]` (permits all hosts). In production, configure exact domain names.                                                                                                                                                  |
+| `CORS_ORIGINS`              | `backend/.env`        | Dev: No, Prod: No      | Comma-separated list or JSON array of allowed frontend origins. Default: `["http://localhost:3000", "http://127.0.0.1:3000", "https://open-source-mate-tawny.vercel.app"]`.                                                                                                                                                           |
+| `CORS_ALLOW_CREDENTIALS`    | `backend/.env`        | Dev: No, Prod: No      | Boolean indicating whether cross-origin cookies and authorization headers are supported. Safe default: `False`.                                                                                                                                                                                                                       |
+| `CORS_ALLOW_METHODS`        | `backend/.env`        | Dev: No, Prod: No      | Comma-separated list or JSON array of permitted HTTP methods. Default: `["*"]`.                                                                                                                                                                                                                                                       |
+| `CORS_ALLOW_HEADERS`        | `backend/.env`        | Dev: No, Prod: No      | Comma-separated list or JSON array of permitted HTTP headers. Default: `["*"]`.                                                                                                                                                                                                                                                       |
+| `GITHUB_TOKEN`              | `backend/.env`        | Dev: No, Prod: No      | GitHub Personal Access Token (classic or fine-grained). Raises GitHub REST API rate limits from 60 to 5,000 requests/hour. Safe default: empty (unauthenticated requests). To obtain one, navigate to GitHub **Settings > Developer Settings > Personal access tokens** and generate a token (public read-only access is sufficient). |
+| `GITHUB_CACHE_TTL`          | `backend/.env`        | Dev: No, Prod: No      | In-memory cache duration (in seconds) for GitHub profile and repository API responses. Safe default: `300` (5 minutes). Set to `0` to disable in-memory caching during development.                                                                                                                                                   |
+| `GITHUB_MAX_REPO_PAGES`     | `backend/.env`        | Dev: No, Prod: No      | Maximum number of pagination calls permitted per user profile fetch. Safe default: `3`.                                                                                                                                                                                                                                               |
+| `GITHUB_REPOS_PER_PAGE`     | `backend/.env`        | Dev: No, Prod: No      | Number of repositories requested per page from the GitHub API (maximum allowed by GitHub is 100). Safe default: `100`.                                                                                                                                                                                                                |
+| `GITHUB_MAX_REPOS_CAP`      | `backend/.env`        | Dev: No, Prod: No      | Sensible ceiling for total repositories analyzed per user profile. Safe default: `300`.                                                                                                                                                                                                                                               |
+| `AI_API_KEY`                | `backend/.env`        | Dev: No, Prod: No      | OpenAI API key used for optional AI-powered issue analysis (`/api/ai/analyze-issue`). Safe default: empty (AI analysis endpoints return graceful fallback recommendations without errors). To obtain one, generate an API key at [platform.openai.com](https://platform.openai.com/).                                                 |
+| `AI_MODEL`                  | `backend/.env`        | Dev: No, Prod: No      | Model name passed to OpenAI when `AI_API_KEY` is set. Safe default: `gpt-4o-mini`.                                                                                                                                                                                                                                                    |
+| `GEMINI_API_KEY`            | `backend/.env`        | Dev: No, Prod: No      | Optional Google Gemini API key supported by `AISettings`. Safe default: empty.                                                                                                                                                                                                                                                        |
+| `OSM_MAX_EXPLANATION_WORDS` | `backend/.env`        | Dev: No, Prod: No      | Maximum word count for AI-generated issue match explanations. Safe default: `50`.                                                                                                                                                                                                                                                     |
+| `OSM_USE_EMBEDDINGS`        | `backend/.env`        | Dev: No, Prod: No      | Flag (`true`/`false`) to enable optional semantic sentence-transformers embeddings for issue matching. Safe default: `false`.                                                                                                                                                                                                         |
+| `NEXT_PUBLIC_API_URL`       | `frontend/.env.local` | Dev: No, Prod: **Yes** | Base URL of the FastAPI backend server accessed by the Next.js frontend. Safe default: `http://localhost:8000`. In production, set to your deployed backend API URL.                                                                                                                                                                  |
 
 > **Framework & Dev/Prod Notes:**
+>
 > - The backend is implemented in **FastAPI** using Pydantic Settings, not Django. Django-specific settings are not used.
 > - In **development** (`ENVIRONMENT=development`), `DEBUG` defaults to `True` and an insecure default `SECRET_KEY` is allowed so developers can run `uvicorn app.main:app --reload` immediately without configuration.
 > - In **production** (`ENVIRONMENT=production`), the application enforces strict production invariants: `DEBUG` must be `False`, and `SECRET_KEY` must be a high-entropy string of at least 16 characters. If `SECRET_KEY` is unset, empty, or using the default key, the application **fails loudly on startup** with a descriptive `ValueError`.
