@@ -45,6 +45,58 @@ class NotFoundError(APIException):
         )
 
 
+class UserNotFoundError(NotFoundError):
+    """Raised when a requested GitHub user does not exist."""
+
+    def __init__(self, username: str = "", message: str | None = None) -> None:
+        msg = message or (f"GitHub user '{username}' could not be found." if username else "GitHub user not found")
+        super().__init__(
+            message=msg,
+            details={"username": username, "error_type": "user_not_found"} if username else None,
+        )
+        self.code = "USER_NOT_FOUND"
+
+
+class NoPublicRepositoriesError(APIException):
+    """Raised when a GitHub user has no public repositories or only forks to analyze."""
+
+    def __init__(self, username: str, only_forks: bool = False) -> None:
+        code = "ONLY_FORKS" if only_forks else "NO_PUBLIC_REPOSITORIES"
+        message = (
+            f"GitHub user '{username}' only has forked repositories."
+            if only_forks
+            else f"GitHub user '{username}' has no public repositories to analyze."
+        )
+        super().__init__(
+            status_code=422,
+            code=code,
+            message=message,
+            details={
+                "username": username,
+                "only_forks": only_forks,
+                "error_type": "only_forks" if only_forks else "no_public_repositories",
+            },
+        )
+
+
+class UpstreamFailureError(APIException):
+    """Raised when an upstream external dependency (GitHub API) fails, times out, or returns 5xx."""
+
+    def __init__(
+        self,
+        message: str = "Upstream GitHub service is temporarily unavailable or returned a server error.",
+        details: Any = None,
+        status_code: int = 502,
+        code: str = "UPSTREAM_FAILURE",
+    ) -> None:
+        super().__init__(
+            status_code=status_code,
+            code=code,
+            message=message,
+            details=details,
+        )
+
+
 class RateLimitExceededError(APIException):
     """Raised when GitHub or internal rate limits are exceeded."""
 

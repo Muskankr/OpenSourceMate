@@ -7,6 +7,8 @@ All notable changes to OpenSourceMate are recorded here. The format follows
 
 ### Added
 
+- Frontend & Backend: Typed error handling and actionable guidance for GitHub username edge cases (non-existent users, profiles with zero public repositories, and fork-only profiles) as well as upstream GitHub service degradation. The analyzer validates usernames client-side before submission, returns distinct typed API errors (`USER_NOT_FOUND`, `NO_PUBLIC_REPOSITORIES`, `ONLY_FORKS`, `UPSTREAM_FAILURE`), and renders friendly tailored messages with suggested next steps and retry actions.
+
 - Frontend: Repository Friendliness Score and badge on recommended issues, computing a deterministic 0–100 score from community signals (CONTRIBUTING guide, Code of Conduct, issue templates, README length, recent merged PRs) with an interactive breakdown popover and client-side caching to respect GitHub rate limits.
 
 - Frontend: Learning mode toggle and target skills picker to recommend and prioritize beginner-friendly issues in skills the user wants to learn next, with dedicated card explanations (#Issue).

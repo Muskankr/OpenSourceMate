@@ -15,6 +15,8 @@ export type AnalyzerState =
       requestId: number;
       username: string;
       message: string;
+      suggestion?: string;
+      errorCode?: string;
       canRetry: boolean;
       serviceError?: ServiceErrorDetails;
       data?: AnalyzerData;
@@ -36,6 +38,8 @@ export type AnalyzerAction =
       type: "error";
       requestId: number;
       message: string;
+      suggestion?: string;
+      errorCode?: string;
       canRetry: boolean;
       serviceError?: ServiceErrorDetails;
     }
@@ -46,7 +50,7 @@ export type AnalyzerAction =
       resetAt?: string;
       canRetry: boolean;
     }
-  | { type: "validation-error"; message: string }
+  | { type: "validation-error"; message: string; suggestion?: string; errorCode?: string }
   | { type: "clear-service-error" }
   | { type: "clear-error" }
   | { type: "reset" };
@@ -82,6 +86,8 @@ export function analyzerReducer(state: AnalyzerState, action: AnalyzerAction): A
         requestId: action.requestId,
         username: state.username,
         message: action.message,
+        suggestion: action.suggestion,
+        errorCode: action.errorCode,
         canRetry: action.canRetry,
         ...(action.serviceError ? { serviceError: action.serviceError } : {}),
         ...(currentData(state) ? { data: currentData(state) } : {}),
@@ -103,6 +109,8 @@ export function analyzerReducer(state: AnalyzerState, action: AnalyzerAction): A
         requestId: state.status === "idle" ? 0 : state.requestId,
         username: state.status === "idle" ? "" : state.username,
         message: action.message,
+        suggestion: action.suggestion,
+        errorCode: action.errorCode || "VALIDATION_ERROR",
         canRetry: false,
         ...(currentData(state) ? { data: currentData(state) } : {}),
       };

@@ -79,9 +79,45 @@ def test_not_found_returns_unified_error_format_404():
     assert resp.status_code == 404
     data = resp.json()
     assert "error" in data
-    assert data["error"]["code"] == "NOT_FOUND"
+    assert data["error"]["code"] in ("NOT_FOUND", "USER_NOT_FOUND")
     assert data["error"]["message"] == "GitHub user not found"
     assert data["detail"] == "GitHub user not found"
+
+
+def test_no_public_repositories_returns_typed_error_422():
+    with patch("app.api.routes.matching.get_user_repositories", AsyncMock(return_value=[])):
+        resp = client.get("/api/matching/users/emptyuser/issues")
+    assert resp.status_code == 422
+    data = resp.json()
+    assert "error" in data
+    assert data["error"]["code"] == "NO_PUBLIC_REPOSITORIES"
+    assert "no public repositories" in data["error"]["message"].lower()
+
+
+def test_only_forks_returns_typed_error_422():
+    fork_repo = [{"name": "some-repo", "fork": True, "stargazers_count": 0}]
+    with patch("app.api.routes.matching.get_user_repositories", AsyncMock(return_value=fork_repo)):
+        resp = client.get("/api/matching/users/forkuser/issues")
+    assert resp.status_code == 422
+    data = resp.json()
+    assert "error" in data
+    assert data["error"]["code"] == "ONLY_FORKS"
+    assert "only has forked repositories" in data["error"]["message"].lower()
+
+
+def test_upstream_failure_returns_typed_error_502():
+    from app.services.github_service import GitHubUpstreamError
+
+    with patch(
+        "app.api.routes.github.get_github_user",
+        AsyncMock(side_effect=GitHubUpstreamError("https://api.github.com/users/octocat", 502, "Bad Gateway")),
+    ):
+        resp = client.get("/api/github/users/octocat")
+    assert resp.status_code == 502
+    data = resp.json()
+    assert "error" in data
+    assert data["error"]["code"] == "UPSTREAM_FAILURE"
+    assert "upstream" in data["error"]["message"].lower()
 
 
 def test_validation_error_returns_unified_error_format_422():

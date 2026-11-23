@@ -226,7 +226,7 @@ async def github_upstream_handler(request: Request, exc: GitHubUpstreamError):
     return JSONResponse(
         status_code=502,
         content=format_error_content(
-            code="UPSTREAM_SERVICE_ERROR",
+            code="UPSTREAM_FAILURE",
             message="Upstream GitHub service is temporarily unavailable or returned a server error.",
             details={"status_code": exc.status_code, "url": exc.url},
         ),

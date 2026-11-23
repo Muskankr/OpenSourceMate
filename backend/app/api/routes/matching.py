@@ -5,6 +5,7 @@ from xml.etree import ElementTree
 from fastapi import APIRouter, HTTPException, Query, Request, Response
 
 from app.ai.ai_service import generate_issue_match_explanation
+from app.exceptions import NoPublicRepositoriesError, UserNotFoundError
 from app.services.embedding_service import similarities
 from app.services.github_service import (
     GitHubRateLimitError,
@@ -71,10 +72,13 @@ async def get_matched_issues(
     repositories = await get_user_repositories(validated_username)
 
     if repositories is None:
-        raise HTTPException(
-            status_code=404,
-            detail="GitHub user not found",
-        )
+        raise UserNotFoundError(validated_username)
+
+    if explicit_skills is None:
+        if len(repositories) == 0:
+            raise NoPublicRepositoriesError(validated_username, only_forks=False)
+        if all(r.get("fork", False) for r in repositories):
+            raise NoPublicRepositoriesError(validated_username, only_forks=True)
 
     skill_data = analyze_skills(repositories)
 

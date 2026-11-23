@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, Query
 
 from app.config import get_settings
+from app.exceptions import NoPublicRepositoriesError, UserNotFoundError
 from app.schemas.serializers import (
     ExtendedGitHubUserProfileSerializer,
     GitHubUserProfileSerializer,
@@ -49,10 +50,7 @@ async def get_user(
     user = await get_github_user(validated_username, refresh=refresh)
 
     if user is None:
-        raise HTTPException(
-            status_code=404,
-            detail="GitHub user not found",
-        )
+        raise UserNotFoundError(validated_username)
 
     return {
         "username": user["login"],
@@ -86,10 +84,7 @@ async def get_repositories(
     repositories = await get_user_repositories(validated_username, refresh=refresh)
 
     if repositories is None:
-        raise HTTPException(
-            status_code=404,
-            detail="GitHub user not found",
-        )
+        raise UserNotFoundError(validated_username)
 
     settings = get_settings()
     per_page = getattr(settings, "github_repos_per_page", 100)
@@ -137,10 +132,7 @@ async def get_top_repositories(
     repositories = await get_user_repositories(validated_username, refresh=refresh)
 
     if repositories is None:
-        raise HTTPException(
-            status_code=404,
-            detail="GitHub user not found",
-        )
+        raise UserNotFoundError(validated_username)
 
     # Filter forks if requested
     filtered = [
@@ -194,16 +186,20 @@ async def get_user_skills(
     ignore_noise: bool = True,
     group_related: bool = False,
     include_proficiency: bool = True,
+    require_repos: bool = Query(default=False, description="Raise 422 if user has no public repositories or only forks"),
     refresh: bool = Query(default=False, description="Bypass cache and re-analyze fresh data (Issue #132)"),
 ):
     validated_username = validate_github_username(username)
     repositories = await get_user_repositories(validated_username, refresh=refresh)
 
     if repositories is None:
-        raise HTTPException(
-            status_code=404,
-            detail="GitHub user not found",
-        )
+        raise UserNotFoundError(validated_username)
+
+    if require_repos:
+        if len(repositories) == 0:
+            raise NoPublicRepositoriesError(validated_username, only_forks=False)
+        if not include_forks and all(r.get("fork", False) for r in repositories):
+            raise NoPublicRepositoriesError(validated_username, only_forks=True)
 
     details = await get_repository_details(repositories, refresh=refresh)
     result = analyze_skills(

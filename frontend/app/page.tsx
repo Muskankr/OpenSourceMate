@@ -45,12 +45,12 @@ import {
   removeRecentSearch,
   clearRecentSearches,
 } from "../utils/recentSearches";
-import { validateGitHubUsername, resolveAnalyzerErrorMessage } from "../utils/validation";
 import {
-  analyzerReducer,
-  initialAnalyzerState,
-  type AnalyzerData,
-} from "../utils/analyzerState";
+  validateGitHubUsername,
+  resolveAnalyzerErrorMessage,
+  resolveAnalyzerErrorDetails,
+} from "../utils/validation";
+import { analyzerReducer, initialAnalyzerState, type AnalyzerData } from "../utils/analyzerState";
 import BuildVersionBadge from "../components/BuildVersionBadge";
 import ContributorsWall from "../components/ContributorsWall";
 export default function Home() {
@@ -154,6 +154,7 @@ export default function Home() {
     analyzerState.status === "error" || analyzerState.status === "rate-limited"
       ? analyzerState.message
       : "";
+  const errorSuggestion = analyzerState.status === "error" ? analyzerState.suggestion : undefined;
   const serviceError = analyzerState.status === "error" ? analyzerState.serviceError : undefined;
   const lastAnalyzed = analyzerState.status === "idle" ? "" : analyzerState.username;
   const canRetry =
@@ -398,6 +399,8 @@ export default function Home() {
       dispatchAnalyzer({
         type: "validation-error",
         message: validation.error || "Please enter a valid GitHub username.",
+        suggestion:
+          "GitHub usernames must contain only alphanumeric characters and single hyphens, without leading or trailing hyphens.",
       });
       return;
     }
@@ -433,6 +436,44 @@ export default function Home() {
       const profileData = await fetchUserProfile(cleanUsername, { signal: searchSignal });
       const skillsData = await fetchUserSkills(cleanUsername, { signal: searchSignal });
 
+      // Case: User exists but has no public repositories
+      if (profileData.public_repositories === 0) {
+        const resolution = resolveAnalyzerErrorDetails(422, {
+          username: cleanUsername,
+          code: "NO_PUBLIC_REPOSITORIES",
+        });
+        dispatchAnalyzer({
+          type: "error",
+          requestId,
+          message: resolution.message,
+          suggestion: resolution.suggestion,
+          errorCode: "NO_PUBLIC_REPOSITORIES",
+          canRetry: false,
+        });
+        return;
+      }
+
+      // Case: User exists but only has forked repositories (0 original repos analyzed)
+      if (
+        profileData.public_repositories > 0 &&
+        skillsData.total_repositories_analyzed === 0 &&
+        (!skillsData.skills || skillsData.skills.length === 0)
+      ) {
+        const resolution = resolveAnalyzerErrorDetails(422, {
+          username: cleanUsername,
+          code: "ONLY_FORKS",
+        });
+        dispatchAnalyzer({
+          type: "error",
+          requestId,
+          message: resolution.message,
+          suggestion: resolution.suggestion,
+          errorCode: "ONLY_FORKS",
+          canRetry: false,
+        });
+        return;
+      }
+
       dispatchAnalyzer({
         type: "success",
         requestId,
@@ -454,10 +495,16 @@ export default function Home() {
           username: cleanUsername,
           endpoint: `/api/github/users/${cleanUsername}`,
         });
+        const resolution = resolveAnalyzerErrorDetails(err, {
+          username: cleanUsername,
+          code: "UPSTREAM_FAILURE",
+        });
         dispatchAnalyzer({
           type: "error",
           requestId,
-          message: details.message,
+          message: resolution.message || details.message,
+          suggestion: resolution.suggestion,
+          errorCode: "UPSTREAM_FAILURE",
           canRetry: true,
           serviceError: details,
         });
@@ -465,15 +512,78 @@ export default function Home() {
       }
 
       if (err instanceof ApiClientError) {
-        if (err.status === 404) {
+        if (err.status === 404 || err.code === "USER_NOT_FOUND" || err.code === "NOT_FOUND") {
+          const resolution = resolveAnalyzerErrorDetails(404, {
+            username: cleanUsername,
+            code: "USER_NOT_FOUND",
+          });
           dispatchAnalyzer({
             type: "error",
             requestId,
-            message: resolveAnalyzerErrorMessage(404, { username: cleanUsername }),
+            message: resolution.message,
+            suggestion: resolution.suggestion,
+            errorCode: "USER_NOT_FOUND",
             canRetry: true,
           });
           return;
         }
+
+        if (err.code === "ONLY_FORKS") {
+          const resolution = resolveAnalyzerErrorDetails(422, {
+            username: cleanUsername,
+            code: "ONLY_FORKS",
+          });
+          dispatchAnalyzer({
+            type: "error",
+            requestId,
+            message: resolution.message,
+            suggestion: resolution.suggestion,
+            errorCode: "ONLY_FORKS",
+            canRetry: false,
+          });
+          return;
+        }
+
+        if (
+          err.code === "NO_PUBLIC_REPOSITORIES" ||
+          (err.status === 422 && err.code !== "ONLY_FORKS")
+        ) {
+          const resolution = resolveAnalyzerErrorDetails(422, {
+            username: cleanUsername,
+            code: "NO_PUBLIC_REPOSITORIES",
+          });
+          dispatchAnalyzer({
+            type: "error",
+            requestId,
+            message: resolution.message,
+            suggestion: resolution.suggestion,
+            errorCode: "NO_PUBLIC_REPOSITORIES",
+            canRetry: false,
+          });
+          return;
+        }
+
+        if (
+          err.status === 502 ||
+          err.status === 504 ||
+          err.code === "UPSTREAM_FAILURE" ||
+          err.code === "UPSTREAM_SERVICE_ERROR"
+        ) {
+          const resolution = resolveAnalyzerErrorDetails(err.status, {
+            username: cleanUsername,
+            code: "UPSTREAM_FAILURE",
+          });
+          dispatchAnalyzer({
+            type: "error",
+            requestId,
+            message: resolution.message,
+            suggestion: resolution.suggestion,
+            errorCode: "UPSTREAM_FAILURE",
+            canRetry: true,
+          });
+          return;
+        }
+
         if (err.status === 429) {
           dispatchAnalyzer({
             type: "rate-limited",
@@ -485,11 +595,15 @@ export default function Home() {
           return;
         }
       }
+
+      const resolution = resolveAnalyzerErrorDetails(err, { username: cleanUsername });
       dispatchAnalyzer({
         type: "error",
         requestId,
-        message: sanitizeErrorMessage(resolveAnalyzerErrorMessage(err)),
-        canRetry: true,
+        message: sanitizeErrorMessage(resolution.message),
+        suggestion: resolution.suggestion,
+        errorCode: resolution.errorCode,
+        canRetry: resolution.canRetry,
       });
     }
   };
@@ -932,21 +1046,31 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Accessible Error Alert (WCAG 2.1 AA: Assertive live region for validation/404/429) */}
+              {/* Accessible Error Alert (WCAG 2.1 AA: Assertive live region for validation/404/429/edge cases) */}
               {error && !serviceError && (
                 <div
                   id="analyzer-error"
                   role="alert"
                   aria-live="assertive"
                   aria-atomic="true"
-                  className="mt-4 flex flex-col items-center justify-center gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-center text-sm font-medium text-red-300 sm:flex-row"
+                  className="mt-4 flex flex-col items-center justify-between gap-3 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-center sm:flex-row sm:text-left"
                 >
-                  <span>{error}</span>
+                  <div className="flex flex-col gap-1 text-sm font-medium text-red-300">
+                    <span>{error}</span>
+                    {errorSuggestion && (
+                      <span className="text-xs text-red-200/80" data-testid="error-suggestion">
+                        <strong className="font-semibold text-red-100">
+                          Suggested next step:{" "}
+                        </strong>
+                        {errorSuggestion}
+                      </span>
+                    )}
+                  </div>
                   {canRetry && lastAnalyzed && !loading && (
                     <button
                       type="button"
                       onClick={() => analyzeProfile(lastAnalyzed)}
-                      className="rounded-lg border border-red-400/40 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                      className="shrink-0 rounded-lg border border-red-400/40 bg-red-500/10 px-3 py-1.5 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
                     >
                       Retry
                     </button>
@@ -1539,10 +1663,7 @@ export default function Home() {
                 <JobOpportunitiesList studentSkills={skills?.skills || []} theme={theme} />
 
                 {/* Student Job & Internship Matches */}
-                <JobOpportunitiesList
-                  studentSkills={skills?.skills || []}
-                  theme={theme}
-                />
+                <JobOpportunitiesList studentSkills={skills?.skills || []} theme={theme} />
               </div>
             </section>
           )}

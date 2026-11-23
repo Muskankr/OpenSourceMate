@@ -2,7 +2,23 @@ import {
   sanitizeUsername,
   validateGitHubUsername,
   resolveAnalyzerErrorMessage,
+  resolveAnalyzerErrorDetails,
+  extractUsernameFromUrl,
 } from "../utils/validation";
+
+describe("Validation Utilities - URL Extraction", () => {
+  it("extracts clean username from GitHub profile URLs", () => {
+    expect(extractUsernameFromUrl("https://github.com/torvalds")?.username).toBe("torvalds");
+    expect(extractUsernameFromUrl("http://github.com/torvalds/")?.username).toBe("torvalds");
+    expect(extractUsernameFromUrl("github.com/torvalds")?.username).toBe("torvalds");
+    expect(extractUsernameFromUrl("www.github.com/torvalds")?.username).toBe("torvalds");
+  });
+
+  it("rejects repository or deep page URLs with friendly error", () => {
+    const repoCheck = extractUsernameFromUrl("https://github.com/torvalds/linux");
+    expect(repoCheck?.error).toMatch(/points to a repository or page/i);
+  });
+});
 
 describe("Validation Utilities - sanitizeUsername", () => {
   it("trims leading and trailing whitespace", () => {
@@ -152,5 +168,45 @@ describe("Validation Utilities - resolveAnalyzerErrorMessage", () => {
 
   it("resolves unknown errors safely", () => {
     expect(resolveAnalyzerErrorMessage(null)).toMatch(/unexpected error/i);
+  });
+});
+
+describe("Validation Utilities - resolveAnalyzerErrorDetails", () => {
+  it("resolves USER_NOT_FOUND with friendly message and suggested next step", () => {
+    const details = resolveAnalyzerErrorDetails(404, { username: "ghost-user" });
+    expect(details.errorCode).toBe("USER_NOT_FOUND");
+    expect(details.message).toContain("GitHub user 'ghost-user' could not be found");
+    expect(details.suggestion).toMatch(/double-check the username for typos/i);
+    expect(details.canRetry).toBe(true);
+  });
+
+  it("resolves NO_PUBLIC_REPOSITORIES with message and suggestion to create repo or add skills", () => {
+    const details = resolveAnalyzerErrorDetails(422, {
+      username: "newbie-contributor",
+      code: "NO_PUBLIC_REPOSITORIES",
+    });
+    expect(details.errorCode).toBe("NO_PUBLIC_REPOSITORIES");
+    expect(details.message).toContain("has no public repositories to analyze");
+    expect(details.suggestion).toMatch(/Create or publish a public repository/i);
+    expect(details.canRetry).toBe(false);
+  });
+
+  it("resolves ONLY_FORKS with message explaining original code is needed", () => {
+    const details = resolveAnalyzerErrorDetails(422, {
+      username: "forks-only-dev",
+      code: "ONLY_FORKS",
+    });
+    expect(details.errorCode).toBe("ONLY_FORKS");
+    expect(details.message).toContain("only has forked repositories");
+    expect(details.suggestion).toMatch(/analyzes original code/i);
+    expect(details.canRetry).toBe(false);
+  });
+
+  it("resolves UPSTREAM_FAILURE with friendly message and retry suggestion", () => {
+    const details = resolveAnalyzerErrorDetails(502, { code: "UPSTREAM_FAILURE" });
+    expect(details.errorCode).toBe("UPSTREAM_FAILURE");
+    expect(details.message).toMatch(/GitHub API is temporarily unavailable/i);
+    expect(details.suggestion).toMatch(/click Retry/i);
+    expect(details.canRetry).toBe(true);
   });
 });
