@@ -47,6 +47,23 @@ export function inferIssueDifficulty(labels: string[] = []): IssueDifficulty {
   return "Intermediate";
 }
 
+export function resolveIssueDifficulty(
+  issue: Pick<IssueRecommendation, "difficulty" | "labels">
+): IssueDifficulty {
+  const value = typeof issue.difficulty === "string" ? issue.difficulty.trim().toLowerCase() : "";
+  switch (value) {
+    case "beginner":
+      return "Beginner";
+    case "intermediate":
+      return "Intermediate";
+    case "advanced":
+    case "hard":
+      return "Advanced";
+    default:
+      return inferIssueDifficulty(issue.labels);
+  }
+}
+
 /**
  * Realistic repository of open-source issues used for demo and fallback states
  * when the backend matching endpoint is not yet ready or in development.

@@ -6,6 +6,29 @@ import { setCachedResponsiveness, determineResponsiveness } from "../utils/repoR
 import { setCachedFriendlinessScore, calculateFriendlinessScore } from "../utils/repoFriendliness";
 
 describe("IssueCard Component", () => {
+  it("shows the server difficulty and its reason even with a starter label", () => {
+    render(
+      <IssueCard
+        issue={{
+          id: 27,
+          title: "Matching edge case",
+          repository: "octocat/hello-world",
+          url: "https://github.com/octocat/hello-world/issues/27",
+          state: "open",
+          labels: ["good first issue"],
+          comments: 2,
+          created_at: "2026-11-14T00:00:00Z",
+          updated_at: "2026-11-15T00:00:00Z",
+          difficulty: "advanced",
+          difficulty_reason: "Several files suggest a wider investigation.",
+        }}
+      />
+    );
+
+    expect(screen.getByTestId("difficulty-badge")).toHaveTextContent("Advanced");
+    expect(screen.getByText("Several files suggest a wider investigation.")).toBeVisible();
+  });
+
   beforeAll(() => {
     setCachedResponsiveness(
       "octocat/hello-world",

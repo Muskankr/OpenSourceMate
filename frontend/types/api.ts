@@ -60,6 +60,7 @@ export interface IssueRecommendation {
   explanation?: string;
   is_ai_generated?: boolean;
   difficulty?: string;
+  difficulty_reason?: string;
   is_mock?: boolean;
   is_learning_mode?: boolean;
   learning_skill?: string;

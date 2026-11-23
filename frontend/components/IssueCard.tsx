@@ -2,7 +2,7 @@
 
 import React from "react";
 import type { IssueRecommendation } from "../types/api";
-import { inferIssueDifficulty, type IssueDifficulty } from "../data/mockIssues";
+import { resolveIssueDifficulty, type IssueDifficulty } from "../data/mockIssues";
 import ResponsivenessBadge from "./ResponsivenessBadge";
 import FriendlinessBadge from "./FriendlinessBadge";
 
@@ -40,7 +40,7 @@ export default function IssueCard({
   const reasons = issue.match_reasons ?? issue.reasons ?? [];
 
   // Determine difficulty
-  const difficulty: IssueDifficulty = issue.difficulty || inferIssueDifficulty(issue.labels);
+  const difficulty = resolveIssueDifficulty(issue);
 
   const getDifficultyBadge = (diff: IssueDifficulty) => {
     switch (diff) {
@@ -173,6 +173,12 @@ export default function IssueCard({
               {issue.title}
             </a>
           </h4>
+
+          {issue.difficulty_reason && (
+            <p className={`mt-2 text-xs ${isDark ? "text-gray-300" : "text-gray-700"}`}>
+              {issue.difficulty_reason}
+            </p>
+          )}
 
           {/* Labels List */}
           {issue.labels && issue.labels.length > 0 && (

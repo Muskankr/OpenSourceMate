@@ -1,5 +1,5 @@
 import type { IssueRecommendation } from "../types/api";
-import { inferIssueDifficulty, type IssueDifficulty } from "../data/mockIssues";
+import { resolveIssueDifficulty } from "../data/mockIssues";
 
 export interface LearningScoreResult {
   score: number;
@@ -95,8 +95,7 @@ export function calculateLearningScore(
   const matchedSkill = findMatchingTargetSkill(issue, targetSkills);
   const isTargetMatch = matchedSkill !== null;
   const originalScore = issue.match_score ?? issue.score ?? 75;
-  const difficulty: IssueDifficulty =
-    (issue.difficulty as IssueDifficulty) || inferIssueDifficulty(issue.labels);
+  const difficulty = resolveIssueDifficulty(issue);
 
   if (!isTargetMatch) {
     return {

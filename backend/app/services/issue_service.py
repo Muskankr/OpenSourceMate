@@ -1,5 +1,7 @@
 from typing import Any
+
 from app.services.github_service import GITHUB_API_URL, github_get
+from app.services.issue_difficulty import estimate_issue_difficulty
 
 MAX_BODY_LENGTH: int = 1000
 
@@ -56,6 +58,7 @@ async def search_github_issues(
                 "user": issue["user"]["login"],
                 "body": (issue.get("body") or "")[:MAX_BODY_LENGTH],
                 "language": language,
+                **estimate_issue_difficulty(issue),
             }
         )
 

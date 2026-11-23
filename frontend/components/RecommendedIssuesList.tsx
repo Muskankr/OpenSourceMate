@@ -3,7 +3,7 @@
 import React, { useMemo, useState } from "react";
 import type { IssueRecommendation } from "../types/api";
 import IssueCard from "./IssueCard";
-import { inferIssueDifficulty, type IssueDifficulty } from "../data/mockIssues";
+import { resolveIssueDifficulty } from "../data/mockIssues";
 import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
 import { rankIssuesForLearningMode, COMMON_TARGET_SKILLS } from "../utils/learningMode";
 
@@ -86,7 +86,7 @@ export default function RecommendedIssuesList({
 
       // Difficulty filter
       if (difficultyFilter !== "all") {
-        const diff: IssueDifficulty = issue.difficulty || inferIssueDifficulty(issue.labels);
+        const diff = resolveIssueDifficulty(issue);
         if (diff.toLowerCase() !== difficultyFilter.toLowerCase()) {
           return false;
         }
