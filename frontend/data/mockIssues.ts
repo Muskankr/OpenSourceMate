@@ -72,6 +72,7 @@ export const MOCK_RECOMMENDED_ISSUES: IssueRecommendation[] = [
     explanation:
       "This issue directly matches your TypeScript experience and has clear acceptance criteria suitable for getting started in Next.js core.",
     difficulty: "Beginner",
+    stars: 125000,
     is_mock: true,
   },
   {
@@ -94,6 +95,7 @@ export const MOCK_RECOMMENDED_ISSUES: IssueRecommendation[] = [
     explanation:
       "A great match for backend Python developers comfortable with type annotations and modern async frameworks.",
     difficulty: "Intermediate",
+    stars: 75000,
     is_mock: true,
   },
   {
@@ -112,6 +114,7 @@ export const MOCK_RECOMMENDED_ISSUES: IssueRecommendation[] = [
     explanation:
       "Deep dive into React DOM reconciliation and SVG layout recalculation under heavy rendering workloads.",
     difficulty: "Advanced",
+    stars: 230000,
     is_mock: true,
   },
   {
@@ -125,10 +128,11 @@ export const MOCK_RECOMMENDED_ISSUES: IssueRecommendation[] = [
     created_at: "2026-10-05T12:00:00Z",
     updated_at: "2026-10-27T17:00:00Z",
     language: "Go",
-    match_score: 91,
+    match_score: 84,
     match_reasons: ["Matched primary skill: Go", "Network systems programming alignment"],
     explanation: "Requires familiarity with Go's net package and sync.Pool memory reuse patterns.",
     difficulty: "Advanced",
+    stars: 122000,
     is_mock: true,
   },
   {
@@ -142,11 +146,12 @@ export const MOCK_RECOMMENDED_ISSUES: IssueRecommendation[] = [
     created_at: "2026-10-22T09:30:00Z",
     updated_at: "2026-10-31T15:00:00Z",
     language: "Rust",
-    match_score: 88,
+    match_score: 83,
     match_reasons: ["Matched skill: Rust", "Beginner-friendly issue labeled good first issue"],
     explanation:
       "Straightforward Rust enhancement updating clap CLI error reporting and user guide documentation.",
     difficulty: "Beginner",
+    stars: 48000,
     is_mock: true,
   },
   {
@@ -165,6 +170,7 @@ export const MOCK_RECOMMENDED_ISSUES: IssueRecommendation[] = [
     explanation:
       "Builds on Tailwind compiler internals to format dynamic unit values across international locales.",
     difficulty: "Intermediate",
+    stars: 82000,
     is_mock: true,
   },
 ];

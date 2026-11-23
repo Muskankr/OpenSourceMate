@@ -16,6 +16,47 @@ export interface RecommendedIssuesListProps {
   initialTargetSkills?: string[];
 }
 
+export function getIssueStars(issue: IssueRecommendation): number {
+  return issue.stars ?? issue.repository_stars ?? 0;
+}
+
+export function matchesStarRange(issue: IssueRecommendation, range: string): boolean {
+  if (range === "all") return true;
+  const stars = getIssueStars(issue);
+  switch (range) {
+    case "under-1k":
+      return stars < 1000;
+    case "1k-10k":
+      return stars >= 1000 && stars <= 10000;
+    case "10k-50k":
+      return stars > 10000 && stars <= 50000;
+    case "50k-plus":
+      return stars > 50000;
+    default:
+      return true;
+  }
+}
+
+export function matchesActivity(issue: IssueRecommendation, range: string): boolean {
+  if (range === "all") return true;
+  const dateStr = issue.updated_at || issue.created_at;
+  if (!dateStr) return true;
+  const issueDate = new Date(dateStr).getTime();
+  if (isNaN(issueDate)) return true;
+  const now = Date.now();
+  const diffDays = (now - issueDate) / (1000 * 60 * 60 * 24);
+  switch (range) {
+    case "7d":
+      return diffDays <= 7;
+    case "30d":
+      return diffDays <= 30;
+    case "90d":
+      return diffDays <= 90;
+    default:
+      return true;
+  }
+}
+
 export default function RecommendedIssuesList({
   issues,
   theme = "dark",
@@ -34,6 +75,11 @@ export default function RecommendedIssuesList({
   const [searchQuery, setSearchQuery] = useState("");
   const [languageFilter, setLanguageFilter] = useState("all");
   const [labelFilter, setLabelFilter] = useState("all");
+  const [starRangeFilter, setStarRangeFilter] = useState("all");
+  const [activityFilter, setActivityFilter] = useState("all");
+  const [sortBy, setSortBy] = useState<"match_score" | "newest" | "recently_updated">(
+    "match_score"
+  );
   const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
   const [minScoreFilter, setMinScoreFilter] = useState(0);
   const [showHidden, setShowHidden] = useState(false);
@@ -47,6 +93,20 @@ export default function RecommendedIssuesList({
       if (i.language) langs.add(i.language);
     });
     return Array.from(langs).sort();
+  }, [issues]);
+
+  // Extract available custom labels dynamically
+  const availableLabels = useMemo(() => {
+    const labels = new Set<string>();
+    issues.forEach((i) => {
+      i.labels?.forEach((lbl) => {
+        const lower = lbl.toLowerCase();
+        if (!lower.includes("good first") && !lower.includes("help wanted")) {
+          labels.add(lbl);
+        }
+      });
+    });
+    return Array.from(labels).sort();
   }, [issues]);
 
   // Dynamic set of selectable target skills for learning mode
@@ -63,9 +123,9 @@ export default function RecommendedIssuesList({
     return rankIssuesForLearningMode(issues, targetSkills, isLearningMode);
   }, [issues, targetSkills, isLearningMode]);
 
-  // Filtering logic
+  // Filtering and sorting logic
   const filteredIssues = useMemo(() => {
-    return rankedIssues.filter((issue) => {
+    const filtered = rankedIssues.filter((issue) => {
       if (!showHidden && hiddenIds.includes(hiddenIssueId(issue))) return false;
       // Language filter
       if (
@@ -77,11 +137,29 @@ export default function RecommendedIssuesList({
 
       // Label filter
       if (labelFilter === "good-first-issue") {
-        const hasGFI = issue.labels?.some((l) => l.toLowerCase().includes("good first"));
+        const hasGFI = issue.labels?.some(
+          (l) =>
+            l.toLowerCase().includes("good first") || l.toLowerCase().includes("good-first-issue")
+        );
         if (!hasGFI) return false;
       } else if (labelFilter === "help-wanted") {
-        const hasHW = issue.labels?.some((l) => l.toLowerCase().includes("help wanted"));
+        const hasHW = issue.labels?.some(
+          (l) => l.toLowerCase().includes("help wanted") || l.toLowerCase().includes("help-wanted")
+        );
         if (!hasHW) return false;
+      } else if (labelFilter !== "all") {
+        const hasLabel = issue.labels?.some((l) => l.toLowerCase() === labelFilter.toLowerCase());
+        if (!hasLabel) return false;
+      }
+
+      // Star range filter
+      if (!matchesStarRange(issue, starRangeFilter)) {
+        return false;
+      }
+
+      // Last activity filter
+      if (!matchesActivity(issue, activityFilter)) {
+        return false;
       }
 
       // Difficulty filter
@@ -108,29 +186,56 @@ export default function RecommendedIssuesList({
 
       return true;
     });
+
+    // Sorting
+    return [...filtered].sort((a, b) => {
+      if (sortBy === "newest") {
+        const dateA = new Date(a.created_at || 0).getTime();
+        const dateB = new Date(b.created_at || 0).getTime();
+        return dateB - dateA;
+      }
+      if (sortBy === "recently_updated") {
+        const dateA = new Date(a.updated_at || a.created_at || 0).getTime();
+        const dateB = new Date(b.updated_at || b.created_at || 0).getTime();
+        return dateB - dateA;
+      }
+      // Default: match_score
+      const scoreA = a.match_score ?? a.score ?? 0;
+      const scoreB = b.match_score ?? b.score ?? 0;
+      return scoreB - scoreA;
+    });
   }, [
     rankedIssues,
     hiddenIds,
     showHidden,
     languageFilter,
     labelFilter,
+    starRangeFilter,
+    activityFilter,
     difficultyFilter,
     minScoreFilter,
     searchQuery,
+    sortBy,
   ]);
 
   const hasActiveFilters =
     languageFilter !== "all" ||
     labelFilter !== "all" ||
+    starRangeFilter !== "all" ||
+    activityFilter !== "all" ||
     difficultyFilter !== "all" ||
     minScoreFilter > 0 ||
+    sortBy !== "match_score" ||
     searchQuery.trim().length > 0;
 
   const resetFilters = () => {
     setLanguageFilter("all");
     setLabelFilter("all");
+    setStarRangeFilter("all");
+    setActivityFilter("all");
     setDifficultyFilter("all");
     setMinScoreFilter(0);
+    setSortBy("match_score");
     setSearchQuery("");
   };
 
@@ -174,7 +279,10 @@ export default function RecommendedIssuesList({
         </div>
 
         {hasIssues && (
-          <div className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+          <div
+            data-testid="result-count"
+            className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}
+          >
             Showing {filteredIssues.length} of {issues.length} issues
           </div>
         )}
@@ -335,9 +443,9 @@ export default function RecommendedIssuesList({
             isDark ? "border-white/5 bg-white/[0.02]" : "border-gray-200 bg-gray-50/50"
           }`}
         >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {/* Search filter */}
-            <div className="lg:col-span-1">
+            <div>
               <label
                 htmlFor="issue-search-filter"
                 className="block text-xs font-semibold text-gray-400"
@@ -387,6 +495,113 @@ export default function RecommendedIssuesList({
               </select>
             </div>
 
+            {/* Label type filter */}
+            <div>
+              <label
+                htmlFor="issue-label-filter"
+                className="block text-xs font-semibold text-gray-400"
+              >
+                Label Type
+              </label>
+              <select
+                id="issue-label-filter"
+                value={labelFilter}
+                onChange={(e) => setLabelFilter(e.target.value)}
+                aria-label="Filter issues by label type"
+                className={`mt-1.5 w-full rounded-xl border px-3 py-2 text-xs outline-none transition ${
+                  isDark
+                    ? "border-white/10 bg-[#0c101d] text-white focus:border-purple-400"
+                    : "border-gray-300 bg-white text-gray-900 focus:border-purple-600"
+                }`}
+              >
+                <option value="all">All Labels</option>
+                <option value="good-first-issue">Good First Issue</option>
+                <option value="help-wanted">Help Wanted</option>
+                {availableLabels.map((lbl) => (
+                  <option key={lbl} value={lbl}>
+                    {lbl}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Repository star range filter */}
+            <div>
+              <label
+                htmlFor="issue-stars-filter"
+                className="block text-xs font-semibold text-gray-400"
+              >
+                Stars
+              </label>
+              <select
+                id="issue-stars-filter"
+                value={starRangeFilter}
+                onChange={(e) => setStarRangeFilter(e.target.value)}
+                aria-label="Filter issues by repository star range"
+                className={`mt-1.5 w-full rounded-xl border px-3 py-2 text-xs outline-none transition ${
+                  isDark
+                    ? "border-white/10 bg-[#0c101d] text-white focus:border-purple-400"
+                    : "border-gray-300 bg-white text-gray-900 focus:border-purple-600"
+                }`}
+              >
+                <option value="all">All Star Counts</option>
+                <option value="under-1k">&lt; 1,000 stars</option>
+                <option value="1k-10k">1,000 - 10,000 stars</option>
+                <option value="10k-50k">10,000 - 50,000 stars</option>
+                <option value="50k-plus">50,000+ stars</option>
+              </select>
+            </div>
+
+            {/* Last activity filter */}
+            <div>
+              <label
+                htmlFor="issue-activity-filter"
+                className="block text-xs font-semibold text-gray-400"
+              >
+                Last Activity
+              </label>
+              <select
+                id="issue-activity-filter"
+                value={activityFilter}
+                onChange={(e) => setActivityFilter(e.target.value)}
+                aria-label="Filter issues by last activity"
+                className={`mt-1.5 w-full rounded-xl border px-3 py-2 text-xs outline-none transition ${
+                  isDark
+                    ? "border-white/10 bg-[#0c101d] text-white focus:border-purple-400"
+                    : "border-gray-300 bg-white text-gray-900 focus:border-purple-600"
+                }`}
+              >
+                <option value="all">Any time</option>
+                <option value="7d">Past 7 days</option>
+                <option value="30d">Past 30 days</option>
+                <option value="90d">Past 90 days</option>
+              </select>
+            </div>
+
+            {/* Sort by filter */}
+            <div>
+              <label htmlFor="issue-sort-by" className="block text-xs font-semibold text-gray-400">
+                Sort By
+              </label>
+              <select
+                id="issue-sort-by"
+                value={sortBy}
+                onChange={(e) =>
+                  setSortBy(e.target.value as "match_score" | "newest" | "recently_updated")
+                }
+                aria-label="Sort recommendations"
+                className={`mt-1.5 w-full rounded-xl border px-3 py-2 text-xs outline-none transition ${
+                  isDark
+                    ? "border-white/10 bg-[#0c101d] text-white focus:border-purple-400"
+                    : "border-gray-300 bg-white text-gray-900 focus:border-purple-600"
+                }`}
+              >
+                <option value="match_score">Match Score (Highest)</option>
+                <option value="newest">Newest</option>
+                <option value="recently_updated">Recently Updated</option>
+              </select>
+            </div>
+
             {/* Difficulty filter */}
             <div>
               <label
@@ -410,31 +625,6 @@ export default function RecommendedIssuesList({
                 <option value="beginner">Beginner</option>
                 <option value="intermediate">Intermediate</option>
                 <option value="advanced">Advanced</option>
-              </select>
-            </div>
-
-            {/* Label type filter */}
-            <div>
-              <label
-                htmlFor="issue-label-filter"
-                className="block text-xs font-semibold text-gray-400"
-              >
-                Label Type
-              </label>
-              <select
-                id="issue-label-filter"
-                value={labelFilter}
-                onChange={(e) => setLabelFilter(e.target.value)}
-                aria-label="Filter issues by label type"
-                className={`mt-1.5 w-full rounded-xl border px-3 py-2 text-xs outline-none transition ${
-                  isDark
-                    ? "border-white/10 bg-[#0c101d] text-white focus:border-purple-400"
-                    : "border-gray-300 bg-white text-gray-900 focus:border-purple-600"
-                }`}
-              >
-                <option value="all">All Labels</option>
-                <option value="good-first-issue">Good First Issue</option>
-                <option value="help-wanted">Help Wanted</option>
               </select>
             </div>
 
@@ -490,14 +680,15 @@ export default function RecommendedIssuesList({
         >
           <p className="text-sm font-semibold">No issues match your filters</p>
           <p className={`mt-1 text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-            Try adjusting your language, difficulty, or search terms to see more recommendations.
+            Try adjusting your filters, star range, or search terms to see more recommendations.
           </p>
           <button
             type="button"
+            data-testid="clear-filters-button"
             onClick={resetFilters}
             className="mt-4 rounded-xl border border-purple-500/30 bg-purple-500/10 px-4 py-2 text-xs font-semibold text-purple-400 transition hover:bg-purple-500/20"
           >
-            Reset Filters
+            Clear filters
           </button>
         </div>
       )}
