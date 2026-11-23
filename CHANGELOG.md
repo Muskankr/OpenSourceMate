@@ -7,6 +7,7 @@ All notable changes to OpenSourceMate are recorded here. The format follows
 
 ### Added
 
+- DevOps & Containerization: Dockerfiles for frontend (Next.js 15/16) and backend (FastAPI), comprehensive `.dockerignore` files excluding all secrets and temporary build artifacts, and root `docker-compose.yml` for single-command (`docker compose up`) local execution with clean-clone defaults and environment file reading.
 - Frontend: Repository Friendliness Score and badge on recommended issues, computing a deterministic 0–100 score from community signals (CONTRIBUTING guide, Code of Conduct, issue templates, README length, recent merged PRs) with an interactive breakdown popover and client-side caching to respect GitHub rate limits.
 
 - Frontend: Learning mode toggle and target skills picker to recommend and prioritize beginner-friendly issues in skills the user wants to learn next, with dedicated card explanations (#Issue).

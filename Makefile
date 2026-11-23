@@ -1,10 +1,13 @@
-.PHONY: help install install-backend install-frontend dev-frontend dev-backend lint format test test-backend test-frontend clean
+.PHONY: help install install-backend install-frontend dev-frontend dev-backend lint format test test-backend test-frontend clean docker-up docker-down docker-build
 
 help:
 	@echo "OpenSourceMate Development Commands:"
 	@echo "  make install        Install backend and frontend dependencies"
 	@echo "  make dev-frontend   Start Next.js frontend development server"
 	@echo "  make dev-backend    Start FastAPI backend development server"
+	@echo "  make docker-up      Start all services with docker compose"
+	@echo "  make docker-down    Stop all docker compose services"
+	@echo "  make docker-build   Build or rebuild docker compose images"
 	@echo "  make lint           Run backend (ruff) and frontend (eslint) linters"
 	@echo "  make format         Run backend (ruff) and frontend (prettier) formatters"
 	@echo "  make test           Run both backend and frontend test suites"
@@ -25,6 +28,15 @@ dev-frontend:
 
 dev-backend:
 	cd backend && uvicorn app.main:app --reload --port 8000
+
+docker-up:
+	docker compose up
+
+docker-down:
+	docker compose down
+
+docker-build:
+	docker compose build
 
 lint:
 	ruff check backend

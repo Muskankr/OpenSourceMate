@@ -1,0 +1,43 @@
+# ==============================================================================
+# Frontend .dockerignore
+# ==============================================================================
+
+# Version control
+.git/
+.gitignore
+.github/
+
+# Secrets & environment files
+.env
+.env.*
+.env*.local
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+*.secret
+
+# Node dependencies & Next.js cache
+node_modules/
+.next/
+out/
+.turbo/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.storybook/
+storybook-static/
+
+# Tests & coverage
+__tests__/
+coverage/
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

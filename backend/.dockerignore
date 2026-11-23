@@ -1,0 +1,49 @@
+# ==============================================================================
+# Backend .dockerignore
+# ==============================================================================
+
+# Version control
+.git/
+.gitignore
+.github/
+
+# Secrets & environment files
+.env
+.env.*
+.env*.local
+!.env.example
+*.pem
+*.key
+*.cert
+*.crt
+*.secret
+
+# Python cache & virtual environments
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Tests & evaluation (not required in production image)
+tests/
+evaluation/
+
+# IDE & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

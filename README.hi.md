@@ -33,6 +33,7 @@ OpenSourceMate एक AI-संचालित ओपन-सोर्स यो�
 - [🛠️ टेक स्टैक (Tech Stack)](#%EF%B8%8F-टेक-स्टैक-tech-stack)
 - [🚀 शुरुआत कैसे करें (Getting Started)](#-शुरुआत-कैसे-करें-getting-started)
   - [GitHub Codespaces में विकास करें (Develop in GitHub Codespaces)](#github-codespaces-में-विकास-करें-develop-in-github-codespaces)
+  - [🐳 Docker Compose के साथ चलाएं (Run with Docker Compose)](#-docker-compose-के-साथ-चलाएं-run-with-docker-compose)
   - [आवश्यक शर्तें (Prerequisites)](#आवश्यक-शर्तें-prerequisites)
   - [1. रिपॉजिटरी को क्लोन करें (Clone the repository)](#1-रिपॉजिटरी-को-क्लोन-करें-clone-the-repository)
   - [2. फ्रंटएंड चलाएं (Run the frontend)](#2-फ्रंटएंड-चलाएं-run-the-frontend)
@@ -201,6 +202,32 @@ OpenSourceMate/
    - **फ्रंटएंड**: `make dev-frontend` (पोर्ट `3000` पर पूर्वावलोकन में स्वचालित रूप से खुलता है)
    - **बैकएंड**: `make dev-backend` (पोर्ट `8000` पर FastAPI सर्वर)
    - **टेस्ट चलाएं**: `make test` (या `make test-backend` / `make test-frontend`)
+
+---
+
+### 🐳 Docker Compose के साथ चलाएं (Run with Docker Compose)
+
+योगदानकर्ता किसी भी मैन्युअल सेटअप के बिना केवल एक कमांड के साथ फ्रंटएंड और बैकएंड दोनों को एक साथ चला सकते हैं:
+
+```bash
+# 1. रिपॉजिटरी को क्लोन करें
+git clone https://github.com/Muskankr/OpenSourceMate.git
+cd OpenSourceMate
+
+# 2. सभी सेवाएँ शुरू करें
+docker compose up
+```
+
+दोनों सेवाएँ स्वचालित रूप से शुरू हो जाती हैं:
+
+- **फ्रंटएंड यूआई:** [`http://localhost:3000`](http://localhost:3000)
+- **बैकएंड एपीआई:** [`http://localhost:8000`](http://localhost:8000)
+- **ओपनएपीआई डॉक्स:** [`http://localhost:8000/docs`](http://localhost:8000/docs)
+
+#### एनवायरनमेंट सेटिंग्स और सीक्रेट्स सुरक्षा
+
+- **सुरक्षित डिफ़ॉल्ट सेटिंग्स:** दोनों कंटेनर सुरक्षित स्थानीय विकास डिफ़ॉल्ट के साथ शुरू होते हैं। इमेज लेयर्स में कोई सीक्रेट्स नहीं जोड़े जाते।
+- **वैकल्पिक सेटिंग्स:** उच्च GitHub API दर सीमा के लिए `.env.example` को `.env` के रूप में कॉपी करें और `GITHUB_TOKEN` दर्ज करें।
 
 ---
 

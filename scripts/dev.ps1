@@ -1,7 +1,7 @@
 # PowerShell helper script for common OpenSourceMate development tasks
 param (
     [Parameter(Position=0, Mandatory=$false)]
-    [ValidateSet("help", "install", "install-backend", "install-frontend", "dev-frontend", "dev-backend", "lint", "format", "test", "test-backend", "test-frontend", "clean")]
+    [ValidateSet("help", "install", "install-backend", "install-frontend", "dev-frontend", "dev-backend", "docker-up", "docker-down", "docker-build", "lint", "format", "test", "test-backend", "test-frontend", "clean")]
     [string]$Task = "help"
 )
 
@@ -12,6 +12,9 @@ function Show-Help {
     Write-Host "  install         Install dependencies for both frontend and backend"
     Write-Host "  dev-frontend    Start Next.js frontend dev server (port 3000)"
     Write-Host "  dev-backend     Start FastAPI backend dev server (port 8000)"
+    Write-Host "  docker-up       Start all services with docker compose"
+    Write-Host "  docker-down     Stop all docker compose services"
+    Write-Host "  docker-build    Build or rebuild docker compose images"
     Write-Host "  lint            Run backend (ruff) and frontend (eslint) linting"
     Write-Host "  format          Run backend (ruff) and frontend (prettier) formatting"
     Write-Host "  test            Run both backend and frontend test suites"
@@ -38,6 +41,18 @@ switch ($Task) {
     }
     "dev-backend" {
         Push-Location backend; uvicorn app.main:app --reload --port 8000; Pop-Location
+    }
+    "docker-up" {
+        Write-Host "Starting services with docker compose..." -ForegroundColor Green
+        docker compose up
+    }
+    "docker-down" {
+        Write-Host "Stopping docker compose services..." -ForegroundColor Green
+        docker compose down
+    }
+    "docker-build" {
+        Write-Host "Building docker compose images..." -ForegroundColor Green
+        docker compose build
     }
     "lint" {
         Write-Host "Linting backend with ruff..." -ForegroundColor Green
