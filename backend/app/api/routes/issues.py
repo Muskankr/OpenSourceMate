@@ -20,6 +20,9 @@ async def search_issues(
     label: str | None = Query(default=None),
     keyword: str | None = Query(default=None),
     per_page: int = Query(default=20, ge=1, le=100),
+    skip_assigned: bool | None = Query(default=None),
+    skip_archived: bool | None = Query(default=None),
+    max_repo_inactive_days: int | None = Query(default=None),
 ):
     try:
         data = await search_github_issues(
@@ -27,6 +30,9 @@ async def search_issues(
             label=label,
             keyword=keyword,
             per_page=per_page,
+            skip_assigned=skip_assigned,
+            skip_archived=skip_archived,
+            max_repo_inactive_days=max_repo_inactive_days,
         )
 
         return {

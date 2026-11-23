@@ -7,6 +7,7 @@ All notable changes to OpenSourceMate are recorded here. The format follows
 
 ### Added
 
+- Backend: Issue recommendation filtering rules that automatically skip assigned issues (`no:assignee`), issues in archived repositories (`archived:false`), and inactive/abandoned repositories based on configurable inactivity thresholds (`max_repo_inactive_days`), configurable via environment variables or `data/issue_filters.json` without code changes (#25 extension).
 - Frontend: Repository Friendliness Score and badge on recommended issues, computing a deterministic 0–100 score from community signals (CONTRIBUTING guide, Code of Conduct, issue templates, README length, recent merged PRs) with an interactive breakdown popover and client-side caching to respect GitHub rate limits.
 
 - Frontend: Learning mode toggle and target skills picker to recommend and prioritize beginner-friendly issues in skills the user wants to learn next, with dedicated card explanations (#Issue).

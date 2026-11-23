@@ -563,6 +563,37 @@ async def get_repository_details(
     return details
 
 
+async def get_repository_info(full_name: str, refresh: bool = False) -> dict[str, Any] | None:
+    """Fetch repository metadata from GitHub API or in-memory cache.
+
+    Returns repository metadata dict including 'archived', 'pushed_at', 'updated_at', etc.
+    Returns None if repository is not found or fails to load.
+    """
+    clean_name = (full_name or "").strip().strip("/")
+    if not clean_name or "/" not in clean_name:
+        return None
+
+    key = f"github:repo-info:{clean_name.lower()}"
+    if not refresh:
+        cached = cache.get(key)
+        if cached is not None:
+            return cached
+
+    try:
+        response = await github_get(f"{GITHUB_API_URL}/repos/{clean_name}")
+        if response.status_code == 404:
+            return None
+        response.raise_for_status()
+        data = response.json()
+        if isinstance(data, dict):
+            cache.set(key, data, get_settings().github_cache_ttl)
+            return data
+    except (GitHubRateLimitError, GitHubTimeoutError, GitHubUpstreamError, httpx.HTTPError, ValueError):
+        pass
+
+    return None
+
+
 async def get_github_diagnostics() -> dict:
     """Check GitHub API reachability, auth token presence, and quota status."""
     settings = get_settings()
