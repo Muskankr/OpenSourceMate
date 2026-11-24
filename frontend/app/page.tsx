@@ -2,6 +2,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import ActivePreferencesBar from "../components/ActivePreferencesBar";
+import ContributionPreferencesPanel from "../components/ContributionPreferencesPanel";
 import ExportMenu from "../components/ExportMenu";
 import GitHubLink from "../components/GitHubLink";
 import ProfileCard from "../components/ProfileCard";
@@ -41,6 +43,14 @@ import {
   sanitizeErrorMessage,
 } from "../utils/errorHandling";
 import { exportAnalysisData, type ExportFormat, type ExportPayload } from "../utils/exportAnalysis";
+import {
+  type MatchingPreferences,
+  DEFAULT_MATCHING_PREFERENCES,
+  loadMatchingPreferences,
+  saveMatchingPreferences,
+  resetMatchingPreferences,
+  hasActiveMatchingPreferences,
+} from "../utils/preferences";
 import {
   getRecentSearches,
   saveRecentSearch,
@@ -195,6 +205,14 @@ export default function Home() {
   // Custom skills state
   const [customSkills, setCustomSkills] = useState<string[] | null>(null);
 
+  // Contribution matching preferences state (Issue #421)
+  const [matchingPreferences, setMatchingPreferences] = useState<MatchingPreferences>(DEFAULT_MATCHING_PREFERENCES);
+
+  useEffect(() => {
+    const loaded = loadMatchingPreferences();
+    setMatchingPreferences(loaded);
+  }, []);
+
   const detectedSkills = useMemo(() => {
     return skills?.skills.map((s) => s.name) || [];
   }, [skills]);
@@ -224,7 +242,8 @@ export default function Home() {
   const fetchMatchedIssues = async (
     targetUsername: string,
     signal?: AbortSignal,
-    overrideSkills?: string[]
+    overrideSkills?: string[],
+    overridePreferences?: MatchingPreferences
   ) => {
     setLoadingMatching(true);
     setMatchingError("");
@@ -237,10 +256,16 @@ export default function Home() {
           ? customSkills
           : skills?.skills.map((s) => s.name);
 
+    const prefsToUse = overridePreferences !== undefined ? overridePreferences : matchingPreferences;
+
     try {
       const matchData = await apiFetchMatchedIssues(targetUsername, {
         signal,
         skills: skillsToUse,
+        preferredLanguages: prefsToUse.preferredLanguages,
+        excludedOrgs: prefsToUse.excludedOrgs,
+        maxAgeDays: prefsToUse.maxAgeDays,
+        expectedTime: prefsToUse.expectedTime,
       });
       if (matchData.recommendations && matchData.recommendations.length > 0) {
         setRecommendations(matchData.recommendations);
@@ -270,6 +295,24 @@ export default function Home() {
       }
     } finally {
       setLoadingMatching(false);
+    }
+  };
+
+  const handlePreferencesChange = (newPrefs: MatchingPreferences) => {
+    setMatchingPreferences(newPrefs);
+    saveMatchingPreferences(newPrefs);
+    const target = profile?.username || username;
+    if (target) {
+      fetchMatchedIssues(target, undefined, undefined, newPrefs);
+    }
+  };
+
+  const handleResetPreferences = () => {
+    const defaults = resetMatchingPreferences();
+    setMatchingPreferences(defaults);
+    const target = profile?.username || username;
+    if (target) {
+      fetchMatchedIssues(target, undefined, undefined, defaults);
     }
   };
 
@@ -1103,6 +1146,22 @@ export default function Home() {
                       : "border-purple-200 bg-white shadow-sm"
                   }`}
                 >
+                  {/* Preferences Panel (Issue #421) */}
+                  <ContributionPreferencesPanel
+                    theme={theme}
+                    preferences={matchingPreferences}
+                    onPreferencesChange={handlePreferencesChange}
+                    onReset={handleResetPreferences}
+                    className="mb-6"
+                  />
+
+                  {/* Active Preferences Indicator & Quick Reset (Issue #421) */}
+                  <ActivePreferencesBar
+                    preferences={matchingPreferences}
+                    onReset={handleResetPreferences}
+                    theme={theme}
+                  />
+
                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                     <div>
                       <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-purple-400/20 bg-purple-400/10 px-3 py-1 text-xs font-medium text-purple-300">

@@ -29,8 +29,29 @@ export interface UserPreferences {
   timeAvailability: TimeAvailability;
   onlyAssignedOpportunities: boolean;
   notifyOnNewMatches: boolean;
+  // Issue #421: Contribution matching query preferences
+  preferredLanguages?: string[];
+  excludedOrgs?: string[];
+  maxAgeDays?: number | null;
+  expectedTime?: "quick" | "weekend" | "ongoing" | null;
   updatedAt?: string;
 }
+
+export type ExpectedTimeCommitment = "quick" | "weekend" | "ongoing";
+
+export interface MatchingPreferences {
+  preferredLanguages: string[];
+  excludedOrgs: string[];
+  maxAgeDays: number | null;
+  expectedTime: ExpectedTimeCommitment | null;
+}
+
+export const DEFAULT_MATCHING_PREFERENCES: Readonly<MatchingPreferences> = {
+  preferredLanguages: [],
+  excludedOrgs: [],
+  maxAgeDays: null,
+  expectedTime: null,
+};
 
 export const DEFAULT_PREFERENCES: Readonly<UserPreferences> = {
   goal: "general",
@@ -105,4 +126,89 @@ export function resetUserPreferences(): UserPreferences {
     }
   }
   return { ...DEFAULT_PREFERENCES };
+}
+
+export const MATCHING_PREFERENCES_STORAGE_KEY = "osm_matching_preferences_v1";
+
+/**
+ * Safely loads contribution matching preferences (Issue #421) from localStorage.
+ */
+export function loadMatchingPreferences(): MatchingPreferences {
+  if (typeof window === "undefined" || !window.localStorage) {
+    return { ...DEFAULT_MATCHING_PREFERENCES };
+  }
+
+  try {
+    const raw = localStorage.getItem(MATCHING_PREFERENCES_STORAGE_KEY);
+    if (!raw) return { ...DEFAULT_MATCHING_PREFERENCES };
+
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== "object") return { ...DEFAULT_MATCHING_PREFERENCES };
+
+    const preferredLanguages = Array.isArray(parsed.preferredLanguages)
+      ? parsed.preferredLanguages.filter((l: unknown) => typeof l === "string" && l.trim().length > 0)
+      : [];
+
+    const excludedOrgs = Array.isArray(parsed.excludedOrgs)
+      ? parsed.excludedOrgs.filter((o: unknown) => typeof o === "string" && o.trim().length > 0)
+      : [];
+
+    const maxAgeDays =
+      typeof parsed.maxAgeDays === "number" && parsed.maxAgeDays > 0 ? parsed.maxAgeDays : null;
+
+    const expectedTime = ["quick", "weekend", "ongoing"].includes(parsed.expectedTime)
+      ? (parsed.expectedTime as ExpectedTimeCommitment)
+      : null;
+
+    return {
+      preferredLanguages,
+      excludedOrgs,
+      maxAgeDays,
+      expectedTime,
+    };
+  } catch {
+    return { ...DEFAULT_MATCHING_PREFERENCES };
+  }
+}
+
+/**
+ * Persists contribution matching preferences into localStorage.
+ */
+export function saveMatchingPreferences(prefs: MatchingPreferences): boolean {
+  if (typeof window === "undefined" || !window.localStorage) {
+    return false;
+  }
+
+  try {
+    localStorage.setItem(MATCHING_PREFERENCES_STORAGE_KEY, JSON.stringify(prefs));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Resets contribution matching preferences back to default values.
+ */
+export function resetMatchingPreferences(): MatchingPreferences {
+  if (typeof window !== "undefined" && window.localStorage) {
+    try {
+      localStorage.removeItem(MATCHING_PREFERENCES_STORAGE_KEY);
+    } catch {
+      // Ignore storage clear errors
+    }
+  }
+  return { ...DEFAULT_MATCHING_PREFERENCES };
+}
+
+/**
+ * Checks whether any matching preference is actively configured.
+ */
+export function hasActiveMatchingPreferences(prefs: MatchingPreferences): boolean {
+  return (
+    (prefs.preferredLanguages && prefs.preferredLanguages.length > 0) ||
+    (prefs.excludedOrgs && prefs.excludedOrgs.length > 0) ||
+    prefs.maxAgeDays !== null ||
+    prefs.expectedTime !== null
+  );
 }

@@ -12,6 +12,13 @@ from app.services.github_service import (
 )
 from app.services.issue_service import search_github_issues
 from app.services.matching_service import build_idf, calculate_issue_score
+from app.services.preferences_service import (
+    filter_by_preferences,
+    validate_excluded_orgs_or_repos,
+    validate_expected_time,
+    validate_max_age_days,
+    validate_preference_languages,
+)
 from app.services.skill_service import analyze_skills
 from app.utils.validation import is_valid_skill, validate_github_username
 
@@ -44,8 +51,24 @@ async def get_matched_issues(
     username: str,
     exclude_stale: bool = Query(default=False),
     skills: list[str] | None = Query(default=None),
+    preferred_languages: list[str] | None = Query(default=None, description="Preferred languages filter"),
+    excluded_orgs: list[str] | None = Query(default=None, description="Excluded organizations or repositories"),
+    max_age_days: int | None = Query(default=None, description="Maximum issue age in days"),
+    expected_time: str | None = Query(default=None, description="Expected time commitment (quick, weekend, ongoing)"),
 ):
     validated_username = validate_github_username(username)
+
+    # Validate preference parameters (Issue #421)
+    try:
+        clean_preferred_langs = validate_preference_languages(preferred_languages)
+        clean_excluded_orgs = validate_excluded_orgs_or_repos(excluded_orgs)
+        clean_max_age_days = validate_max_age_days(max_age_days)
+        clean_expected_time = validate_expected_time(expected_time)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=400,
+            detail=str(e),
+        )
 
     explicit_skills: list[str] | None = None
     if skills is not None:
@@ -110,10 +133,13 @@ async def get_matched_issues(
             "recommendations": [],
         }
 
+    # If preferred languages are set, combine with explicit/user skills for broader candidate search
+    search_skills = clean_preferred_langs if clean_preferred_langs else user_skills
+
     found_issues = []
 
-    # Search issues for the user's top skills.
-    for skill in user_skills[:5]:
+    # Search issues for the target skills.
+    for skill in search_skills[:5]:
         try:
             result = await search_github_issues(
                 language=skill,
@@ -185,6 +211,16 @@ async def get_matched_issues(
             unique_issues[issue["id"]] = issue
 
     recommendations = list(unique_issues.values())
+
+    # Apply contribution preferences filtering (Issue #421)
+    if clean_preferred_langs or clean_excluded_orgs or clean_max_age_days is not None or clean_expected_time:
+        recommendations = filter_by_preferences(
+            recommendations,
+            preferred_languages=clean_preferred_langs,
+            excluded_orgs_or_repos=clean_excluded_orgs,
+            max_age_days=clean_max_age_days,
+            expected_time=clean_expected_time,
+        )
 
     # Optionally exclude stale issues (>60 days inactive)
     if exclude_stale:

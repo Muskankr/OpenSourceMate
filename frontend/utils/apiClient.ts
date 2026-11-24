@@ -288,6 +288,10 @@ export async function fetchUserSkills(
 
 export interface FetchMatchedIssuesOptions extends RequestOptions {
   skills?: string[];
+  preferredLanguages?: string[];
+  excludedOrgs?: string[];
+  maxAgeDays?: number | null;
+  expectedTime?: string | null;
 }
 
 /**
@@ -306,6 +310,18 @@ export async function fetchMatchedIssues(
     } else {
       options.skills.forEach((s) => query.append("skills", s));
     }
+  }
+  if (options?.preferredLanguages && options.preferredLanguages.length > 0) {
+    options.preferredLanguages.forEach((l) => query.append("preferred_languages", l));
+  }
+  if (options?.excludedOrgs && options.excludedOrgs.length > 0) {
+    options.excludedOrgs.forEach((o) => query.append("excluded_orgs", o));
+  }
+  if (options?.maxAgeDays !== undefined && options.maxAgeDays !== null) {
+    query.append("max_age_days", String(options.maxAgeDays));
+  }
+  if (options?.expectedTime) {
+    query.append("expected_time", options.expectedTime);
   }
   const queryString = query.toString() ? `?${query.toString()}` : "";
   return typedRequest<MatchedIssuesResponse>(
