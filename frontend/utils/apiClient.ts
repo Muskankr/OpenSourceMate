@@ -288,6 +288,7 @@ export async function fetchUserSkills(
 
 export interface FetchMatchedIssuesOptions extends RequestOptions {
   skills?: string[];
+  learning_goal?: string;
 }
 
 /**
@@ -306,6 +307,9 @@ export async function fetchMatchedIssues(
     } else {
       options.skills.forEach((s) => query.append("skills", s));
     }
+  }
+  if (options?.learning_goal) {
+    query.append("learning_goal", options.learning_goal.trim());
   }
   const queryString = query.toString() ? `?${query.toString()}` : "";
   return typedRequest<MatchedIssuesResponse>(

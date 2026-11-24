@@ -1,6 +1,7 @@
 import {
   calculateLearningScore,
   rankIssuesForLearningMode,
+  filterAndRankByLearningGoal,
   isIssueMatchingSkill,
   findMatchingTargetSkill,
   COMMON_TARGET_SKILLS,
@@ -229,6 +230,55 @@ describe("Learning Mode Scoring and Ranking Module", () => {
       expect(ranked[0].difficulty).toBe("Beginner");
       expect(ranked[0].is_learning_mode).toBe(true);
       expect(ranked[0].match_score).toBeGreaterThanOrEqual(95);
+    });
+  });
+
+  describe("filterAndRankByLearningGoal (Issue #418)", () => {
+    it("returns issues unchanged when learning goal is not selected (feature is off)", () => {
+      expect(filterAndRankByLearningGoal(sampleIssues, null)).toEqual(sampleIssues);
+      expect(filterAndRankByLearningGoal(sampleIssues, "")).toEqual(sampleIssues);
+      expect(filterAndRankByLearningGoal(sampleIssues, "none")).toEqual(sampleIssues);
+    });
+
+    it("returns beginner issues in chosen technology marked as stretch opportunities", () => {
+      const results = filterAndRankByLearningGoal(sampleIssues, "Rust");
+      expect(results.length).toBe(2);
+
+      // Top result is beginner issue
+      const top = results[0];
+      expect(top.id).toBe(3);
+      expect(top.language).toBe("Rust");
+      expect(top.difficulty).toBe("Beginner");
+      expect(top.is_stretch).toBe(true);
+      expect(top.is_learning_mode).toBe(true);
+      expect(top.learning_skill).toBe("Rust");
+      expect(top.match_reasons).toEqual(
+        expect.arrayContaining([expect.stringContaining("Stretch learning opportunity for Rust")])
+      );
+    });
+
+    it("ranks by approachability (fewer comments / small scope) instead of skill overlap", () => {
+      const testIssues: IssueRecommendation[] = [
+        {
+          ...sampleIssues[2],
+          id: 301,
+          comments: 12,
+        },
+        {
+          ...sampleIssues[2],
+          id: 302,
+          comments: 0,
+        },
+      ];
+
+      const ranked = filterAndRankByLearningGoal(testIssues, "Rust");
+      expect(ranked[0].id).toBe(302); // 0 comments ranks higher than 12 comments
+      expect(ranked[0].match_score!).toBeGreaterThan(ranked[1].match_score!);
+    });
+
+    it("returns empty result when no issues match the selected technology", () => {
+      const emptyResults = filterAndRankByLearningGoal(sampleIssues, "Haskell");
+      expect(emptyResults).toEqual([]);
     });
   });
 });

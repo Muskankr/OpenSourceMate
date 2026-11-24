@@ -19,7 +19,11 @@ import { useTheme } from "../hooks/useTheme";
 import JobOpportunitiesList from "../components/JobOpportunitiesList";
 import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
 import { getMockRecommendedIssues } from "../data/mockIssues";
-import { rankIssuesForLearningMode, COMMON_TARGET_SKILLS } from "../utils/learningMode";
+import {
+  rankIssuesForLearningMode,
+  filterAndRankByLearningGoal,
+  COMMON_TARGET_SKILLS,
+} from "../utils/learningMode";
 import {
   type GitHubUserProfile as Profile,
   type SkillItem as Skill,
@@ -146,7 +150,8 @@ export default function Home() {
   const [matchingError, setMatchingError] = useState("");
   const [isDemoData, setIsDemoData] = useState(false);
 
-  // Learning Mode state
+  // Learning Mode & Learning Goal state (Issue #418)
+  const [learningGoal, setLearningGoal] = useState<string>("");
   const [isLearningMode, setIsLearningMode] = useState(false);
   const [targetSkills, setTargetSkills] = useState<string[]>([]);
 
@@ -241,6 +246,7 @@ export default function Home() {
       const matchData = await apiFetchMatchedIssues(targetUsername, {
         signal,
         skills: skillsToUse,
+        learning_goal: learningGoal || undefined,
       });
       if (matchData.recommendations && matchData.recommendations.length > 0) {
         setRecommendations(matchData.recommendations);
@@ -310,10 +316,13 @@ export default function Home() {
     return Array.from(set).sort();
   }, [recommendations]);
 
-  // Re-rank recommendations when learning mode is active
+  // Re-rank recommendations when learning goal or learning mode is active
   const rankedRecommendations = useMemo(() => {
+    if (learningGoal && learningGoal.trim()) {
+      return filterAndRankByLearningGoal(recommendations, learningGoal);
+    }
     return rankIssuesForLearningMode(recommendations, targetSkills, isLearningMode);
-  }, [recommendations, targetSkills, isLearningMode]);
+  }, [recommendations, targetSkills, isLearningMode, learningGoal]);
 
   // Client-side filtering logic (Issue #47)
   const filteredRecommendations = useMemo(() => {
@@ -872,6 +881,62 @@ export default function Home() {
                   ))}
                 </div>
 
+                {/* "I want to learn" Selector on Analyzer (Issue #418) */}
+                <div
+                  data-testid="analyzer-learning-goal-container"
+                  className={`mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3 text-xs ${
+                    learningGoal
+                      ? theme === "dark"
+                        ? "border-amber-500/30 bg-amber-500/5 text-amber-200"
+                        : "border-amber-200 bg-amber-50/70 text-amber-900"
+                      : theme === "dark"
+                        ? "border-white/5 bg-white/[0.02] text-gray-300"
+                        : "border-gray-200 bg-gray-50/50 text-gray-700"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-semibold text-amber-400">🌱 I want to learn:</span>
+                    <span className="text-[11px] text-gray-400">
+                      (Optional language or framework entry point)
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="analyzer-learning-goal-select" className="sr-only">
+                      I want to learn (language or framework)
+                    </label>
+                    <select
+                      id="analyzer-learning-goal-select"
+                      data-testid="analyzer-learning-goal-selector"
+                      value={learningGoal}
+                      onChange={(e) => setLearningGoal(e.target.value)}
+                      className={`rounded-xl border px-3 py-1.5 text-xs font-medium outline-none transition ${
+                        theme === "dark"
+                          ? "border-white/10 bg-[#0c101d] text-white focus:border-amber-400"
+                          : "border-gray-300 bg-white text-gray-900 focus:border-amber-500"
+                      }`}
+                    >
+                      <option value="">None (Skill matching only)</option>
+                      {COMMON_TARGET_SKILLS.map((tech) => (
+                        <option key={tech} value={tech}>
+                          {tech}
+                        </option>
+                      ))}
+                    </select>
+
+                    {learningGoal && (
+                      <button
+                        type="button"
+                        data-testid="analyzer-clear-learning-goal"
+                        onClick={() => setLearningGoal("")}
+                        className="text-xs text-gray-400 hover:text-white underline"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+
                 <RecentSearches
                   searches={recentSearches}
                   onSelect={handleSelectRecent}
@@ -1166,6 +1231,78 @@ export default function Home() {
                         <p className="mt-0.5 text-[11px] opacity-85">
                           Displaying realistic open-source issues matched to your technical profile.
                         </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* "I want to learn" Selector on Results View */}
+                  {recommendations.length > 0 && (
+                    <div
+                      data-testid="page-learning-goal-container"
+                      className={`mt-4 rounded-2xl border p-4 transition-all duration-200 ${
+                        learningGoal
+                          ? theme === "dark"
+                            ? "border-amber-500/30 bg-amber-500/5 shadow-sm"
+                            : "border-amber-200 bg-amber-50/70 shadow-sm"
+                          : theme === "dark"
+                            ? "border-white/5 bg-white/[0.02]"
+                            : "border-gray-200 bg-gray-50/50"
+                      }`}
+                    >
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
+                              🌱 I want to learn
+                            </span>
+                            {learningGoal && (
+                              <span
+                                data-testid="page-learning-goal-active-badge"
+                                className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-300"
+                              >
+                                Stretch: {learningGoal}
+                              </span>
+                            )}
+                          </div>
+                          <p className={`text-xs ${theme === "dark" ? "text-gray-300" : "text-gray-600"}`}>
+                            Return beginner issues in a new language or framework, ranked by approachability.
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <label htmlFor="page-learning-goal-select" className="sr-only">
+                            I want to learn (language or framework)
+                          </label>
+                          <select
+                            id="page-learning-goal-select"
+                            data-testid="page-learning-goal-selector"
+                            value={learningGoal}
+                            onChange={(e) => setLearningGoal(e.target.value)}
+                            className={`rounded-xl border px-3 py-1.5 text-xs font-medium outline-none transition ${
+                              theme === "dark"
+                                ? "border-white/10 bg-[#0c101d] text-white focus:border-amber-400"
+                                : "border-gray-300 bg-white text-gray-900 focus:border-amber-500"
+                            }`}
+                          >
+                            <option value="">None (Skill matching only)</option>
+                            {selectableSkills.map((tech) => (
+                              <option key={tech} value={tech}>
+                                {tech}
+                              </option>
+                            ))}
+                          </select>
+
+                          {learningGoal && (
+                            <button
+                              type="button"
+                              data-testid="page-clear-learning-goal-button"
+                              onClick={() => setLearningGoal("")}
+                              className="text-xs text-gray-400 hover:text-white underline"
+                            >
+                              Clear
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}

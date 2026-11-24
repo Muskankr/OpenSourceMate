@@ -5,7 +5,11 @@ import type { IssueRecommendation } from "../types/api";
 import IssueCard from "./IssueCard";
 import { inferIssueDifficulty, type IssueDifficulty } from "../data/mockIssues";
 import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
-import { rankIssuesForLearningMode, COMMON_TARGET_SKILLS } from "../utils/learningMode";
+import {
+  rankIssuesForLearningMode,
+  filterAndRankByLearningGoal,
+  COMMON_TARGET_SKILLS,
+} from "../utils/learningMode";
 
 export interface RecommendedIssuesListProps {
   issues: IssueRecommendation[];
@@ -14,6 +18,8 @@ export interface RecommendedIssuesListProps {
   username?: string;
   initialLearningMode?: boolean;
   initialTargetSkills?: string[];
+  initialLearningGoal?: string;
+  onLearningGoalChange?: (goal: string) => void;
 }
 
 export default function RecommendedIssuesList({
@@ -23,8 +29,13 @@ export default function RecommendedIssuesList({
   username = "",
   initialLearningMode = false,
   initialTargetSkills = [],
+  initialLearningGoal = "",
+  onLearningGoalChange,
 }: RecommendedIssuesListProps) {
   const isDark = theme === "dark";
+
+  // Learning goal states (Issue #418)
+  const [learningGoal, setLearningGoal] = useState<string>(initialLearningGoal);
 
   // Learning mode states
   const [isLearningMode, setIsLearningMode] = useState<boolean>(initialLearningMode);
@@ -58,10 +69,13 @@ export default function RecommendedIssuesList({
     return Array.from(set).sort();
   }, [issues]);
 
-  // Re-rank issues when Learning Mode is active
+  // Re-rank issues when Learning Goal or Learning Mode is active
   const rankedIssues = useMemo(() => {
+    if (learningGoal && learningGoal.trim()) {
+      return filterAndRankByLearningGoal(issues, learningGoal);
+    }
     return rankIssuesForLearningMode(issues, targetSkills, isLearningMode);
-  }, [issues, targetSkills, isLearningMode]);
+  }, [issues, targetSkills, isLearningMode, learningGoal]);
 
   // Filtering logic
   const filteredIssues = useMemo(() => {
@@ -210,6 +224,85 @@ export default function RecommendedIssuesList({
               {username ? `@${username}'s` : "your"} technical skill set. You can filter by
               difficulty, language, and keywords below.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* "I want to learn" Selector (Issue #418) */}
+      {hasIssues && (
+        <div
+          data-testid="learning-goal-section"
+          className={`mt-4 rounded-2xl border p-4 transition-all duration-200 ${
+            learningGoal
+              ? isDark
+                ? "border-amber-500/30 bg-amber-500/5 shadow-sm"
+                : "border-amber-200 bg-amber-50/70 shadow-sm"
+              : isDark
+                ? "border-white/5 bg-white/[0.02]"
+                : "border-gray-200 bg-gray-50/50"
+          }`}
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-amber-400">
+                  🌱 I want to learn
+                </span>
+                {learningGoal && (
+                  <span
+                    data-testid="learning-goal-active-badge"
+                    className="rounded-full bg-amber-500/20 px-2 py-0.5 text-[10px] font-semibold text-amber-300"
+                  >
+                    Stretch: {learningGoal}
+                  </span>
+                )}
+              </div>
+              <p className={`text-xs ${isDark ? "text-gray-300" : "text-gray-600"}`}>
+                Return beginner issues in a new language or framework, ranked by approachability instead of skill overlap.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <label htmlFor="results-learning-goal-select" className="sr-only">
+                I want to learn (language or framework)
+              </label>
+              <select
+                id="results-learning-goal-select"
+                data-testid="results-learning-goal-selector"
+                value={learningGoal}
+                onChange={(e) => {
+                  const nextGoal = e.target.value;
+                  setLearningGoal(nextGoal);
+                  onLearningGoalChange?.(nextGoal);
+                }}
+                className={`rounded-xl border px-3 py-1.5 text-xs font-medium outline-none transition ${
+                  isDark
+                    ? "border-white/10 bg-[#0c101d] text-white focus:border-amber-400"
+                    : "border-gray-300 bg-white text-gray-900 focus:border-amber-500"
+                }`}
+              >
+                <option value="">None (Skill matching only)</option>
+                {selectableSkills.map((tech) => (
+                  <option key={tech} value={tech}>
+                    {tech}
+                  </option>
+                ))}
+              </select>
+
+              {learningGoal && (
+                <button
+                  type="button"
+                  data-testid="clear-learning-goal-button"
+                  onClick={() => {
+                    setLearningGoal("");
+                    onLearningGoalChange?.("");
+                  }}
+                  className="text-xs text-gray-400 hover:text-white underline"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -480,8 +573,41 @@ export default function RecommendedIssuesList({
         </div>
       )}
 
+      {/* Learning Goal Empty State */}
+      {learningGoal && filteredIssues.length === 0 && (
+        <div
+          data-testid="learning-goal-empty"
+          className={`mt-8 rounded-2xl border border-dashed p-8 text-center ${
+            isDark
+              ? "border-amber-500/20 bg-amber-500/5 text-amber-200"
+              : "border-amber-200 bg-amber-50 text-amber-900"
+          }`}
+        >
+          <div className="mx-auto mb-2 text-2xl" aria-hidden="true">
+            🌱
+          </div>
+          <p className="text-sm font-semibold">
+            No beginner issues found for &quot;{learningGoal}&quot;
+          </p>
+          <p className={`mt-1 text-xs ${isDark ? "text-amber-300/70" : "text-amber-800/80"}`}>
+            Try selecting a different language or framework, or switch back to skill matching.
+          </p>
+          <button
+            type="button"
+            data-testid="reset-learning-goal-button"
+            onClick={() => {
+              setLearningGoal("");
+              onLearningGoalChange?.("");
+            }}
+            className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-2 text-xs font-semibold text-amber-300 transition hover:bg-amber-500/20"
+          >
+            Clear Learning Goal
+          </button>
+        </div>
+      )}
+
       {/* Filtered Empty State */}
-      {hasIssues && filteredIssues.length === 0 && (
+      {hasIssues && !learningGoal && filteredIssues.length === 0 && (
         <div
           data-testid="filter-empty-state"
           className={`mt-8 rounded-2xl border border-dashed p-8 text-center ${

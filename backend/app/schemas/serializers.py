@@ -282,6 +282,15 @@ class MatchedIssueRecommendationSerializer(BaseModel):
     ai_explanation: str | None = Field(
         default=None, description="Optional AI explanation"
     )
+    is_stretch: bool = Field(
+        default=False, description="Whether this issue is a stretch learning opportunity"
+    )
+    is_learning_mode: bool = Field(
+        default=False, description="Whether this issue is a learning mode recommendation"
+    )
+    learning_skill: str | None = Field(
+        default=None, description="Target technology for the learning goal"
+    )
 
 
 class MatchedIssuesResponseSerializer(BaseModel):

@@ -155,6 +155,20 @@ describe("IssueCard Component", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders stretch badge clearly labelling learning opportunities (Issue #418)", () => {
+    const stretchIssue: IssueRecommendation = {
+      ...sampleIssue,
+      is_stretch: true,
+      learning_skill: "Rust",
+    };
+
+    render(<IssueCard issue={stretchIssue} theme="dark" />);
+
+    const stretchBadge = screen.getByTestId("stretch-badge");
+    expect(stretchBadge).toBeInTheDocument();
+    expect(stretchBadge).toHaveTextContent("Stretch: Rust");
+  });
+
   it("renders repository friendliness badge with score and tier", () => {
     render(<IssueCard issue={sampleIssue} theme="dark" />);
 

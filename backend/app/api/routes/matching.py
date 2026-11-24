@@ -44,8 +44,59 @@ async def get_matched_issues(
     username: str,
     exclude_stale: bool = Query(default=False),
     skills: list[str] | None = Query(default=None),
+    learning_goal: str | None = Query(default=None, description="Optional target language or framework to learn"),
 ):
     validated_username = validate_github_username(username)
+
+    # Learning goal mode (Issue #418): rank by approachability instead of skill overlap
+    if learning_goal:
+        clean_goal = learning_goal.strip()
+        if not is_valid_skill(clean_goal):
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid learning goal: '{clean_goal}'.",
+            )
+
+        try:
+            search_res = await search_github_issues(
+                language=clean_goal,
+                label="good first issue",
+                per_page=20,
+            )
+            raw_issues = search_res.get("issues", [])
+        except GitHubRateLimitError:
+            raise
+        except Exception:
+            raw_issues = []
+
+        # Filter and rank by approachability (small scope: fewer comments, beginner labels)
+        ranked_learning_issues = []
+        for iss in raw_issues:
+            comments = iss.get("comments", 0)
+            # Approachability score: base 95, minus penalty for heavy discussions (larger scope)
+            approachability_score = max(50.0, 95.0 - (min(comments, 10) * 3.0))
+            ranked_learning_issues.append({
+                **iss,
+                "score": round(approachability_score, 1),
+                "match_score": round(approachability_score, 1),
+                "match_reasons": [
+                    f"Stretch learning opportunity for {clean_goal}",
+                    "Beginner-friendly scope in target technology",
+                ],
+                "score_method": "learning-goal-approachability",
+                "is_stretch": True,
+                "is_learning_mode": True,
+                "learning_skill": clean_goal,
+            })
+
+        # Rank by approachability descending
+        ranked_learning_issues.sort(key=lambda x: x["score"], reverse=True)
+
+        return {
+            "username": validated_username,
+            "skills": [clean_goal],
+            "recommendations": ranked_learning_issues,
+        }
 
     explicit_skills: list[str] | None = None
     if skills is not None:
@@ -203,6 +254,9 @@ async def get_matched_issues(
     top_recommendations = recommendations[:20]
     for issue in top_recommendations:
         issue.pop("_raw_score", None)
+        issue.setdefault("is_stretch", False)
+        issue.setdefault("is_learning_mode", False)
+        issue.setdefault("learning_skill", None)
         explanation_data = await generate_issue_match_explanation(issue, user_skills)
         issue["explanation"] = explanation_data["explanation"]
         issue["is_ai_generated"] = explanation_data["is_ai_generated"]

@@ -131,6 +131,23 @@ export default function IssueCard({
               {difficulty}
             </span>
 
+            {/* Stretch Learning Opportunity Badge */}
+            {issue.is_stretch && (
+              <span
+                data-testid="stretch-badge"
+                className={`rounded-md border px-2 py-0.5 text-[11px] font-semibold tracking-wide ${
+                  isDark
+                    ? "border-amber-400/30 bg-amber-400/10 text-amber-300"
+                    : "border-amber-300 bg-amber-50 text-amber-800"
+                }`}
+                title={`Stretch learning opportunity: beginner starter issue to learn ${
+                  issue.learning_skill || issue.language || "new technology"
+                }`}
+              >
+                🌱 Stretch: {issue.learning_skill || issue.language || "Learning Goal"}
+              </span>
+            )}
+
             {/* Learning Mode Badge */}
             {issue.is_learning_mode && (
               <span

@@ -63,6 +63,8 @@ export interface IssueRecommendation {
   is_mock?: boolean;
   is_learning_mode?: boolean;
   learning_skill?: string;
+  is_stretch?: boolean;
+  learning_goal?: string;
 }
 
 export interface MatchedIssuesResponse {

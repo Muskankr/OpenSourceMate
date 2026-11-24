@@ -127,6 +127,7 @@ export function calculateLearningScore(
       : `Picked for Learning Mode: ${difficulty.toLowerCase()} ${matchedSkill} issue to build your hands-on experience.`;
 
   const reasons = [
+    `Stretch learning opportunity for ${matchedSkill}`,
     `Target learning skill: ${matchedSkill}`,
     `${difficulty} difficulty: ideal for learning new technologies`,
     ...(issue.match_reasons ?? issue.reasons ?? []).slice(0, 1),
@@ -168,6 +169,7 @@ export function rankIssuesForLearningMode(
         ...issue,
         match_score: learningResult.score,
         is_learning_mode: false,
+        is_stretch: false,
       };
     }
 
@@ -178,6 +180,7 @@ export function rankIssuesForLearningMode(
       match_reasons: learningResult.reasons,
       is_learning_mode: true,
       learning_skill: learningResult.matchedSkill || undefined,
+      is_stretch: true,
     };
   });
 
@@ -186,4 +189,52 @@ export function rankIssuesForLearningMode(
     const scoreB = b.match_score ?? b.score ?? 0;
     return scoreB - scoreA;
   });
+}
+
+/**
+ * Filters and ranks beginner issues for a specific learning goal (language/framework).
+ * Ranked by approachability (small scope / beginner friendly, fewer comments) instead of skill overlap.
+ * Marked as stretch learning opportunities.
+ * Returns issues unchanged when goal is empty or none.
+ */
+export function filterAndRankByLearningGoal(
+  issues: IssueRecommendation[],
+  goal: string | null | undefined
+): IssueRecommendation[] {
+  if (!goal || !goal.trim() || goal.toLowerCase() === "none" || goal.toLowerCase() === "all") {
+    return issues;
+  }
+
+  const cleanGoal = goal.trim();
+  const matching = issues.filter((issue) => isIssueMatchingSkill(issue, cleanGoal));
+
+  return matching
+    .map((issue) => {
+      const difficulty: IssueDifficulty =
+        (issue.difficulty as IssueDifficulty) || inferIssueDifficulty(issue.labels);
+      // Approachability calculation: beginner issues with fewer comments have highest approachability
+      let base = 75;
+      if (difficulty === "Beginner") base = 95;
+      else if (difficulty === "Intermediate") base = 85;
+
+      const commentBonus = Math.max(0, 4 - Math.floor((issue.comments || 0) / 3));
+      const approachabilityScore = Math.min(99, base + commentBonus);
+
+      return {
+        ...issue,
+        score: approachabilityScore,
+        match_score: approachabilityScore,
+        difficulty,
+        is_stretch: true,
+        is_learning_mode: true,
+        learning_skill: cleanGoal,
+        match_reasons: [
+          `Stretch learning opportunity for ${cleanGoal}`,
+          "Beginner-friendly scope in target technology",
+          `${difficulty} difficulty starter issue`,
+        ],
+        explanation: `Picked as a stretch learning opportunity for ${cleanGoal}: beginner-friendly scope with active maintainers.`,
+      };
+    })
+    .sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0));
 }

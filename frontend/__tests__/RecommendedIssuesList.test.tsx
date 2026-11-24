@@ -189,4 +189,53 @@ describe("RecommendedIssuesList Component", () => {
     const restoredCards = screen.getAllByRole("article");
     expect(restoredCards[0]).toHaveTextContent("vercel/next.js");
   });
+
+  describe("Learning Goal Selector (Issue #418)", () => {
+    it("returns beginner issues in chosen technology marked as stretch when goal is selected", () => {
+      render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} />);
+
+      const selector = screen.getByTestId("results-learning-goal-selector");
+      fireEvent.change(selector, { target: { value: "Rust" } });
+
+      // All returned issues are Rust issues
+      const cards = screen.getAllByRole("article");
+      expect(cards.length).toBeGreaterThan(0);
+      expect(cards[0]).toHaveTextContent("BurntSushi/ripgrep");
+
+      // Clearly labelled as stretch learning opportunities
+      expect(screen.getByTestId("stretch-badge")).toHaveTextContent("Stretch: Rust");
+      expect(screen.getByTestId("learning-goal-active-badge")).toHaveTextContent("Stretch: Rust");
+    });
+
+    it("leaves normal skill matching active when no goal is selected (feature is off)", () => {
+      render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} />);
+
+      const selector = screen.getByTestId("results-learning-goal-selector");
+      expect(selector).toHaveValue("");
+
+      // Default top issue is skill-matched vercel/next.js
+      const cards = screen.getAllByRole("article");
+      expect(cards[0]).toHaveTextContent("vercel/next.js");
+      expect(screen.queryByTestId("stretch-badge")).not.toBeInTheDocument();
+      expect(screen.queryByTestId("learning-goal-active-badge")).not.toBeInTheDocument();
+    });
+
+    it("displays an empty state when no issues match the selected technology", () => {
+      render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} />);
+
+      const selector = screen.getByTestId("results-learning-goal-selector");
+      fireEvent.change(selector, { target: { value: "CSS" } });
+
+      // No CSS beginner issues in mock dataset
+      expect(screen.getByTestId("learning-goal-empty")).toBeInTheDocument();
+      expect(
+        screen.getByText(/No beginner issues found for "CSS"/i)
+      ).toBeInTheDocument();
+
+      // Clear button restores issues
+      const clearBtn = screen.getByTestId("reset-learning-goal-button");
+      fireEvent.click(clearBtn);
+      expect(screen.queryByTestId("learning-goal-empty")).not.toBeInTheDocument();
+    });
+  });
 });

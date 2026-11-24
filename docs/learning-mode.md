@@ -69,8 +69,32 @@ flowchart TD
 
 ---
 
+## Learning Goal Mode ("I want to learn" Selector - Issue #418)
+
+### Overview
+Many developers want to use open source to learn a new language or framework and need easy entry points in that technology rather than matching only existing skills. **Learning Goal Mode** adds an optional selector to both the analyzer and results views.
+
+### Features
+1. **Optional "I want to learn" Selector**:
+   - Available on the GitHub Profile Analyzer input card and the Recommended Issues results section.
+   - Allows selecting a target language or framework (e.g. `Python`, `Rust`, `Go`, `TypeScript`, `React`, `CSS`).
+   - Feature is completely off when no goal is selected (`None` / empty).
+2. **Beginner Entry Points Ranked by Approachability**:
+   - Returns open issues in repositories using that technology labelled for beginners (`good first issue`).
+   - Ranked by approachability (small scope, fewer comments, active maintainers) instead of skill overlap.
+3. **Stretch Opportunity Badges**:
+   - Results are distinctly labelled with `🌱 Stretch: {language/framework}` badges (`data-testid="stretch-badge"`) so they are not mixed up with normal skill-matched issues.
+4. **Empty State Handling**:
+   - Displays a clean dedicated empty state (`data-testid="learning-goal-empty"`) when no beginner issues match the target technology, with a one-click reset button.
+
+---
+
 ## Acceptance Criteria Verification
 
+- [x] **Choosing a learning goal returns beginner issues in that technology**: Verified in `backend/tests/test_learning_goal_matching.py` and `frontend/__tests__/learningMode.test.ts`.
+- [x] **Results are clearly labelled as learning opportunities**: Marked with `is_stretch: true` and `🌱 Stretch: {technology}` badge.
+- [x] **The feature is off when no goal is selected**: Verified that normal skill overlap ranking and response format remain unchanged.
+- [x] **Tests cover goal selection and an empty result**: Verified across backend pytest tests and frontend Jest component tests.
 - [x] **With learning mode on, results favour the chosen skills**: Verified in `learningMode.test.ts` and `RecommendedIssuesList.test.tsx`.
 - [x] **Beginner-friendly issues in chosen skills rank higher**: Confirmed through boundary tests in `learningMode.test.ts`.
 - [x] **With learning mode off, ranking is unchanged**: Verified in `learningMode.test.ts` and `mockIssues.test.ts`.
