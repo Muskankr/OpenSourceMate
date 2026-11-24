@@ -129,6 +129,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               Compare
             </Link>
             <Link
+              href="/team"
+              className={`transition-colors ${
+                isDark
+                  ? "text-slate-400 hover:text-slate-200"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Team
+            </Link>
+            <Link
               href="/contribute"
               className={`transition-colors ${
                 isDark

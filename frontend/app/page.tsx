@@ -611,6 +611,13 @@ export default function Home() {
                 Compare
               </Link>
 
+              <Link
+                href="/team"
+                className="rounded-lg px-2 py-1 transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+              >
+                Team
+              </Link>
+
               <GitHubLink className="rounded-lg px-2 py-1 transition hover:text-purple-400" />
 
               <ThemeSegmentedToggle
