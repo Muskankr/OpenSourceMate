@@ -5,6 +5,7 @@ import type { IssueRecommendation } from "../types/api";
 import { inferIssueDifficulty, type IssueDifficulty } from "../data/mockIssues";
 import ResponsivenessBadge from "./ResponsivenessBadge";
 import FriendlinessBadge from "./FriendlinessBadge";
+import HealthBadge from "./HealthBadge";
 
 export interface IssueCardProps {
   issue: IssueRecommendation;
@@ -92,6 +93,9 @@ export default function IssueCard({
             <span className={`font-semibold ${isDark ? "text-purple-400" : "text-purple-600"}`}>
               {issue.repository}
             </span>
+
+            {/* Repository Health Signal Badge */}
+            <HealthBadge repository={issue.repository} theme={theme} />
 
             {/* Responsiveness Signal Label */}
             <ResponsivenessBadge repository={issue.repository} theme={theme} />

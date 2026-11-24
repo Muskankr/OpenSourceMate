@@ -23,10 +23,15 @@ fixtures/
 │   ├── languages_multi.json                  # Real multi-language + noise bytes (Muskankr/OpenSourceMate)
 │   ├── languages_single.json                 # Real single-language bytes (sindresorhus/is)
 │   └── languages_empty.json                  # Real empty languages map (octocat/Hello-World)
-└── events/
-    ├── events_active.json                    # Real 30 sanitized public events (@sindresorhus, >= 15 tier)
-    ├── events_occasional.json                # Derived 4-event subset from events_active.json (1-14 tier)
-    └── events_empty.json                     # Real empty public events list (@octocat, 0 events tier)
+├── events/
+│   ├── events_active.json                    # Real 30 sanitized public events (@sindresorhus, >= 15 tier)
+│   ├── events_occasional.json                # Derived 4-event subset from events_active.json (1-14 tier)
+│   └── events_empty.json                     # Real empty public events list (@octocat, 0 events tier)
+└── health/
+    ├── health_active.json                    # Sanitized active repository fixture (recent commits, merged PRs, quick responses)
+    ├── health_slow.json                      # Sanitized slow repository fixture (occasional commits & longer response delays)
+    ├── health_inactive.json                  # Sanitized inactive repository fixture (stalled commits > 90d, low PR merges)
+    └── health_unknown.json                   # Deterministic insufficient-data edge case (< 3 samples, returns Unknown)
 ```
 
 ## Fixture Catalog & Provenance
@@ -66,6 +71,15 @@ fixtures/
 | `events_active.json`     | Active contributor (`>= 15` events tier, `30` items)   | **Real (sanitized)** | `GET /users/sindresorhus/events/public?per_page=30` (`2026-11-10`)        | Contains `PushEvent`, `PullRequestEvent`, `IssuesEvent`, `CreateEvent`, `DeleteEvent`, `IssueCommentEvent` |
 | `events_occasional.json` | Occasional contributor (`1–14` events tier, `4` items) | **Derived subset**   | Deterministic slice of `events_active.json` (`2` Push, `1` PR, `1` Issue) | Keeps event distribution compact & deterministic                                                           |
 | `events_empty.json`      | Inactive / zero public events (`0` items)              | **Real**             | `GET /users/octocat/events/public` (`2026-11-10`)                         | Evaluates to `"Inactive"` activity tier                                                                    |
+
+### Repository Health Signals (`fixtures/health/`)
+
+| Fixture File             | Scenario                                            | Origin Type          | Exact Provenance / Retrieval                                               | Notes                                                                                               |
+| :----------------------- | :-------------------------------------------------- | :------------------- | :------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------- |
+| `health_active.json`     | Active repository (`Active` badge)                  | **Real (sanitized)** | Commits within 30d, >=50% PR merge rate, median response <= 48h            | Conforms to GitHub REST API commit, pull, and issue payloads                                        |
+| `health_slow.json`       | Slow repository (`Slow` badge)                      | **Real (sanitized)** | Commits within 90d, >=20% PR merge rate, response <= 168h                  | Represents steady but delayed maintainer response pace                                              |
+| `health_inactive.json`   | Inactive / dormant repo (`Inactive` badge)          | **Real (sanitized)** | Commits > 90d old, low PR merge rate (< 20%), response > 168h              | Demonstrates stalled maintainer activity                                                            |
+| `health_unknown.json`    | Insufficient data repo (`Unknown` badge)            | **Synthetic**        | Authored edge case with 0 commits, 0 PRs, and 0 issues                     | Strictly verifies repositories with too little data show `Unknown`, not `Active`                    |
 
 ## Real vs. Synthetic Responses
 

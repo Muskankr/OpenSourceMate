@@ -63,6 +63,28 @@ export interface IssueRecommendation {
   is_mock?: boolean;
   is_learning_mode?: boolean;
   learning_skill?: string;
+  repository_health?: RepositoryHealthResult;
+}
+
+export type HealthStatus = "Active" | "Slow" | "Inactive" | "Unknown";
+
+export interface RepositoryHealthSignals {
+  daysSinceLastCommit?: number | null;
+  mergedPrShare?: number | null;
+  medianResponseHours?: number | null;
+  sampleCount?: number;
+}
+
+export interface RepositoryHealthResult {
+  repository: string;
+  status: HealthStatus;
+  daysSinceLastCommit: number | null;
+  mergedPrShare: number | null;
+  medianResponseHours: number | null;
+  sampleCount: number;
+  tooltipText: string;
+  ruleExplanation: string;
+  cachedAt: number;
 }
 
 export interface MatchedIssuesResponse {

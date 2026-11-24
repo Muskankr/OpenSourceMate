@@ -1,0 +1,76 @@
+{
+  "repository": "sample-org/slow-repo",
+  "commits": [
+    {
+      "sha": "b2c3d4e5f6789012345678901234567890123456",
+      "commit": {
+        "author": {
+          "name": "Slow Dev",
+          "date": "2026-10-10T12:00:00Z"
+        },
+        "committer": {
+          "name": "Slow Dev",
+          "date": "2026-10-10T12:00:00Z"
+        },
+        "message": "fix: occasional maintenance patch"
+      }
+    }
+  ],
+  "pulls": [
+    {
+      "id": 105,
+      "number": 105,
+      "state": "closed",
+      "merged_at": "2026-10-10T16:00:00Z",
+      "created_at": "2026-10-01T10:00:00Z",
+      "updated_at": "2026-10-10T16:00:00Z"
+    },
+    {
+      "id": 106,
+      "number": 106,
+      "state": "closed",
+      "merged_at": null,
+      "created_at": "2026-09-25T11:00:00Z",
+      "updated_at": "2026-10-05T12:00:00Z"
+    },
+    {
+      "id": 107,
+      "number": 107,
+      "state": "closed",
+      "merged_at": null,
+      "created_at": "2026-09-15T09:00:00Z",
+      "updated_at": "2026-09-20T10:00:00Z"
+    },
+    {
+      "id": 108,
+      "number": 108,
+      "state": "closed",
+      "merged_at": null,
+      "created_at": "2026-09-01T14:00:00Z",
+      "updated_at": "2026-09-08T15:00:00Z"
+    }
+  ],
+  "issues": [
+    {
+      "id": 205,
+      "number": 205,
+      "comments": 2,
+      "created_at": "2026-10-01T10:00:00Z",
+      "updated_at": "2026-10-04T16:00:00Z"
+    },
+    {
+      "id": 206,
+      "number": 206,
+      "comments": 1,
+      "created_at": "2026-09-20T08:00:00Z",
+      "updated_at": "2026-09-24T12:00:00Z"
+    },
+    {
+      "id": 207,
+      "number": 207,
+      "comments": 3,
+      "created_at": "2026-09-10T12:00:00Z",
+      "updated_at": "2026-09-15T18:00:00Z"
+    }
+  ]
+}

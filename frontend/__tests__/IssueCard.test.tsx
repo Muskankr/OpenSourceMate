@@ -4,6 +4,7 @@ import IssueCard from "../components/IssueCard";
 import type { IssueRecommendation } from "../types/api";
 import { setCachedResponsiveness, determineResponsiveness } from "../utils/repoResponsiveness";
 import { setCachedFriendlinessScore, calculateFriendlinessScore } from "../utils/repoFriendliness";
+import { setCachedHealth, determineHealthStatus } from "../utils/repoHealth";
 
 describe("IssueCard Component", () => {
   beforeAll(() => {
@@ -23,6 +24,16 @@ describe("IssueCard Component", () => {
         hasIssueTemplates: true,
         readmeLength: 3000,
         recentMergedPrs: 10,
+      })
+    );
+    setCachedHealth(
+      "octocat/hello-world",
+      determineHealthStatus({
+        repository: "octocat/hello-world",
+        daysSinceLastCommit: 2,
+        mergedPrShare: 0.8,
+        medianResponseHours: 12.0,
+        sampleCount: 5,
       })
     );
   });
@@ -161,5 +172,13 @@ describe("IssueCard Component", () => {
     const friendlinessBadge = screen.getByTestId("friendliness-badge");
     expect(friendlinessBadge).toBeInTheDocument();
     expect(friendlinessBadge).toHaveTextContent("100 Very Welcoming");
+  });
+
+  it("renders repository health badge on every recommended issue", () => {
+    render(<IssueCard issue={sampleIssue} theme="dark" />);
+
+    const healthBadge = screen.getByTestId("health-badge");
+    expect(healthBadge).toBeInTheDocument();
+    expect(healthBadge).toHaveTextContent("Active");
   });
 });

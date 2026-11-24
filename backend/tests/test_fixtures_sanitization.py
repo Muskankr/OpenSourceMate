@@ -25,6 +25,10 @@ REQUIRED_FIXTURES = [
     "events/events_active.json",
     "events/events_occasional.json",
     "events/events_empty.json",
+    "health/health_active.json",
+    "health/health_slow.json",
+    "health/health_inactive.json",
+    "health/health_unknown.json",
 ]
 
 
@@ -78,6 +82,11 @@ def test_all_fixtures_are_sanitized_without_emails_tokens_or_private_flags():
                 assert isinstance(language, str) and language
                 assert isinstance(byte_count, int) and not isinstance(byte_count, bool)
                 assert byte_count >= 0
+        elif path.parent.name == "health":
+            assert isinstance(parsed, dict)
+            assert "commits" in parsed
+            assert "pulls" in parsed
+            assert "issues" in parsed
 
 
 def test_edge_case_fixture_invariants():
@@ -100,3 +109,11 @@ def test_edge_case_fixture_invariants():
     assert len(load_fixture("events/events_active.json")) >= 15
     assert 1 <= len(load_fixture("events/events_occasional.json")) <= 14
     assert load_fixture("events/events_empty.json") == []
+
+    active_health = load_fixture("health/health_active.json")
+    assert len(active_health["commits"]) > 0
+    assert len(active_health["pulls"]) > 0
+
+    unknown_health = load_fixture("health/health_unknown.json")
+    assert len(unknown_health["commits"]) == 0
+    assert len(unknown_health["issues"]) == 0

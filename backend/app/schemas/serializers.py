@@ -332,3 +332,25 @@ class IssueAnalysisResponseSerializer(BaseModel):
     explanation: str | None = Field(
         default=None, description="Comprehensive AI explanation"
     )
+
+
+# ---------------------------------------------------------
+# Repository Health Signal Serializers (Issue #416)
+# ---------------------------------------------------------
+class RepositoryHealthResponseSerializer(BaseModel):
+    """Repository health signal evaluation serializer."""
+
+    repository: str = Field(..., description="Repository full name, e.g. owner/repo")
+    status: str = Field(..., description="Health status rating: Active, Slow, Inactive, or Unknown")
+    days_since_last_commit: float | None = Field(
+        default=None, description="Days elapsed since the latest commit on the default branch"
+    )
+    merged_pr_share: float | None = Field(
+        default=None, description="Proportion of sampled recent pull requests that have been merged"
+    )
+    median_response_hours: float | None = Field(
+        default=None, description="Estimated median response hours for recent issues and pull requests"
+    )
+    sample_count: int = Field(default=0, description="Number of sampled issues and pull requests")
+    tooltip_text: str = Field(..., description="Detailed tooltip explaining the computed health numbers")
+    rule_explanation: str = Field(..., description="Rule-based explanation of the assigned health status")
