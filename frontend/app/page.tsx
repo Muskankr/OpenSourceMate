@@ -611,6 +611,14 @@ export default function Home() {
                 Compare
               </Link>
 
+              <Link
+                href="/saved"
+                data-testid="nav-saved-link"
+                className="rounded-lg px-2 py-1 transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+              >
+                Saved
+              </Link>
+
               <GitHubLink className="rounded-lg px-2 py-1 transition hover:text-purple-400" />
 
               <ThemeSegmentedToggle
@@ -705,6 +713,22 @@ export default function Home() {
                 >
                   Analyzer
                 </a>
+
+                <Link
+                  href="/compare"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-xl px-3 py-2 transition hover:bg-white/10"
+                >
+                  Compare
+                </Link>
+
+                <Link
+                  href="/saved"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-xl px-3 py-2 transition hover:bg-white/10"
+                >
+                  Saved Issues
+                </Link>
 
                 <div
                   className="rounded-xl px-3 py-2 transition hover:bg-white/10"

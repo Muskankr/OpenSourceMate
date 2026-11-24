@@ -172,6 +172,7 @@ export const MOCK_RECOMMENDED_ISSUES: IssueRecommendation[] = [
 export interface MockIssuesOptions {
   learningMode?: boolean;
   targetSkills?: string[];
+  filterBySkills?: boolean;
 }
 
 /**
@@ -185,6 +186,10 @@ export function getMockRecommendedIssues(
   skills?: string[] | SkillItem[] | null,
   options?: MockIssuesOptions
 ): IssueRecommendation[] {
+  if (options?.filterBySkills && (!skills || skills.length === 0)) {
+    return [];
+  }
+
   let baseList: IssueRecommendation[];
 
   if (!skills || skills.length === 0) {
@@ -216,7 +221,17 @@ export function getMockRecommendedIssues(
       };
     });
 
-    baseList = scored.sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0));
+    if (options?.filterBySkills) {
+      baseList = scored
+        .filter((issue) => {
+          const langMatch = issue.language && userSkillNames.has(issue.language.toLowerCase());
+          const labelMatch = issue.labels?.some((lbl) => userSkillNames.has(lbl.toLowerCase()));
+          return langMatch || labelMatch;
+        })
+        .sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0));
+    } else {
+      baseList = scored.sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0));
+    }
   }
 
   if (options?.learningMode && options?.targetSkills && options.targetSkills.length > 0) {

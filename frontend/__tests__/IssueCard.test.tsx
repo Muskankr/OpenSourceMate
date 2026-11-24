@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 import IssueCard from "../components/IssueCard";
 import type { IssueRecommendation } from "../types/api";
 import { setCachedResponsiveness, determineResponsiveness } from "../utils/repoResponsiveness";
@@ -161,5 +161,41 @@ describe("IssueCard Component", () => {
     const friendlinessBadge = screen.getByTestId("friendliness-badge");
     expect(friendlinessBadge).toBeInTheDocument();
     expect(friendlinessBadge).toHaveTextContent("100 Very Welcoming");
+  });
+
+  describe("Save Button (Issue #419)", () => {
+    beforeEach(() => {
+      localStorage.clear();
+    });
+
+    it("renders Save button and toggles between Save and Saved on click", () => {
+      render(<IssueCard issue={sampleIssue} theme="dark" />);
+
+      const saveBtn = screen.getByTestId("save-issue-button");
+      expect(saveBtn).toBeInTheDocument();
+      expect(screen.getByTestId("save-button-label")).toHaveTextContent("Save");
+
+      // Click to save
+      fireEvent.click(saveBtn);
+      expect(screen.getByTestId("save-button-label")).toHaveTextContent("Saved");
+
+      // Click again to unsave
+      fireEvent.click(saveBtn);
+      expect(screen.getByTestId("save-button-label")).toHaveTextContent("Save");
+    });
+
+    it("calls onToggleSave callback when provided", () => {
+      const handleToggle = jest.fn();
+      render(<IssueCard issue={sampleIssue} isSaved={false} onToggleSave={handleToggle} />);
+
+      const saveBtn = screen.getByTestId("save-issue-button");
+      fireEvent.click(saveBtn);
+      expect(handleToggle).toHaveBeenCalledTimes(1);
+    });
+
+    it("displays 'Saved' when isSaved prop is true", () => {
+      render(<IssueCard issue={sampleIssue} isSaved={true} />);
+      expect(screen.getByTestId("save-button-label")).toHaveTextContent("Saved");
+    });
   });
 });

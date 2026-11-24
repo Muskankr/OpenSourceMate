@@ -5,6 +5,7 @@ import type { IssueRecommendation } from "../types/api";
 import { inferIssueDifficulty, type IssueDifficulty } from "../data/mockIssues";
 import ResponsivenessBadge from "./ResponsivenessBadge";
 import FriendlinessBadge from "./FriendlinessBadge";
+import { useSavedIssues } from "../hooks/useSavedIssues";
 
 export interface IssueCardProps {
   issue: IssueRecommendation;
@@ -14,6 +15,8 @@ export interface IssueCardProps {
   isHidden?: boolean;
   onHide?: () => void;
   onRestore?: () => void;
+  isSaved?: boolean;
+  onToggleSave?: () => void;
 }
 
 export default function IssueCard({
@@ -24,8 +27,30 @@ export default function IssueCard({
   isHidden = false,
   onHide,
   onRestore,
+  isSaved: propIsSaved,
+  onToggleSave: propOnToggleSave,
 }: IssueCardProps) {
   const isDark = theme === "dark";
+  const { isSaved: checkSaved, toggleSave } = useSavedIssues();
+  const isSaved = propIsSaved !== undefined ? propIsSaved : checkSaved(issue.id);
+
+  const handleToggleSave = () => {
+    if (propOnToggleSave) {
+      propOnToggleSave();
+      return;
+    }
+    toggleSave({
+      id: issue.id,
+      title: issue.title,
+      repository: issue.repository,
+      url: issue.url,
+      language: issue.language,
+      labels: issue.labels,
+      comments: issue.comments,
+      match_score: issue.match_score ?? issue.score,
+      difficulty: issue.difficulty,
+    });
+  };
 
   const isGoodFirst = issue.labels?.some((l) => l.toLowerCase().includes("good first"));
   const isHelpWanted = issue.labels?.some((l) => l.toLowerCase().includes("help wanted"));
@@ -273,6 +298,32 @@ export default function IssueCard({
             <span className="text-sm font-bold sm:text-base">{score}%</span>
             <span className="block text-[10px] uppercase tracking-wider text-gray-400">Match</span>
           </div>
+
+          {/* Save Button (Issue #419) */}
+          <button
+            type="button"
+            data-testid="save-issue-button"
+            onClick={handleToggleSave}
+            aria-label={
+              isSaved
+                ? `Remove "${issue.title}" from saved issues`
+                : `Save "${issue.title}" to personal list`
+            }
+            className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
+              isSaved
+                ? isDark
+                  ? "border-amber-400/40 bg-amber-400/15 text-amber-300 hover:bg-amber-400/25"
+                  : "border-amber-400 bg-amber-50 text-amber-800 hover:bg-amber-100"
+                : isDark
+                  ? "border-white/10 bg-white/5 text-gray-300 hover:border-white/20 hover:text-white"
+                  : "border-gray-300 bg-white text-gray-700 hover:bg-gray-100"
+            }`}
+          >
+            <span aria-hidden="true" className={isSaved ? "text-amber-400" : ""}>
+              {isSaved ? "★" : "☆"}
+            </span>
+            <span data-testid="save-button-label">{isSaved ? "Saved" : "Save"}</span>
+          </button>
 
           {/* Link to GitHub */}
           <a

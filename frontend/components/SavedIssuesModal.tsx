@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+import Link from "next/link";
 import type { BookmarkedIssue } from "../hooks/useBookmarkedIssues";
 
 interface SavedIssuesModalProps {
@@ -33,6 +35,13 @@ export default function SavedIssuesModal({
           </div>
 
           <div className="flex items-center gap-2">
+            <Link
+              href="/saved"
+              onClick={onClose}
+              className="text-xs text-purple-400 hover:text-purple-300 underline"
+            >
+              Open page ↗
+            </Link>
             {bookmarks.length > 0 && (
               <button
                 onClick={onClear}

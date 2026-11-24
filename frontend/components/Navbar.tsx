@@ -138,6 +138,17 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               Contribute
             </Link>
+            <Link
+              href="/saved"
+              data-testid="nav-saved-issues-link"
+              className={`transition-colors ${
+                isDark
+                  ? "text-slate-400 hover:text-slate-200"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Saved
+            </Link>
             <a
               href="#faq"
               onClick={(e) => {
@@ -264,6 +275,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="block py-2 text-sm font-medium hover:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded-lg px-2"
           >
             Contribute
+          </Link>
+          <Link
+            href="/saved"
+            onClick={() => handleMobileNavClick()}
+            className="block py-2 text-sm font-medium hover:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded-lg px-2"
+          >
+            Saved Issues
           </Link>
           <a
             href="#faq"

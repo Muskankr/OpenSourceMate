@@ -28,6 +28,7 @@ export const DEFAULT_NAV_ITEMS: NavItem[] = [
   { label: "How It Works", href: "#how-it-works", isSection: true, sectionId: "how-it-works" },
   { label: "Compare Profiles", href: "/compare" },
   { label: "Contribute", href: "/contribute" },
+  { label: "Saved Issues", href: "/saved" },
   { label: "FAQ", href: "#faq", isSection: true, sectionId: "faq" },
 ];
 
