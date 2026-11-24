@@ -3,9 +3,11 @@ import re
 from collections import Counter
 from datetime import UTC, datetime
 
+from app.services.scoring_config import DEFAULT_SCORING_CONFIG, ScoringConfig
+
 SCORE_METHOD = "keyword-tfidf"
-MAX_TEXT_POINTS = 30
-MAX_EMBEDDING_POINTS = 25
+MAX_TEXT_POINTS = DEFAULT_SCORING_CONFIG.max_text_points
+MAX_EMBEDDING_POINTS = DEFAULT_SCORING_CONFIG.max_embedding_points
 
 _TOKEN = re.compile(r"[a-z0-9][a-z0-9+#.\-]*")
 
@@ -27,13 +29,17 @@ def _skill_entries(user_skills: list) -> dict[str, float]:
     return entries
 
 
-def _issue_term_counts(issue: dict, skill_names: set[str]) -> Counter[str]:
+def _issue_term_counts(
+    issue: dict,
+    skill_names: set[str],
+    config: ScoringConfig = DEFAULT_SCORING_CONFIG,
+) -> Counter[str]:
     """Weighted mentions of each skill: title counts 3x, labels and repo name 2x, body 1x."""
     fields = (
-        (issue.get("title"), 3),
-        (" ".join(issue.get("labels", [])), 2),
-        (issue.get("repository"), 2),
-        (issue.get("body"), 1),
+        (issue.get("title"), config.title_term_weight),
+        (" ".join(issue.get("labels", [])), config.labels_term_weight),
+        (issue.get("repository"), config.repo_term_weight),
+        (issue.get("body"), config.body_term_weight),
     )
     counts: Counter[str] = Counter()
 
@@ -53,6 +59,7 @@ def _issue_term_counts(issue: dict, skill_names: set[str]) -> Counter[str]:
 def categorize_issue_freshness(
     updated_at_str: str | None,
     now: datetime | None = None,
+    config: ScoringConfig = DEFAULT_SCORING_CONFIG,
 ) -> dict:
     """
     Categorize issue freshness into 'Active', 'Recent', or 'Stale'
@@ -71,10 +78,10 @@ def categorize_issue_freshness(
         current_time = now or datetime.now(UTC)
         days = max(0, (current_time - updated).days)
 
-        if days <= 14:
+        if days <= config.freshness_active_days_threshold:
             status = "Active"
             is_stale = False
-        elif days <= 60:
+        elif days <= config.freshness_stale_days_threshold:
             status = "Recent"
             is_stale = False
         else:
@@ -103,7 +110,11 @@ def categorize_issue_freshness(
         }
 
 
-def build_idf(issues: list[dict], user_skills: list) -> dict[str, float]:
+def build_idf(
+    issues: list[dict],
+    user_skills: list,
+    config: ScoringConfig = DEFAULT_SCORING_CONFIG,
+) -> dict[str, float]:
     """Inverse document frequency of each skill over the fetched issues.
 
     A skill that shows up in every issue (the one we searched for) says little
@@ -113,7 +124,7 @@ def build_idf(issues: list[dict], user_skills: list) -> dict[str, float]:
     document_frequency: Counter[str] = Counter()
 
     for issue in issues:
-        for name, count in _issue_term_counts(issue, names).items():
+        for name, count in _issue_term_counts(issue, names, config=config).items():
             if count:
                 document_frequency[name] += 1
 
@@ -130,10 +141,11 @@ def calculate_issue_score(
     user_skills: list,
     idf: dict[str, float] | None = None,
     embedding_similarity: float | None = None,
+    config: ScoringConfig = DEFAULT_SCORING_CONFIG,
 ) -> dict:
     """
     Calculate a transparent compatibility score between
-    a GitHub issue and a user's skills.
+    a GitHub issue and a user's skills using configurable weights.
     """
 
     score = 0
@@ -151,14 +163,14 @@ def calculate_issue_score(
     # The language only counts when it is known and in the profile, and
     # a skill the user relies on more is worth more.
     if issue_language and issue_language.lower() in skills:
-        score += round(40 * skills[issue_language.lower()])
+        score += round(config.language_match_weight * skills[issue_language.lower()])
         reasons.append(f"Your profile includes {issue_language}.")
 
     # -----------------------------------
     # 1b. Skills mentioned in the title, body, labels or repo name
     # -----------------------------------
 
-    counts = _issue_term_counts(issue, set(skills))
+    counts = _issue_term_counts(issue, set(skills), config=config)
     idf = idf or {}
     matched_skills = []
     text_points = 0.0
@@ -170,14 +182,18 @@ def calculate_issue_score(
         matched_skills.append(name)
         # Repeated mentions help, with diminishing returns.
         text_points += (
-            12 * skills[name] * idf.get(name, 1.0) * (1 + math.log(count)) / 2
+            config.text_term_multiplier
+            * skills[name]
+            * idf.get(name, 1.0)
+            * (1 + math.log(count))
+            / config.text_log_scale_divisor
         )
 
-    text_points = min(round(text_points), MAX_TEXT_POINTS)
+    text_points = min(round(text_points), config.max_text_points)
 
     # Optional semantic score, only present when the embedding model is available.
     if embedding_similarity is not None:
-        embedding_points = round(MAX_EMBEDDING_POINTS * embedding_similarity)
+        embedding_points = round(config.max_embedding_points * embedding_similarity)
         if embedding_points:
             score += embedding_points
             reasons.append("The issue is semantically close to your skills.")
@@ -191,7 +207,7 @@ def calculate_issue_score(
     # -----------------------------------
 
     if "good first issue" in labels:
-        score += 25
+        score += config.good_first_issue_bonus
         reasons.append("This issue is marked as a good first issue.")
 
     # -----------------------------------
@@ -199,7 +215,7 @@ def calculate_issue_score(
     # -----------------------------------
 
     if "help wanted" in labels:
-        score += 15
+        score += config.help_wanted_bonus
         reasons.append("The repository is actively looking for contributors.")
 
     # -----------------------------------
@@ -214,12 +230,12 @@ def calculate_issue_score(
 
             days_old = (datetime.now(UTC) - updated).days
 
-            if days_old <= 30:
-                score += 10
+            if days_old <= config.activity_recent_days_threshold:
+                score += config.activity_recent_bonus
                 reasons.append("This issue has been active recently.")
 
-            elif days_old <= 90:
-                score += 5
+            elif days_old <= config.activity_moderate_days_threshold:
+                score += config.activity_moderate_bonus
                 reasons.append("This issue has recent activity.")
 
         except ValueError:
@@ -231,17 +247,17 @@ def calculate_issue_score(
 
     comments = issue.get("comments", 0)
 
-    if comments <= 10:
-        score += 10
+    if comments <= config.comments_max_threshold:
+        score += config.comments_manageable_bonus
         reasons.append("The issue has a manageable discussion size.")
 
     # Keep the uncapped value so results that both reach 100 can still be ordered.
     raw_score = score
 
-    # Never exceed 100
-    score = min(score, 100)
+    # Clamp score strictly within [min_score, max_score]
+    score = max(config.min_score, min(score, config.max_score))
 
-    freshness = categorize_issue_freshness(updated_at)
+    freshness = categorize_issue_freshness(updated_at, config=config)
 
     return {
         "score": score,
