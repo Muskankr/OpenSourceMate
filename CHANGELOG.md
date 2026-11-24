@@ -7,6 +7,7 @@ All notable changes to OpenSourceMate are recorded here. The format follows
 
 ### Added
 
+- Backend & Frontend: embeddable SVG skill badge endpoint (`/api/badge/{username}.svg`) listing top 3 detected languages with caching headers, XML sanitization, neutral fallback badges on upstream rate limits or unknown users, and a "Copy badge Markdown" button in the frontend results action bar (#420).
 - Frontend: Light, Dark, and System theme toggle in the navbar, default system preference detection with OS change listener, synchronous inline blocking script to prevent theme flash (FOUC) on load, persistent choice across reloads, and readable contrast across all components and charts.
 - Frontend: Repository Friendliness Score and badge on recommended issues, computing a deterministic 0–100 score from community signals (CONTRIBUTING guide, Code of Conduct, issue templates, README length, recent merged PRs) with an interactive breakdown popover and client-side caching to respect GitHub rate limits.
 

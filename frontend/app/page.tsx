@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import CopyBadgeButton from "../components/CopyBadgeButton";
 import ExportMenu from "../components/ExportMenu";
 import GitHubLink from "../components/GitHubLink";
 import ProfileCard from "../components/ProfileCard";
@@ -992,6 +993,7 @@ export default function Home() {
                       >
                         {linkCopied ? "Link copied" : "Copy link"}
                       </button>
+                      <CopyBadgeButton username={profile.username} />
                       <ExportMenu onExport={handleExport} />
                     </div>
                   )}

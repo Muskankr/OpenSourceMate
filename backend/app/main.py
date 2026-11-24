@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.api.routes.ai import router as ai_router
+from app.api.routes.badge import router as badge_router
 from app.api.routes.github import router as github_router
 from app.api.routes.issues import router as issues_router
 from app.api.routes.matching import router as matching_router
@@ -372,6 +373,7 @@ async def health_diagnostics():
 # Routers (Dual-mounted: /api/ and /api/v1/ for compatibility)
 # ---------------------------------------------------------
 # v1 Prefix Routers
+app.include_router(badge_router, prefix="/api/v1", include_in_schema=True)
 app.include_router(github_router, prefix="/api/v1", include_in_schema=True)
 app.include_router(issues_router, prefix="/api/v1", include_in_schema=True)
 app.include_router(ai_router, prefix="/api/v1", include_in_schema=True)
@@ -380,6 +382,7 @@ app.include_router(friendliness_router, prefix="/api/v1", include_in_schema=True
 app.include_router(text_skills_router, prefix="/api/v1", include_in_schema=True)
 
 # Legacy /api/ Routers (Backward Compatibility)
+app.include_router(badge_router, prefix="/api", include_in_schema=False)
 app.include_router(github_router, prefix="/api", include_in_schema=False)
 app.include_router(issues_router, prefix="/api", include_in_schema=False)
 app.include_router(ai_router, prefix="/api", include_in_schema=False)
