@@ -5,6 +5,7 @@ import type { IssueRecommendation } from "../types/api";
 import { inferIssueDifficulty, type IssueDifficulty } from "../data/mockIssues";
 import ResponsivenessBadge from "./ResponsivenessBadge";
 import FriendlinessBadge from "./FriendlinessBadge";
+import ContributionRequirementsChips from "./ContributionRequirementsChips";
 
 export interface IssueCardProps {
   issue: IssueRecommendation;
@@ -195,6 +196,13 @@ export default function IssueCard({
               ))}
             </div>
           )}
+
+          {/* Contribution Requirements Chips (Issue #417) */}
+          <ContributionRequirementsChips
+            repository={issue.repository}
+            theme={theme}
+            className="mt-2.5"
+          />
 
           {/* Explanation if present */}
           {issue.explanation && (

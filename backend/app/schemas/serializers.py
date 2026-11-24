@@ -332,3 +332,26 @@ class IssueAnalysisResponseSerializer(BaseModel):
     explanation: str | None = Field(
         default=None, description="Comprehensive AI explanation"
     )
+
+
+# ---------------------------------------------------------
+# Contribution Requirements Serializers (Issue #417)
+# ---------------------------------------------------------
+class RequirementItemSerializer(BaseModel):
+    """Serializer for a single detected contribution requirement item."""
+
+    detected: bool = Field(..., description="Whether the requirement file or signal was detected")
+    name: str | None = Field(default=None, description="Display name or file title")
+    url: str | None = Field(default=None, description="Direct URL to the file in the repository")
+    type: str | None = Field(default=None, description="Type identifier for CLA/DCO")
+    status: str = Field(default="unknown", description="Status: 'present' or 'unknown'")
+
+
+class ContributionRequirementsResponseSerializer(BaseModel):
+    """Response envelope for repository contribution requirements."""
+
+    repository: str = Field(..., description="Repository full name, e.g. owner/repo")
+    contributing: RequirementItemSerializer
+    code_of_conduct: RequirementItemSerializer
+    license: RequirementItemSerializer
+    cla_dco: RequirementItemSerializer

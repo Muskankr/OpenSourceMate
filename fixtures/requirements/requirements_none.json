@@ -1,0 +1,18 @@
+{
+  "repository": "sample-org/none-requirements-repo",
+  "community_profile": {
+    "files": {
+      "code_of_conduct": null,
+      "contributing": null,
+      "license": null
+    }
+  },
+  "contents": [
+    {
+      "name": "README.md",
+      "path": "README.md",
+      "type": "file",
+      "html_url": "https://github.com/sample-org/none-requirements-repo/blob/main/README.md"
+    }
+  ]
+}

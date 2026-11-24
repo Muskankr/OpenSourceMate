@@ -1,0 +1,50 @@
+{
+  "repository": "sample-org/full-requirements-repo",
+  "community_profile": {
+    "files": {
+      "code_of_conduct": {
+        "key": "contributor_covenant",
+        "name": "Contributor Covenant",
+        "url": "https://api.github.com/repos/sample-org/full-requirements-repo/community/code_of_conduct",
+        "html_url": "https://github.com/sample-org/full-requirements-repo/blob/main/CODE_OF_CONDUCT.md"
+      },
+      "contributing": {
+        "url": "https://api.github.com/repos/sample-org/full-requirements-repo/community/contributing",
+        "html_url": "https://github.com/sample-org/full-requirements-repo/blob/main/CONTRIBUTING.md"
+      },
+      "license": {
+        "key": "mit",
+        "name": "MIT License",
+        "spdx_id": "MIT",
+        "url": "https://api.github.com/licenses/mit",
+        "html_url": "https://github.com/sample-org/full-requirements-repo/blob/main/LICENSE"
+      }
+    }
+  },
+  "contents": [
+    {
+      "name": "CONTRIBUTING.md",
+      "path": "CONTRIBUTING.md",
+      "type": "file",
+      "html_url": "https://github.com/sample-org/full-requirements-repo/blob/main/CONTRIBUTING.md"
+    },
+    {
+      "name": "CODE_OF_CONDUCT.md",
+      "path": "CODE_OF_CONDUCT.md",
+      "type": "file",
+      "html_url": "https://github.com/sample-org/full-requirements-repo/blob/main/CODE_OF_CONDUCT.md"
+    },
+    {
+      "name": "LICENSE",
+      "path": "LICENSE",
+      "type": "file",
+      "html_url": "https://github.com/sample-org/full-requirements-repo/blob/main/LICENSE"
+    },
+    {
+      "name": "CLA.md",
+      "path": "CLA.md",
+      "type": "file",
+      "html_url": "https://github.com/sample-org/full-requirements-repo/blob/main/CLA.md"
+    }
+  ]
+}

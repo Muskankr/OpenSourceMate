@@ -4,6 +4,7 @@ import IssueCard from "../components/IssueCard";
 import type { IssueRecommendation } from "../types/api";
 import { setCachedResponsiveness, determineResponsiveness } from "../utils/repoResponsiveness";
 import { setCachedFriendlinessScore, calculateFriendlinessScore } from "../utils/repoFriendliness";
+import { setCachedRequirements } from "../utils/repoRequirements";
 
 describe("IssueCard Component", () => {
   beforeAll(() => {
@@ -25,6 +26,33 @@ describe("IssueCard Component", () => {
         recentMergedPrs: 10,
       })
     );
+    setCachedRequirements("octocat/hello-world", {
+      repository: "octocat/hello-world",
+      contributing: {
+        detected: true,
+        name: "Contributing Guide",
+        url: "https://github.com/octocat/hello-world/blob/main/CONTRIBUTING.md",
+        status: "present",
+      },
+      code_of_conduct: {
+        detected: true,
+        name: "Code of Conduct",
+        url: "https://github.com/octocat/hello-world/blob/main/CODE_OF_CONDUCT.md",
+        status: "present",
+      },
+      license: {
+        detected: true,
+        name: "MIT",
+        url: "https://github.com/octocat/hello-world/blob/main/LICENSE",
+        status: "present",
+      },
+      cla_dco: {
+        detected: false,
+        name: null,
+        url: null,
+        status: "unknown",
+      },
+    });
   });
   const sampleIssue: IssueRecommendation = {
     id: 42,
@@ -161,5 +189,12 @@ describe("IssueCard Component", () => {
     const friendlinessBadge = screen.getByTestId("friendliness-badge");
     expect(friendlinessBadge).toBeInTheDocument();
     expect(friendlinessBadge).toHaveTextContent("100 Very Welcoming");
+  });
+
+  it("renders contribution requirements chips on the issue card", () => {
+    render(<IssueCard issue={sampleIssue} theme="dark" />);
+
+    const chipsContainer = screen.getByTestId("contribution-requirements-container");
+    expect(chipsContainer).toBeInTheDocument();
   });
 });

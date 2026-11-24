@@ -23,10 +23,14 @@ fixtures/
 │   ├── languages_multi.json                  # Real multi-language + noise bytes (Muskankr/OpenSourceMate)
 │   ├── languages_single.json                 # Real single-language bytes (sindresorhus/is)
 │   └── languages_empty.json                  # Real empty languages map (octocat/Hello-World)
-└── events/
-    ├── events_active.json                    # Real 30 sanitized public events (@sindresorhus, >= 15 tier)
-    ├── events_occasional.json                # Derived 4-event subset from events_active.json (1-14 tier)
-    └── events_empty.json                     # Real empty public events list (@octocat, 0 events tier)
+├── events/
+│   ├── events_active.json                    # Real 30 sanitized public events (@sindresorhus, >= 15 tier)
+│   ├── events_occasional.json                # Derived 4-event subset from events_active.json (1-14 tier)
+│   └── events_empty.json                     # Real empty public events list (@octocat, 0 events tier)
+└── requirements/
+    ├── requirements_all.json                 # Repository with all files (CONTRIBUTING, CODE_OF_CONDUCT, LICENSE, CLA)
+    ├── requirements_some.json                # Repository with some files (CONTRIBUTING, LICENSE; missing CoC & CLA)
+    └── requirements_none.json                # Repository with no files (all unknown)
 ```
 
 ## Fixture Catalog & Provenance
@@ -66,6 +70,14 @@ fixtures/
 | `events_active.json`     | Active contributor (`>= 15` events tier, `30` items)   | **Real (sanitized)** | `GET /users/sindresorhus/events/public?per_page=30` (`2026-11-10`)        | Contains `PushEvent`, `PullRequestEvent`, `IssuesEvent`, `CreateEvent`, `DeleteEvent`, `IssueCommentEvent` |
 | `events_occasional.json` | Occasional contributor (`1–14` events tier, `4` items) | **Derived subset**   | Deterministic slice of `events_active.json` (`2` Push, `1` PR, `1` Issue) | Keeps event distribution compact & deterministic                                                           |
 | `events_empty.json`      | Inactive / zero public events (`0` items)              | **Real**             | `GET /users/octocat/events/public` (`2026-11-10`)                         | Evaluates to `"Inactive"` activity tier                                                                    |
+
+### Contribution Requirements (`fixtures/requirements/`)
+
+| Fixture File               | Scenario                                       | Origin Type          | Exact Provenance / Retrieval                                           | Notes                                                                                            |
+| :------------------------- | :--------------------------------------------- | :------------------- | :--------------------------------------------------------------------- | :----------------------------------------------------------------------------------------------- |
+| `requirements_all.json`    | All requirements present                       | **Real (sanitized)** | `GET /repos/.../community/profile` and contents (`2026-11-24`)         | Contains CONTRIBUTING.md, CODE_OF_CONDUCT.md, LICENSE, and CLA.md                               |
+| `requirements_some.json`   | Partial requirements (contributing + license)  | **Real (sanitized)** | `GET /repos/.../community/profile` and contents (`2026-11-24`)         | Contains CONTRIBUTING.md and LICENSE; missing CODE_OF_CONDUCT and CLA/DCO (evaluates to unknown) |
+| `requirements_none.json`   | No requirements present                        | **Synthetic**        | Empty community profile and contents                                   | All contribution requirements evaluate strictly to `unknown` rather than `none`                  |
 
 ## Real vs. Synthetic Responses
 

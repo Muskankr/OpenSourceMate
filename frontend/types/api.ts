@@ -63,6 +63,26 @@ export interface IssueRecommendation {
   is_mock?: boolean;
   is_learning_mode?: boolean;
   learning_skill?: string;
+  contribution_requirements?: ContributionRequirementsResult;
+}
+
+export type RequirementStatus = "present" | "unknown";
+
+export interface RequirementItem {
+  detected: boolean;
+  name: string | null;
+  url: string | null;
+  type?: string | null;
+  status: RequirementStatus;
+}
+
+export interface ContributionRequirementsResult {
+  repository: string;
+  contributing: RequirementItem;
+  code_of_conduct: RequirementItem;
+  license: RequirementItem;
+  cla_dco: RequirementItem;
+  cachedAt?: number;
 }
 
 export interface MatchedIssuesResponse {

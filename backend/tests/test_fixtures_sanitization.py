@@ -25,6 +25,9 @@ REQUIRED_FIXTURES = [
     "events/events_active.json",
     "events/events_occasional.json",
     "events/events_empty.json",
+    "requirements/requirements_all.json",
+    "requirements/requirements_some.json",
+    "requirements/requirements_none.json",
 ]
 
 
@@ -78,6 +81,10 @@ def test_all_fixtures_are_sanitized_without_emails_tokens_or_private_flags():
                 assert isinstance(language, str) and language
                 assert isinstance(byte_count, int) and not isinstance(byte_count, bool)
                 assert byte_count >= 0
+        elif path.parent.name == "requirements":
+            assert isinstance(parsed, dict)
+            assert "community_profile" in parsed
+            assert "contents" in parsed
 
 
 def test_edge_case_fixture_invariants():
@@ -100,3 +107,9 @@ def test_edge_case_fixture_invariants():
     assert len(load_fixture("events/events_active.json")) >= 15
     assert 1 <= len(load_fixture("events/events_occasional.json")) <= 14
     assert load_fixture("events/events_empty.json") == []
+
+    req_all = load_fixture("requirements/requirements_all.json")
+    assert req_all["community_profile"]["files"]["contributing"] is not None
+
+    req_none = load_fixture("requirements/requirements_none.json")
+    assert req_none["community_profile"]["files"]["contributing"] is None

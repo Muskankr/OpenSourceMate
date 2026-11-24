@@ -1,0 +1,33 @@
+{
+  "repository": "sample-org/some-requirements-repo",
+  "community_profile": {
+    "files": {
+      "code_of_conduct": null,
+      "contributing": {
+        "url": "https://api.github.com/repos/sample-org/some-requirements-repo/community/contributing",
+        "html_url": "https://github.com/sample-org/some-requirements-repo/blob/main/CONTRIBUTING.md"
+      },
+      "license": {
+        "key": "apache-2.0",
+        "name": "Apache License 2.0",
+        "spdx_id": "Apache-2.0",
+        "url": "https://api.github.com/licenses/apache-2.0",
+        "html_url": "https://github.com/sample-org/some-requirements-repo/blob/main/LICENSE"
+      }
+    }
+  },
+  "contents": [
+    {
+      "name": "CONTRIBUTING.md",
+      "path": "CONTRIBUTING.md",
+      "type": "file",
+      "html_url": "https://github.com/sample-org/some-requirements-repo/blob/main/CONTRIBUTING.md"
+    },
+    {
+      "name": "LICENSE",
+      "path": "LICENSE",
+      "type": "file",
+      "html_url": "https://github.com/sample-org/some-requirements-repo/blob/main/LICENSE"
+    }
+  ]
+}
