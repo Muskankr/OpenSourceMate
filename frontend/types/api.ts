@@ -39,6 +39,7 @@ export interface UserSkillsResponse {
   username: string;
   skills: SkillItem[];
   total_repositories_analyzed: number;
+  excluded_forks_count?: number;
   analyzed_at?: string;
 }
 

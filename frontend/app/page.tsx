@@ -149,6 +149,8 @@ export default function Home() {
   // Learning Mode state
   const [isLearningMode, setIsLearningMode] = useState(false);
   const [targetSkills, setTargetSkills] = useState<string[]>([]);
+  const [includeAllForks, setIncludeAllForks] = useState(false);
+  const [isUpdatingForks, setIsUpdatingForks] = useState(false);
 
   // Filters for recommended issues (Issue #47)
   const [languageFilter, setLanguageFilter] = useState("all");
@@ -531,6 +533,30 @@ export default function Home() {
       }
     } finally {
       setIsRefreshing(false);
+    }
+  };
+
+  const handleToggleIncludeForks = async (checked: boolean) => {
+    if (!profile?.username || isUpdatingForks) return;
+    setIncludeAllForks(checked);
+    setIsUpdatingForks(true);
+    const searchSignal = createSearchSignal();
+    try {
+      const skillsData = await fetchUserSkills(profile.username, {
+        signal: searchSignal,
+        includeForks: checked,
+      });
+      if (analyzerState.status !== "idle") {
+        dispatchAnalyzer({
+          type: "success",
+          requestId: analyzerState.requestId,
+          data: { profile, skills: skillsData },
+        });
+      }
+    } catch (err: unknown) {
+      if (isAbortError(err)) return;
+    } finally {
+      setIsUpdatingForks(false);
     }
   };
 
@@ -1033,11 +1059,40 @@ export default function Home() {
                       </div>
 
                       <div
-                        className={`text-xs sm:text-sm ${
+                        className={`flex flex-col items-start gap-1 sm:items-end text-xs sm:text-sm ${
                           theme === "dark" ? "text-gray-400" : "text-gray-600"
                         }`}
                       >
-                        {skills.total_repositories_analyzed} repositories analyzed
+                        <div>{skills.total_repositories_analyzed} repositories analyzed</div>
+                        {typeof skills.excluded_forks_count === "number" && (
+                          <div className="flex items-center gap-2">
+                            <span
+                              data-testid="excluded-forks-count"
+                              className={
+                                skills.excluded_forks_count > 0
+                                  ? theme === "dark"
+                                    ? "text-purple-300 font-medium"
+                                    : "text-purple-700 font-medium"
+                                  : ""
+                              }
+                            >
+                              {skills.excluded_forks_count} {skills.excluded_forks_count === 1 ? "fork" : "forks"} excluded
+                            </span>
+                            <label className="inline-flex items-center gap-1.5 cursor-pointer select-none">
+                              <input
+                                type="checkbox"
+                                role="switch"
+                                aria-label="Include all forks"
+                                data-testid="include-all-forks-toggle"
+                                checked={includeAllForks}
+                                disabled={isUpdatingForks}
+                                onChange={(e) => handleToggleIncludeForks(e.target.checked)}
+                                className="h-3.5 w-3.5 rounded border-gray-400 text-purple-600 focus:ring-purple-400"
+                              />
+                              <span className="text-xs">Include all forks</span>
+                            </label>
+                          </div>
+                        )}
                       </div>
                     </div>
 

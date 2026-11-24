@@ -132,6 +132,45 @@ def _is_fork(repository: dict) -> bool:
     return bool(repository.get("fork"))
 
 
+def has_user_commits_on_fork(repository: dict) -> bool:
+    """Determine whether a user has pushed their own commits to a forked repository (Issue #423).
+
+    Checks:
+    1. Direct flag `has_own_commits` (useful for fixtures / API enriched payloads).
+    2. Comparison of `pushed_at` vs `created_at`. In pure forks created on GitHub where the
+       user never pushed any commits, `pushed_at` is either null, earlier than or practically
+       equal to `created_at`. If `pushed_at` is distinctly after `created_at` (e.g. > 10 seconds),
+       the user has pushed commits to their fork.
+    """
+    if not _is_fork(repository):
+        return True
+
+    if "has_own_commits" in repository:
+        return bool(repository.get("has_own_commits"))
+
+    pushed_at = repository.get("pushed_at")
+    created_at = repository.get("created_at")
+
+    if not pushed_at or not created_at:
+        return False
+
+    try:
+        cleaned_pushed = str(pushed_at).replace("Z", "+00:00")
+        dt_pushed = datetime.fromisoformat(cleaned_pushed)
+        if dt_pushed.tzinfo is None:
+            dt_pushed = dt_pushed.replace(tzinfo=timezone.utc)
+
+        cleaned_created = str(created_at).replace("Z", "+00:00")
+        dt_created = datetime.fromisoformat(cleaned_created)
+        if dt_created.tzinfo is None:
+            dt_created = dt_created.replace(tzinfo=timezone.utc)
+
+        # Allow a slight 10s leeway for creation sync
+        return (dt_pushed - dt_created).total_seconds() > 10
+    except Exception:
+        return False
+
+
 def calculate_proficiency(
     repository_count: int,
     percentage: float,
@@ -243,9 +282,10 @@ def analyze_skills(
     ignore_noise: bool = True,
     group_related: bool = False,
     compute_proficiency: bool = True,
+    fork_own_commits_weight: float = 0.5,
 ) -> dict:
     """Build a skill list from a user's repositories with noise filtering, grouping,
-    and proficiency estimation (Issues #130 & #131).
+    proficiency estimation, and fork-aware commit weighting (Issues #130, #131, & #423).
 
     repo_details maps a repo full_name to optional extra data fetched separately:
     {"languages": {"Python": 1234}, "dependencies": ["react", "next"]}.
@@ -253,14 +293,32 @@ def analyze_skills(
 
     Parameters:
     - repositories: List of raw repository dictionaries from GitHub API.
-    - include_forks: Whether to include forked repositories in skill extraction.
+    - include_forks: Whether to include all forked repositories (pure and active) at full 1.0 weight.
     - repo_details: Extra repository data (languages byte counts, dependencies).
     - ignore_noise: Exclude generated/non-skill languages (e.g. Jupyter Notebook, Dockerfile, Makefile).
     - group_related: If True, consolidates related technologies into ecosystem skills with subskills list.
     - compute_proficiency: If True, calculates estimated proficiency levels and explanation rationale.
+    - fork_own_commits_weight: Weight multiplier for forks where the user pushed their own commits (default 0.5).
     """
     repo_details = repo_details or {}
-    analyzed = [r for r in repositories if include_forks or not _is_fork(r)]
+
+    # Separate repositories into analyzed and track excluded forks (Issue #423)
+    analyzed: list[tuple[dict, float]] = []
+    excluded_forks_count = 0
+
+    for r in repositories:
+        is_fork_repo = _is_fork(r)
+        if not is_fork_repo:
+            analyzed.append((r, 1.0))
+        elif include_forks:
+            # Include-all switch restores legacy full behavior: all forks included at 1.0 weight
+            analyzed.append((r, 1.0))
+        else:
+            # Fork-aware check: skip pure forks, count forks with user's own commits at lower weight
+            if has_user_commits_on_fork(r):
+                analyzed.append((r, fork_own_commits_weight))
+            else:
+                excluded_forks_count += 1
 
     languages: Counter[str] = Counter()
     frameworks: Counter[str] = Counter()
@@ -271,7 +329,7 @@ def analyze_skills(
     active_groups: defaultdict[str, list[str]] = defaultdict(list)
     latest_update_by_skill: dict[str, str] = {}
 
-    for repository in analyzed:
+    for repository, weight in analyzed:
         repo_updated_at = repository.get("updated_at")
         details = repo_details.get(repository.get("full_name") or "", {})
         repo_languages = details.get("languages") or {}
@@ -282,7 +340,7 @@ def analyze_skills(
             for language in repo_languages:
                 if ignore_noise and is_noise_language(language):
                     continue
-                languages[language] += 1
+                languages[language] += weight
                 current_repo_languages.add(language)
                 if repo_updated_at:
                     if (
@@ -293,7 +351,7 @@ def analyze_skills(
         elif repository.get("language"):
             lang = repository["language"]
             if not (ignore_noise and is_noise_language(lang)):
-                languages[lang] += 1
+                languages[lang] += weight
                 current_repo_languages.add(lang)
                 if repo_updated_at:
                     if (
@@ -314,9 +372,9 @@ def analyze_skills(
             if skill:
                 repo_skills.add(skill)
 
-        # A repo counts once per skill, even if both a dependency and a topic point at it.
+        # A repo counts once per skill (multiplied by repo weight), even if both a dependency and a topic point at it.
         for skill in repo_skills:
-            frameworks[skill] += 1
+            frameworks[skill] += weight
             if repo_updated_at:
                 if (
                     skill not in latest_update_by_skill
@@ -339,7 +397,7 @@ def analyze_skills(
                 group_subskills[grp].add(skill)
 
         for grp in repo_groups_seen:
-            group_repo_counts[grp] += 1
+            group_repo_counts[grp] += weight
 
     # Build active group dictionary for metadata
     for grp, members in group_subskills.items():
@@ -347,6 +405,13 @@ def analyze_skills(
 
     language_total = sum(languages.values())
     skills: list[dict[str, Any]] = []
+
+    def format_count(val: float | int) -> int | float:
+        if isinstance(val, (int, float)) and float(val).is_integer():
+            return int(val)
+        return round(float(val), 2)
+
+    total_analyzed_count = len(analyzed)
 
     if group_related:
         # Grouped Mode: Replace constituent member languages with their consolidated group
@@ -359,11 +424,12 @@ def analyze_skills(
                 consumed_languages.add(sub.lower())
                 consumed_frameworks.add(sub.lower())
 
-            pct = round((count / len(analyzed)) * 100, 2) if analyzed else 0.0
+            pct = round((count / total_analyzed_count) * 100, 2) if total_analyzed_count else 0.0
+            display_count = format_count(count)
             skill_entry = {
                 "name": grp,
                 "type": "ecosystem",
-                "repository_count": count,
+                "repository_count": display_count,
                 "percentage": pct,
                 "group": grp,
                 "subskills": subskills_list,
@@ -374,7 +440,7 @@ def analyze_skills(
                     default=None,
                 ) or None
                 level, score, reason = calculate_proficiency(
-                    count, pct, latest_sub_ts, skill_name=grp
+                    int(round(count)), pct, latest_sub_ts, skill_name=grp
                 )
                 skill_entry["proficiency"] = level
                 skill_entry["proficiency_score"] = score
@@ -386,16 +452,17 @@ def analyze_skills(
         for name, count in languages.most_common():
             if name.lower() not in consumed_languages:
                 pct = round((count / language_total) * 100, 2) if language_total else 0.0
+                display_count = format_count(count)
                 skill_entry = {
                     "name": name,
                     "type": "language",
-                    "repository_count": count,
+                    "repository_count": display_count,
                     "percentage": pct,
                     "group": None,
                 }
                 if compute_proficiency:
                     level, score, reason = calculate_proficiency(
-                        count, pct, latest_update_by_skill.get(name), skill_name=name
+                        int(round(count)), pct, latest_update_by_skill.get(name), skill_name=name
                     )
                     skill_entry["proficiency"] = level
                     skill_entry["proficiency_score"] = score
@@ -405,17 +472,18 @@ def analyze_skills(
         # Append standalone frameworks that do not belong to any grouped ecosystem
         for name, count in frameworks.most_common():
             if name.lower() not in consumed_frameworks:
-                pct = round((count / len(analyzed)) * 100, 2) if analyzed else 0.0
+                pct = round((count / total_analyzed_count) * 100, 2) if total_analyzed_count else 0.0
+                display_count = format_count(count)
                 skill_entry = {
                     "name": name,
                     "type": "framework",
-                    "repository_count": count,
+                    "repository_count": display_count,
                     "percentage": pct,
                     "group": None,
                 }
                 if compute_proficiency:
                     level, score, reason = calculate_proficiency(
-                        count, pct, latest_update_by_skill.get(name), skill_name=name
+                        int(round(count)), pct, latest_update_by_skill.get(name), skill_name=name
                     )
                     skill_entry["proficiency"] = level
                     skill_entry["proficiency_score"] = score
@@ -425,16 +493,17 @@ def analyze_skills(
         # Standard Mode (Default): Retain fine-grained skills and annotate each with group
         for name, count in languages.most_common():
             pct = round((count / language_total) * 100, 2) if language_total else 0.0
+            display_count = format_count(count)
             skill_entry = {
                 "name": name,
                 "type": "language",
-                "repository_count": count,
+                "repository_count": display_count,
                 "percentage": pct,
                 "group": resolve_group_for_skill(name),
             }
             if compute_proficiency:
                 level, score, reason = calculate_proficiency(
-                    count, pct, latest_update_by_skill.get(name), skill_name=name
+                    int(round(count)), pct, latest_update_by_skill.get(name), skill_name=name
                 )
                 skill_entry["proficiency"] = level
                 skill_entry["proficiency_score"] = score
@@ -442,17 +511,18 @@ def analyze_skills(
             skills.append(skill_entry)
 
         for name, count in frameworks.most_common():
-            pct = round((count / len(analyzed)) * 100, 2) if analyzed else 0.0
+            pct = round((count / total_analyzed_count) * 100, 2) if total_analyzed_count else 0.0
+            display_count = format_count(count)
             skill_entry = {
                 "name": name,
                 "type": "framework",
-                "repository_count": count,
+                "repository_count": display_count,
                 "percentage": pct,
                 "group": resolve_group_for_skill(name),
             }
             if compute_proficiency:
                 level, score, reason = calculate_proficiency(
-                    count, pct, latest_update_by_skill.get(name), skill_name=name
+                    int(round(count)), pct, latest_update_by_skill.get(name), skill_name=name
                 )
                 skill_entry["proficiency"] = level
                 skill_entry["proficiency_score"] = score
@@ -468,6 +538,7 @@ def analyze_skills(
 
     return {
         "skills": skills,
-        "total_repositories_analyzed": len(analyzed),
+        "total_repositories_analyzed": total_analyzed_count,
+        "excluded_forks_count": excluded_forks_count,
         "groups": dict(active_groups) if active_groups else None,
     }

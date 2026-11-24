@@ -216,6 +216,10 @@ class UserSkillsSerializer(BaseModel):
     total_repositories_analyzed: int = Field(
         ..., description="Total count of analyzed repositories"
     )
+    excluded_forks_count: int = Field(
+        default=0,
+        description="Number of pure forks excluded from skill detection (Issue #423)",
+    )
     groups: dict[str, list[str]] | None = Field(
         default=None,
         description="Mapping of active technology groups to present constituent skills (Issue #130)",

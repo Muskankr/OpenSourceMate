@@ -48,7 +48,7 @@ class TestSkillDetection(unittest.TestCase):
     def test_forks_are_excluded_by_default_and_included_on_request(self):
         repositories = [
             {"full_name": "me/own", "language": "Python"},
-            {"full_name": "me/forked", "language": "Go", "fork": True},
+            {"full_name": "me/forked", "language": "Go", "fork": True, "has_own_commits": False},
         ]
 
         default = analyze_skills(repositories)
@@ -56,8 +56,10 @@ class TestSkillDetection(unittest.TestCase):
 
         self.assertEqual([s["name"] for s in default["skills"]], ["Python"])
         self.assertEqual(default["total_repositories_analyzed"], 1)
+        self.assertEqual(default["excluded_forks_count"], 1)
         self.assertEqual({s["name"] for s in with_forks["skills"]}, {"Python", "Go"})
         self.assertEqual(with_forks["total_repositories_analyzed"], 2)
+        self.assertEqual(with_forks["excluded_forks_count"], 0)
 
     def test_frameworks_come_from_dependencies(self):
         repositories = [
@@ -160,9 +162,14 @@ class TestSkillDetection(unittest.TestCase):
 
     def test_analyze_skills_with_large_repository_fixture(self):
         repos_large = load_fixture("repositories/repos_large.json")
-        expected_non_forks = sum(1 for r in repos_large if not r.get("fork"))
+        # Under fork-aware logic (Issue #423), pure forks are excluded while non-forks
+        # and active forks with user commits are analyzed
+        from app.services.skill_service import _is_fork, has_user_commits_on_fork
+        expected_analyzed = sum(
+            1 for r in repos_large if not _is_fork(r) or has_user_commits_on_fork(r)
+        )
 
         result = analyze_skills(repos_large)
 
-        self.assertEqual(result["total_repositories_analyzed"], expected_non_forks)
+        self.assertEqual(result["total_repositories_analyzed"], expected_analyzed)
         self.assertGreater(len(result["skills"]), 0)
