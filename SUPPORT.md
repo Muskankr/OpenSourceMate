@@ -10,7 +10,9 @@ To keep discussions organized and ensure issues remain actionable, please direct
 
 ### 1. GitHub Discussions (Recommended for Help & Ideas)
 
-Use [**GitHub Discussions**](https://github.com/Muskankr/OpenSourceMate/discussions) for general help, design discussions, and open-ended exploration:
+When the repository’s **Discussions** tab is enabled, use it for general help, design discussions, and open-ended exploration. If the tab is unavailable, check the existing documentation and issues for answers; enabling Discussions requires a maintainer. The Issues policy below still applies.
+
+Discussions topics include:
 
 - **🙏 Q&A**: If you need help with:
   - Setting up your local development environment (Node.js, Python, virtual environments).
@@ -27,7 +29,7 @@ Use [**GitHub Issues**](https://github.com/Muskankr/OpenSourceMate/issues) **onl
 
 - **Bug Reports**: Unexpected crashes, broken UI components, broken API endpoints, or failing tests with reproducible steps.
 - **Feature Requests**: Well-scoped, concrete feature additions aligned with the [Roadmap](ROADMAP.md).
-- _Please avoid opening GitHub issues solely for general troubleshooting questions; use GitHub Discussions instead._
+- _Please avoid opening GitHub issues solely for general troubleshooting questions; use GitHub Discussions when it is available._
 
 ---
 
