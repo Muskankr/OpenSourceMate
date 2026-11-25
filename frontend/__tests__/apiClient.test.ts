@@ -302,6 +302,22 @@ describe("Typed API Client", () => {
       );
     });
 
+    it("fetchMatchedIssues appends max_per_repo query parameter when provided", async () => {
+      const issues = { username: "octocat", recommendations: [], repo_cap: 3 };
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => issues,
+      });
+
+      const result = await fetchMatchedIssues("octocat", { maxPerRepo: 3 });
+      expect(result).toEqual(issues);
+      expect(global.fetch).toHaveBeenCalledWith(
+        "http://localhost:8000/api/matching/users/octocat/issues?max_per_repo=3",
+        expect.any(Object)
+      );
+    });
+
     it("fetchPrograms queries /api/matching/programs", async () => {
       const programs = {
         programs: [{ id: "nsoc", name: "NSoC", labels: ["nsoc"], topics: ["nsoc"] }],

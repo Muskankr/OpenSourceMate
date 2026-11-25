@@ -85,6 +85,8 @@ export interface MatchedIssuesResponse {
   skills?: string[];
   program?: string;
   recommendations: IssueRecommendation[];
+  hidden_recommendations?: IssueRecommendation[];
+  repo_cap?: number;
   total?: number;
 }
 

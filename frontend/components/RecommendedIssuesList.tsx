@@ -8,6 +8,11 @@ import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
 import { rankIssuesForLearningMode, COMMON_TARGET_SKILLS } from "../utils/learningMode";
 import { issueMatchesProgram } from "../utils/programs";
 import ProgramSelector from "./ProgramSelector";
+import {
+  applyRepoDiversityCap,
+  DEFAULT_REPO_CAP,
+  normalizeRepoName,
+} from "../utils/repoDiversity";
 
 export interface RecommendedIssuesListProps {
   issues: IssueRecommendation[];
@@ -18,6 +23,7 @@ export interface RecommendedIssuesListProps {
   initialTargetSkills?: string[];
   selectedProgram?: string;
   onProgramChange?: (programId: string) => void;
+  initialRepoCap?: number;
 }
 
 export default function RecommendedIssuesList({
@@ -29,6 +35,7 @@ export default function RecommendedIssuesList({
   initialTargetSkills = [],
   selectedProgram,
   onProgramChange,
+  initialRepoCap,
 }: RecommendedIssuesListProps) {
   const isDark = theme === "dark";
 
@@ -43,6 +50,24 @@ export default function RecommendedIssuesList({
   const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
   const [minScoreFilter, setMinScoreFilter] = useState(0);
   const [showHidden, setShowHidden] = useState(false);
+  const [repoCap, setRepoCap] = useState<number>(
+    initialRepoCap !== undefined ? initialRepoCap : DEFAULT_REPO_CAP
+  );
+  const [expandedRepos, setExpandedRepos] = useState<Set<string>>(new Set());
+
+  const toggleRepoExpand = (repo: string) => {
+    const normalized = normalizeRepoName(repo);
+    setExpandedRepos((prev) => {
+      const next = new Set(prev);
+      if (next.has(normalized)) {
+        next.delete(normalized);
+      } else {
+        next.add(normalized);
+      }
+      return next;
+    });
+  };
+
   const [internalProgram, setInternalProgram] = useState<string>(selectedProgram || "");
   const activeProgram = selectedProgram !== undefined ? selectedProgram : internalProgram;
 
@@ -146,7 +171,9 @@ export default function RecommendedIssuesList({
     labelFilter !== "all" ||
     difficultyFilter !== "all" ||
     minScoreFilter > 0 ||
-    searchQuery.trim().length > 0;
+    searchQuery.trim().length > 0 ||
+    repoCap !== DEFAULT_REPO_CAP ||
+    expandedRepos.size > 0;
 
   const resetFilters = () => {
     handleProgramSelect("");
@@ -155,7 +182,33 @@ export default function RecommendedIssuesList({
     setDifficultyFilter("all");
     setMinScoreFilter(0);
     setSearchQuery("");
+    setRepoCap(DEFAULT_REPO_CAP);
+    setExpandedRepos(new Set());
   };
+
+  // Apply diversity cap per repository
+  const { visibleIssues, hiddenByRepo } = useMemo(() => {
+    return applyRepoDiversityCap(filteredIssues, repoCap, expandedRepos);
+  }, [filteredIssues, repoCap, expandedRepos]);
+
+  // Total issues count per repository before cap
+  const repoTotalCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    filteredIssues.forEach((issue) => {
+      const r = normalizeRepoName(issue.repository);
+      counts[r] = (counts[r] || 0) + 1;
+    });
+    return counts;
+  }, [filteredIssues]);
+
+  // Find the index of the last rendered issue for each repository in visibleIssues
+  const lastRepoIndexMap = useMemo(() => {
+    const map = new Map<string, number>();
+    visibleIssues.forEach((issue, index) => {
+      map.set(normalizeRepoName(issue.repository), index);
+    });
+    return map;
+  }, [visibleIssues]);
 
   const hasIssues = issues.length > 0;
   const isDemo = isMock || issues.some((i) => i.is_mock);
@@ -198,7 +251,7 @@ export default function RecommendedIssuesList({
 
         {hasIssues && (
           <div className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-            Showing {filteredIssues.length} of {issues.length} issues
+            Showing {visibleIssues.length} of {issues.length} issues
           </div>
         )}
       </div>
@@ -469,6 +522,35 @@ export default function RecommendedIssuesList({
               </select>
             </div>
 
+            {/* Repo diversity cap filter */}
+            <div>
+              <label
+                htmlFor="repo-diversity-cap-filter"
+                className="block text-xs font-semibold text-gray-400"
+              >
+                Max Per Repo
+              </label>
+              <select
+                id="repo-diversity-cap-filter"
+                data-testid="repo-diversity-cap-filter"
+                value={repoCap}
+                onChange={(e) => setRepoCap(Number(e.target.value))}
+                aria-label="Filter maximum issues per repository"
+                className={`mt-1.5 w-full rounded-xl border px-3 py-2 text-xs outline-none transition ${
+                  isDark
+                    ? "border-white/10 bg-[#0c101d] text-white focus:border-purple-400"
+                    : "border-gray-300 bg-white text-gray-900 focus:border-purple-600"
+                }`}
+              >
+                <option value={1}>1 issue</option>
+                <option value={2}>2 issues</option>
+                <option value={3}>3 issues (default)</option>
+                <option value={5}>5 issues</option>
+                <option value={10}>10 issues</option>
+                <option value={0}>No limit</option>
+              </select>
+            </div>
+
             {/* Min match score slider */}
             <div>
               <div className="flex items-center justify-between">
@@ -557,20 +639,55 @@ export default function RecommendedIssuesList({
       )}
 
       {/* Render list of cards */}
-      {filteredIssues.length > 0 && (
+      {visibleIssues.length > 0 && (
         <div className="mt-6 space-y-4" role="feed" aria-label="Issue list">
-          {filteredIssues.map((issue) => (
-            <IssueCard
-              key={issue.id}
-              issue={issue}
-              theme={theme}
-              isMock={isDemo}
-              username={username}
-              isHidden={isHidden(issue)}
-              onHide={() => hideIssue(issue)}
-              onRestore={() => restoreIssue(issue)}
-            />
-          ))}
+          {visibleIssues.map((issue, index) => {
+            const repoKey = normalizeRepoName(issue.repository);
+            const totalInRepo = repoTotalCounts[repoKey] || 0;
+            const isLastVisibleForRepo = lastRepoIndexMap.get(repoKey) === index;
+            const hasHiddenIssues = totalInRepo > repoCap && repoCap > 0;
+            const isExpanded = expandedRepos.has(repoKey);
+            const hiddenCountForRepo = totalInRepo - repoCap;
+
+            return (
+              <React.Fragment key={issue.id}>
+                <IssueCard
+                  issue={issue}
+                  theme={theme}
+                  isMock={isDemo}
+                  username={username}
+                  isHidden={isHidden(issue)}
+                  onHide={() => hideIssue(issue)}
+                  onRestore={() => restoreIssue(issue)}
+                />
+                {isLastVisibleForRepo && hasHiddenIssues && (
+                  <div
+                    className="mt-2 pl-4 border-l-2 border-purple-500/40 py-1"
+                    data-testid={`repo-diversity-container-${repoKey.replace(/[^a-z0-9]/g, "-")}`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => toggleRepoExpand(issue.repository)}
+                      aria-expanded={isExpanded}
+                      data-testid={`more-from-repo-${repoKey.replace(/[^a-z0-9]/g, "-")}`}
+                      className={`inline-flex items-center gap-1.5 text-xs font-semibold rounded px-2.5 py-1.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
+                        isDark
+                          ? "text-purple-400 hover:text-purple-300 hover:bg-white/5"
+                          : "text-purple-600 hover:text-purple-700 hover:bg-gray-100"
+                      }`}
+                    >
+                      <span>
+                        {isExpanded
+                          ? `Show fewer from ${issue.repository}`
+                          : `more from this repository (${hiddenCountForRepo} more)`}
+                      </span>
+                      <span aria-hidden="true">{isExpanded ? "▲" : "▼"}</span>
+                    </button>
+                  </div>
+                )}
+              </React.Fragment>
+            );
+          })}
         </div>
       )}
     </section>

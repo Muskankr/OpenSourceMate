@@ -290,6 +290,7 @@ export async function fetchUserSkills(
 export interface FetchMatchedIssuesOptions extends RequestOptions {
   skills?: string[];
   program?: string;
+  maxPerRepo?: number;
 }
 
 /**
@@ -312,6 +313,9 @@ export async function fetchMatchedIssues(
   }
   if (options?.program) {
     query.append("program", options.program);
+  }
+  if (options?.maxPerRepo !== undefined) {
+    query.append("max_per_repo", options.maxPerRepo.toString());
   }
   const queryString = query.toString() ? `?${query.toString()}` : "";
   return typedRequest<MatchedIssuesResponse>(

@@ -255,3 +255,55 @@ def calculate_issue_score(
         ),
         "reasons": reasons,
     }
+
+
+DEFAULT_MAX_ISSUES_PER_REPO: int = 3
+
+
+def _get_issue_repository(issue: dict) -> str:
+    """Extract normalized repository identifier from issue dictionary."""
+    repo = issue.get("repository") or issue.get("repo")
+    if isinstance(repo, dict):
+        return str(repo.get("full_name") or repo.get("name") or "unknown").strip().lower()
+    return str(repo or "unknown").strip().lower()
+
+
+def apply_repository_diversity_cap(
+    issues: list[dict],
+    max_per_repo: int = DEFAULT_MAX_ISSUES_PER_REPO,
+) -> tuple[list[dict], list[dict]]:
+    """
+    Apply a configurable diversity cap on issues per repository in the ranked list.
+    Keeps the highest scoring ones while strictly preserving the relative order
+    of the remaining items.
+
+    Args:
+        issues: List of issue dictionaries sorted by score descending.
+        max_per_repo: Maximum allowed issues per repository in the primary list (default 3).
+                      If None or <= 0, no cap is applied (all issues kept).
+
+    Returns:
+        tuple[list[dict], list[dict]]: (capped_issues, hidden_issues)
+        where:
+        - capped_issues contains at most `max_per_repo` items per repository,
+          preserving their original relative ordering.
+        - hidden_issues contains the issues exceeding the cap for each repository,
+          preserving their original relative ordering.
+    """
+    if max_per_repo is None or max_per_repo <= 0:
+        return list(issues), []
+
+    repo_counts: dict[str, int] = {}
+    kept: list[dict] = []
+    hidden: list[dict] = []
+
+    for issue in issues:
+        repo_key = _get_issue_repository(issue)
+        current_count = repo_counts.get(repo_key, 0)
+        if current_count < max_per_repo:
+            repo_counts[repo_key] = current_count + 1
+            kept.append(issue)
+        else:
+            hidden.append(issue)
+
+    return kept, hidden

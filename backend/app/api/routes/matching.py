@@ -11,7 +11,12 @@ from app.services.github_service import (
     get_user_repositories,
 )
 from app.services.issue_service import search_github_issues
-from app.services.matching_service import build_idf, calculate_issue_score
+from app.services.matching_service import (
+    DEFAULT_MAX_ISSUES_PER_REPO,
+    apply_repository_diversity_cap,
+    build_idf,
+    calculate_issue_score,
+)
 from app.services.program_service import (
     get_all_programs,
     get_program_by_id_or_name,
@@ -58,6 +63,11 @@ async def get_matched_issues(
     exclude_stale: bool = Query(default=False),
     skills: list[str] | None = Query(default=None),
     program: str | None = Query(default=None),
+    max_per_repo: int = Query(
+        default=DEFAULT_MAX_ISSUES_PER_REPO,
+        ge=1,
+        description="Maximum recommendations from the same repository (diversity cap)",
+    ),
 ):
     validated_username = validate_github_username(username)
 
@@ -245,7 +255,12 @@ async def get_matched_issues(
         reverse=True,
     )
 
-    top_recommendations = recommendations[:20]
+    capped_recommendations, hidden_recommendations = apply_repository_diversity_cap(
+        recommendations,
+        max_per_repo=max_per_repo,
+    )
+
+    top_recommendations = capped_recommendations[:20]
     for issue in top_recommendations:
         issue.pop("_raw_score", None)
         explanation_data = await generate_issue_match_explanation(issue, user_skills)
@@ -253,10 +268,15 @@ async def get_matched_issues(
         issue["is_ai_generated"] = explanation_data["is_ai_generated"]
         issue["why_it_matches"] = explanation_data["explanation"]
 
+    for issue in hidden_recommendations:
+        issue.pop("_raw_score", None)
+
     response_data: dict[str, Any] = {
         "username": validated_username,
         "skills": user_skills,
         "recommendations": top_recommendations,
+        "hidden_recommendations": hidden_recommendations,
+        "repo_cap": max_per_repo,
     }
     if program_config:
         response_data["program"] = program_config["id"]
