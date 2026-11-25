@@ -100,11 +100,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               Profile Analyzer
             </a>
-            <a
-              href="#how-it-works"
+            <Link
+              href="/how-it-works"
               onClick={(e) => {
-                e.preventDefault();
-                onNavigateSection?.("how-it-works");
+                if (onNavigateSection) {
+                  e.preventDefault();
+                  onNavigateSection("how-it-works");
+                }
               }}
               className={`transition-colors ${
                 activeSection === "how-it-works"
@@ -117,7 +119,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               How It Works
-            </a>
+            </Link>
             <Link
               href="/compare"
               className={`transition-colors ${
@@ -138,11 +140,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             >
               Contribute
             </Link>
-            <a
-              href="#faq"
+            <Link
+              href="/how-it-works#faq"
               onClick={(e) => {
-                e.preventDefault();
-                onNavigateSection?.("faq");
+                if (onNavigateSection) {
+                  e.preventDefault();
+                  onNavigateSection("faq");
+                }
               }}
               className={`transition-colors ${
                 activeSection === "faq"
@@ -155,7 +159,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               }`}
             >
               FAQ
-            </a>
+            </Link>
           </div>
 
           {/* Right actions: Theme toggle and GitHub Link */}
@@ -241,16 +245,20 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             Profile Analyzer
           </a>
-          <a
-            href="#how-it-works"
+          <Link
+            href="/how-it-works"
             onClick={(e) => {
-              e.preventDefault();
-              handleMobileNavClick("how-it-works");
+              if (onNavigateSection) {
+                e.preventDefault();
+                handleMobileNavClick("how-it-works");
+              } else {
+                handleMobileNavClick();
+              }
             }}
             className="block py-2 text-sm font-medium hover:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded-lg px-2"
           >
             How It Works
-          </a>
+          </Link>
           <Link
             href="/compare"
             onClick={() => handleMobileNavClick()}
@@ -265,16 +273,20 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             Contribute
           </Link>
-          <a
-            href="#faq"
+          <Link
+            href="/how-it-works#faq"
             onClick={(e) => {
-              e.preventDefault();
-              handleMobileNavClick("faq");
+              if (onNavigateSection) {
+                e.preventDefault();
+                handleMobileNavClick("faq");
+              } else {
+                handleMobileNavClick();
+              }
             }}
             className="block py-2 text-sm font-medium hover:text-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 rounded-lg px-2"
           >
             FAQ
-          </a>
+          </Link>
 
           <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
             <span className="text-xs text-slate-400">Theme</span>

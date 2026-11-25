@@ -9,6 +9,7 @@ import ProfileCard from "../components/ProfileCard";
 import ServiceUnavailableBanner from "../components/ServiceUnavailableBanner";
 import CompareSkeleton from "../components/CompareSkeleton";
 import TopRepositoriesDisplay from "../components/TopRepositoriesDisplay";
+import HowItWorksPage from "../app/how-it-works/page";
 
 describe("Automated Accessibility Suite (axe) (#266)", () => {
   it("verifies Navbar has zero serious or critical accessibility violations", async () => {
@@ -113,6 +114,11 @@ describe("Automated Accessibility Suite (axe) (#266)", () => {
       />
     );
 
+    await assertNoSeriousA11yViolations(container);
+  });
+
+  it("verifies HowItWorksPage has zero serious accessibility violations", async () => {
+    const { container } = render(<HowItWorksPage />);
     await assertNoSeriousA11yViolations(container);
   });
 });

@@ -24,11 +24,11 @@ export interface NavItem {
 }
 
 export const DEFAULT_NAV_ITEMS: NavItem[] = [
-  { label: "Profile Analyzer", href: "#analyzer", isSection: true, sectionId: "analyzer" },
-  { label: "How It Works", href: "#how-it-works", isSection: true, sectionId: "how-it-works" },
+  { label: "Profile Analyzer", href: "/#analyzer", isSection: true, sectionId: "analyzer" },
+  { label: "How It Works", href: "/how-it-works", isSection: true, sectionId: "how-it-works" },
   { label: "Compare Profiles", href: "/compare" },
   { label: "Contribute", href: "/contribute" },
-  { label: "FAQ", href: "#faq", isSection: true, sectionId: "faq" },
+  { label: "FAQ", href: "/how-it-works#faq", isSection: true, sectionId: "faq" },
 ];
 
 /**

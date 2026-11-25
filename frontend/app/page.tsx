@@ -604,17 +604,12 @@ export default function Home() {
                 theme === "dark" ? "text-gray-300" : "text-gray-700"
               }`}
             >
-              <a
-                href="#how-it-works"
-                aria-current={activeSection === "how-it-works" ? "location" : undefined}
-                className={`rounded-lg px-2 py-1 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
-                  activeSection === "how-it-works"
-                    ? "font-semibold text-purple-400 underline decoration-purple-400 decoration-2 underline-offset-8"
-                    : "hover:text-purple-400"
-                }`}
+              <Link
+                href="/how-it-works"
+                className="rounded-lg px-2 py-1 transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
               >
                 How it works
-              </a>
+              </Link>
 
               <a
                 href="#analyzer"
@@ -627,6 +622,13 @@ export default function Home() {
               >
                 Analyzer
               </a>
+
+              <Link
+                href="/how-it-works#faq"
+                className="rounded-lg px-2 py-1 transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+              >
+                FAQ
+              </Link>
 
               <Link
                 href="/compare"
@@ -704,18 +706,13 @@ export default function Home() {
               }`}
             >
               <div className="flex flex-col gap-3 text-sm">
-                <a
-                  href="#how-it-works"
+                <Link
+                  href="/how-it-works"
                   onClick={() => setMobileMenuOpen(false)}
-                  aria-current={activeSection === "how-it-works" ? "location" : undefined}
-                  className={`rounded-xl px-3 py-2 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
-                    activeSection === "how-it-works"
-                      ? "bg-purple-500/10 font-semibold text-purple-400"
-                      : "hover:bg-white/10"
-                  }`}
+                  className="rounded-xl px-3 py-2 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
                 >
                   How it works
-                </a>
+                </Link>
 
                 <a
                   href="#analyzer"
@@ -729,6 +726,14 @@ export default function Home() {
                 >
                   Analyzer
                 </a>
+
+                <Link
+                  href="/how-it-works#faq"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-xl px-3 py-2 transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                >
+                  FAQ
+                </Link>
 
                 <div
                   className="rounded-xl px-3 py-2 transition hover:bg-white/10"
@@ -1669,10 +1674,17 @@ export default function Home() {
             <p>© {new Date().getFullYear()} OpenSourceMate</p>
             <div className="flex flex-wrap items-center gap-3 sm:gap-4">
               <Link
+                href="/how-it-works"
+                className="transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded"
+              >
+                How It Works &amp; FAQ
+              </Link>
+              <span>•</span>
+              <Link
                 href="/privacy"
                 className="transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded"
               >
-                Privacy & Data Handling
+                Privacy &amp; Data Handling
               </Link>
               <span>•</span>
               <BuildVersionBadge theme={theme} />

@@ -1,72 +1,24 @@
 "use client";
-import Link from "next/link";
-import { useId, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import React, { useId, useRef, useState, type KeyboardEvent } from "react";
+import { HOW_IT_WORKS_CONTENT, type FAQItem } from "../data/howItWorksContent";
 
-interface FAQItem {
-  question: string;
-  answer: ReactNode;
+export interface FAQProps {
+  theme: "dark" | "light";
+  items?: FAQItem[];
+  filterCategory?: string;
 }
 
-const FAQ_ITEMS: FAQItem[] = [
-  {
-    question: "What data does OpenSourceMate use?",
-    answer: (
-      <span>
-        Only public GitHub data: your public profile and your public repositories, including their languages and topics. For your 5 most recently updated repositories that are not forks, it also reads the language breakdown and any package.json, requirements.txt or pyproject.toml file. Read our full{" "}
-        <Link href="/privacy" className="text-purple-400 underline hover:text-purple-300">
-          Privacy & Data Handling policy
-        </Link>{" "}
-        for details.
-      </span>
-    ),
-  },
-  {
-    question: "Do I need to log in?",
-    answer:
-      "No. There is no sign-up and no GitHub login. Just enter a GitHub username and the analyzer reads that profile's public data.",
-  },
-  {
-    question: "Are my private repositories read?",
-    answer: (
-      <span>
-        No. OpenSourceMate only calls GitHub&apos;s public endpoints, so private repositories are never seen, read, or analyzed. Learn more in our{" "}
-        <Link href="/privacy" className="text-purple-400 underline hover:text-purple-300">
-          Privacy Policy
-        </Link>
-        .
-      </span>
-    ),
-  },
-  {
-    question: "How are my skills detected?",
-    answer:
-      "Each language used in your repositories counts once per repository. Dependencies from your manifest files and repository topics are mapped to frameworks and tools. These counts are turned into the percentages you see in your skill profile.",
-  },
-  {
-    question: "Is my data stored?",
-    answer: (
-      <span>
-        No account or profile is saved. GitHub responses are only cached in memory for a few minutes so repeat searches are faster and stay within GitHub&apos;s rate limits. See our{" "}
-        <Link href="/privacy" className="text-purple-400 underline hover:text-purple-300">
-          Privacy Policy
-        </Link>{" "}
-        for details on in-memory caching and browser storage.
-      </span>
-    ),
-  },
-  {
-    question: "Is it free?",
-    answer: "Yes. OpenSourceMate is free to use and open source under the MIT License.",
-  },
-];
-
-export default function FAQ({ theme }: { theme: "dark" | "light" }) {
+export default function FAQ({ theme, items = HOW_IT_WORKS_CONTENT.faq.items, filterCategory }: FAQProps) {
   const baseId = useId();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const buttonRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
+  const displayedItems = filterCategory && filterCategory !== "All"
+    ? items.filter((item) => item.category === filterCategory)
+    : items;
+
   const handleKeyDown = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
-    const last = FAQ_ITEMS.length - 1;
+    const last = displayedItems.length - 1;
     let next: number | null = null;
 
     if (event.key === "ArrowDown") next = index === last ? 0 : index + 1;
@@ -81,15 +33,15 @@ export default function FAQ({ theme }: { theme: "dark" | "light" }) {
   };
 
   return (
-    <div className="mx-auto mt-14 max-w-3xl space-y-3">
-      {FAQ_ITEMS.map((item, index) => {
+    <div className="mx-auto max-w-3xl space-y-3" data-testid="faq-accordion-container">
+      {displayedItems.map((item, index) => {
         const isOpen = openIndex === index;
         const buttonId = `${baseId}-question-${index}`;
         const panelId = `${baseId}-answer-${index}`;
 
         return (
           <div
-            key={item.question}
+            key={item.id || item.question}
             className={`rounded-2xl border transition-colors ${
               theme === "dark"
                 ? "border-white/10 bg-white/[0.025]"
@@ -110,12 +62,26 @@ export default function FAQ({ theme }: { theme: "dark" | "light" }) {
                 className={`flex w-full items-center justify-between gap-4 rounded-2xl px-6 py-5 text-left font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 ${
                   theme === "dark" ? "hover:bg-white/[0.03]" : "hover:bg-gray-50"
                 }`}
+                data-testid={`faq-question-btn-${index}`}
               >
-                {item.question}
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                  <span>{item.question}</span>
+                  {item.category && (
+                    <span
+                      className={`inline-block w-fit text-[11px] font-medium px-2 py-0.5 rounded-full ${
+                        theme === "dark"
+                          ? "bg-purple-500/10 text-purple-300 border border-purple-500/20"
+                          : "bg-purple-50 text-purple-700 border border-purple-200"
+                      }`}
+                    >
+                      {item.category}
+                    </span>
+                  )}
+                </div>
 
                 <span
                   aria-hidden="true"
-                  className={`shrink-0 text-xl text-purple-400 transition-transform ${
+                  className={`shrink-0 text-xl font-bold text-purple-400 transition-transform duration-200 ${
                     isOpen ? "rotate-45" : ""
                   }`}
                 >
@@ -130,8 +96,9 @@ export default function FAQ({ theme }: { theme: "dark" | "light" }) {
               aria-labelledby={buttonId}
               hidden={!isOpen}
               className={`px-6 pb-5 text-sm leading-6 ${
-                theme === "dark" ? "text-gray-400" : "text-gray-600"
+                theme === "dark" ? "text-gray-300" : "text-gray-600"
               }`}
+              data-testid={`faq-answer-panel-${index}`}
             >
               {item.answer}
             </div>
