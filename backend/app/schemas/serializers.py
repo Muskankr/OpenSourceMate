@@ -361,3 +361,51 @@ class IssueAnalysisResponseSerializer(BaseModel):
     explanation: str | None = Field(
         default=None, description="Comprehensive AI explanation"
     )
+
+
+# ---------------------------------------------------------
+# Repository Discover & Newcomer-Friendliness Serializers (Issue #447)
+# ---------------------------------------------------------
+class DiscoveredRepoScoreBreakdownSerializer(BaseModel):
+    """Breakdown of points contributing to the newcomer-friendliness score."""
+
+    beginner_issues_points: int = Field(..., description="Points awarded for open beginner issues (max 30)")
+    recent_activity_points: int = Field(..., description="Points awarded for recent activity (max 25)")
+    contributing_points: int = Field(..., description="Points awarded for CONTRIBUTING guide (max 25)")
+    code_of_conduct_points: int = Field(..., description="Points awarded for Code of Conduct (max 20)")
+    total_score: int = Field(..., description="Sum of newcomer-friendliness points (0-100)")
+
+
+class DiscoveredRepositorySerializer(BaseModel):
+    """Discovered repository item with newcomer-friendliness ranking."""
+
+    name: str = Field(..., description="Repository short name")
+    full_name: str = Field(..., description="Repository full slug (owner/repo)")
+    html_url: str = Field(..., description="Web URL to repository")
+    description: str | None = Field(default=None, description="Project description")
+    stars: int = Field(default=0, description="Stargazer count")
+    forks: int = Field(default=0, description="Forks count")
+    language: str | None = Field(default=None, description="Primary repository language")
+    open_issues_count: int = Field(default=0, description="Total count of open issues")
+    good_first_issues_count: int = Field(default=0, description="Count of open beginner/good first issues")
+    has_contributing: bool = Field(default=False, description="Whether repository has CONTRIBUTING guidelines")
+    has_code_of_conduct: bool = Field(default=False, description="Whether repository has CODE_OF_CONDUCT")
+    last_activity_at: str | None = Field(default=None, description="ISO timestamp of most recent activity")
+    newcomer_friendliness_score: int = Field(default=0, description="Calculated newcomer friendliness score (0-100)")
+    newcomer_friendliness_tier: str = Field(default="Moderate", description="Friendliness tier classification")
+    score_breakdown: DiscoveredRepoScoreBreakdownSerializer = Field(
+        ..., description="Point breakdown across the 4 newcomer signals"
+    )
+
+
+class DiscoveredRepositoriesResponseSerializer(BaseModel):
+    """Response envelope for discovered welcoming repositories."""
+
+    repositories: list[DiscoveredRepositorySerializer] = Field(
+        default_factory=list, description="Ranked list of welcoming repositories"
+    )
+    total_count: int = Field(default=0, description="Total count of discovered repositories")
+    languages: list[str] = Field(default_factory=list, description="Target languages evaluated")
+    selected_language: str | None = Field(default=None, description="Active language filter if any")
+    stars_filter: dict[str, Any] = Field(default_factory=dict, description="Active stars filter criteria")
+

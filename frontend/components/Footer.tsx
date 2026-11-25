@@ -29,6 +29,9 @@ export const Footer: React.FC<FooterProps> = ({ theme }) => {
         </div>
 
         <div className="flex flex-wrap items-center gap-6 text-xs sm:text-sm">
+          <Link href="/discover" className="hover:text-emerald-400 transition-colors">
+            Discover Repositories
+          </Link>
           <Link href="/compare" className="hover:text-emerald-400 transition-colors">
             Compare Profiles
           </Link>

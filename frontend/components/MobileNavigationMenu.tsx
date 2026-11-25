@@ -25,6 +25,7 @@ export interface NavItem {
 
 export const DEFAULT_NAV_ITEMS: NavItem[] = [
   { label: "Profile Analyzer", href: "#analyzer", isSection: true, sectionId: "analyzer" },
+  { label: "Discover", href: "/discover" },
   { label: "How It Works", href: "#how-it-works", isSection: true, sectionId: "how-it-works" },
   { label: "Compare Profiles", href: "/compare" },
   { label: "Contribute", href: "/contribute" },

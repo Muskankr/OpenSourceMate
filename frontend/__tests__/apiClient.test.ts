@@ -10,6 +10,7 @@ import {
   fetchMatchedIssues,
   fetchPrograms,
   fetchHealth,
+  fetchDiscoveredRepositories,
   searchUser,
   ApiClientError,
   ApiTimeoutError,
@@ -392,6 +393,63 @@ describe("Typed API Client", () => {
       expect(result.profile).toEqual(profile);
       expect(result.skills).toEqual(skills);
       expect(result.issues).toBeUndefined();
+    });
+  });
+
+  describe("fetchDiscoveredRepositories (Issue #447)", () => {
+    it("fetches discovered repositories with language and star parameters", async () => {
+      const mockResponse = {
+        repositories: [
+          {
+            name: "fastapi",
+            full_name: "tiangolo/fastapi",
+            html_url: "https://github.com/tiangolo/fastapi",
+            description: "FastAPI framework",
+            stars: 75000,
+            forks: 6000,
+            language: "Python",
+            open_issues_count: 100,
+            good_first_issues_count: 12,
+            has_contributing: true,
+            has_code_of_conduct: true,
+            last_activity_at: "2026-11-20T10:00:00Z",
+            newcomer_friendliness_score: 100,
+            newcomer_friendliness_tier: "Very Welcoming",
+            score_breakdown: {
+              beginner_issues_points: 30,
+              recent_activity_points: 25,
+              contributing_points: 25,
+              code_of_conduct_points: 20,
+              total_score: 100,
+            },
+          },
+        ],
+        total_count: 1,
+        languages: ["Python"],
+        selected_language: "Python",
+        stars_filter: { min_stars: 1000, max_stars: 100000 },
+      };
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => mockResponse,
+      });
+
+      const res = await fetchDiscoveredRepositories({
+        language: "Python",
+        minStars: 1000,
+        maxStars: 100000,
+        limit: 10,
+      });
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        "http://localhost:8000/api/v1/repositories/discover?language=Python&min_stars=1000&max_stars=100000&limit=10",
+        expect.any(Object)
+      );
+      expect(res.repositories).toHaveLength(1);
+      expect(res.repositories[0].full_name).toBe("tiangolo/fastapi");
+      expect(res.repositories[0].newcomer_friendliness_score).toBe(100);
     });
   });
 });

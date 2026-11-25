@@ -1,0 +1,134 @@
+{
+  "total_count": 4,
+  "incomplete_results": false,
+  "items": [
+    {
+      "id": 1326112,
+      "name": "fastapi",
+      "full_name": "tiangolo/fastapi",
+      "owner": {
+        "login": "tiangolo",
+        "id": 1326112,
+        "avatar_url": "https://avatars.githubusercontent.com/u/1326112",
+        "html_url": "https://github.com/tiangolo"
+      },
+      "html_url": "https://github.com/tiangolo/fastapi",
+      "description": "FastAPI framework, high performance, easy to learn, fast to code, ready for production",
+      "fork": false,
+      "url": "https://api.github.com/repos/tiangolo/fastapi",
+      "created_at": "2018-12-08T14:48:42Z",
+      "updated_at": "2026-11-25T12:00:00Z",
+      "pushed_at": "2026-11-24T18:30:00Z",
+      "stargazers_count": 75000,
+      "watchers_count": 75000,
+      "language": "Python",
+      "forks_count": 6500,
+      "open_issues_count": 120,
+      "has_issues": true,
+      "archived": false,
+      "disabled": false,
+      "visibility": "public",
+      "license": {
+        "key": "mit",
+        "name": "MIT License",
+        "spdx_id": "MIT"
+      }
+    },
+    {
+      "id": 5972019,
+      "name": "flask",
+      "full_name": "pallets/flask",
+      "owner": {
+        "login": "pallets",
+        "id": 16748442,
+        "avatar_url": "https://avatars.githubusercontent.com/u/16748442",
+        "html_url": "https://github.com/pallets"
+      },
+      "html_url": "https://github.com/pallets/flask",
+      "description": "The Python micro framework for building web applications",
+      "fork": false,
+      "url": "https://api.github.com/repos/pallets/flask",
+      "created_at": "2010-04-06T11:11:59Z",
+      "updated_at": "2026-11-23T08:15:00Z",
+      "pushed_at": "2026-11-20T14:22:10Z",
+      "stargazers_count": 68000,
+      "watchers_count": 68000,
+      "language": "Python",
+      "forks_count": 16000,
+      "open_issues_count": 45,
+      "has_issues": true,
+      "archived": false,
+      "disabled": false,
+      "visibility": "public",
+      "license": {
+        "key": "bsd-3-clause",
+        "name": "BSD 3-Clause",
+        "spdx_id": "BSD-3-Clause"
+      }
+    },
+    {
+      "id": 1362490,
+      "name": "requests",
+      "full_name": "psf/requests",
+      "owner": {
+        "login": "psf",
+        "id": 5059136,
+        "avatar_url": "https://avatars.githubusercontent.com/u/5059136",
+        "html_url": "https://github.com/psf"
+      },
+      "html_url": "https://github.com/psf/requests",
+      "description": "A simple, yet elegant, HTTP library",
+      "fork": false,
+      "url": "https://api.github.com/repos/psf/requests",
+      "created_at": "2011-02-13T18:38:17Z",
+      "updated_at": "2026-10-15T09:12:00Z",
+      "pushed_at": "2026-08-10T11:00:00Z",
+      "stargazers_count": 52000,
+      "watchers_count": 52000,
+      "language": "Python",
+      "forks_count": 9200,
+      "open_issues_count": 80,
+      "has_issues": true,
+      "archived": false,
+      "disabled": false,
+      "visibility": "public",
+      "license": {
+        "key": "apache-2.0",
+        "name": "Apache License 2.0",
+        "spdx_id": "Apache-2.0"
+      }
+    },
+    {
+      "id": 1782390,
+      "name": "small-helper",
+      "full_name": "example/small-helper",
+      "owner": {
+        "login": "example",
+        "id": 999999,
+        "avatar_url": "https://avatars.githubusercontent.com/u/999999",
+        "html_url": "https://github.com/example"
+      },
+      "html_url": "https://github.com/example/small-helper",
+      "description": "A growing Python helper library for newcomers",
+      "fork": false,
+      "url": "https://api.github.com/repos/example/small-helper",
+      "created_at": "2024-01-10T10:00:00Z",
+      "updated_at": "2026-11-20T10:00:00Z",
+      "pushed_at": "2026-11-22T10:00:00Z",
+      "stargazers_count": 450,
+      "watchers_count": 450,
+      "language": "Python",
+      "forks_count": 35,
+      "open_issues_count": 12,
+      "has_issues": true,
+      "archived": false,
+      "disabled": false,
+      "visibility": "public",
+      "license": {
+        "key": "mit",
+        "name": "MIT License",
+        "spdx_id": "MIT"
+      }
+    }
+  ]
+}

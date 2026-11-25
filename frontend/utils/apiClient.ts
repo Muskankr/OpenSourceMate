@@ -12,6 +12,7 @@ import {
   type ApiErrorResponse,
   type CompleteAnalysisResult,
   type ProgramsResponse,
+  type DiscoveredRepositoriesResponse,
 } from "../types/api";
 
 export interface RequestOptions extends RequestInit {
@@ -373,3 +374,39 @@ export async function searchUser(
 
   return { profile, skills, issues };
 }
+
+export interface FetchDiscoveredRepositoriesOptions extends RequestOptions {
+  language?: string;
+  languages?: string[];
+  username?: string;
+  minStars?: number;
+  maxStars?: number;
+  limit?: number;
+}
+
+/**
+ * Discovers welcoming open-source repositories matching languages, ranked by newcomer-friendliness (Issue #447).
+ */
+export async function fetchDiscoveredRepositories(
+  options: FetchDiscoveredRepositoriesOptions = {}
+): Promise<DiscoveredRepositoriesResponse> {
+  const params = new URLSearchParams();
+  if (options.language) params.append("language", options.language);
+  if (options.languages && options.languages.length > 0) {
+    params.append("languages", options.languages.join(","));
+  }
+  if (options.username) params.append("username", options.username);
+  if (typeof options.minStars === "number" && !isNaN(options.minStars)) {
+    params.append("min_stars", String(options.minStars));
+  }
+  if (typeof options.maxStars === "number" && !isNaN(options.maxStars)) {
+    params.append("max_stars", String(options.maxStars));
+  }
+  if (typeof options.limit === "number" && !isNaN(options.limit)) {
+    params.append("limit", String(options.limit));
+  }
+
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return typedRequest<DiscoveredRepositoriesResponse>(`/api/v1/repositories/discover${query}`, options);
+}
+

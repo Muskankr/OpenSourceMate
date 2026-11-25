@@ -99,6 +99,43 @@ export interface RepositoryItem {
   updated_at: string;
 }
 
+export interface DiscoveredRepoScoreBreakdown {
+  beginner_issues_points: number;
+  recent_activity_points: number;
+  contributing_points: number;
+  code_of_conduct_points: number;
+  total_score: number;
+}
+
+export interface DiscoveredRepository {
+  name: string;
+  full_name: string;
+  html_url: string;
+  description: string | null;
+  stars: number;
+  forks: number;
+  language: string | null;
+  open_issues_count: number;
+  good_first_issues_count: number;
+  has_contributing: boolean;
+  has_code_of_conduct: boolean;
+  last_activity_at: string | null;
+  newcomer_friendliness_score: number;
+  newcomer_friendliness_tier: "Very Welcoming" | "Welcoming" | "Moderate" | "Challenging" | string;
+  score_breakdown: DiscoveredRepoScoreBreakdown;
+}
+
+export interface DiscoveredRepositoriesResponse {
+  repositories: DiscoveredRepository[];
+  total_count: number;
+  languages: string[];
+  selected_language?: string | null;
+  stars_filter?: {
+    min_stars: number;
+    max_stars?: number | null;
+  };
+}
+
 export interface UserRepositoriesResponse {
   username: string;
   repository_count: number;
