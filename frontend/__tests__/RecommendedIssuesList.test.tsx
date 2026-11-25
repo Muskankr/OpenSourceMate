@@ -49,10 +49,10 @@ describe("RecommendedIssuesList Component", () => {
     unmount();
     render(<RecommendedIssuesList issues={issues} username="octocat" />);
     expect(screen.queryByText(issues[0].title)).not.toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: "Show hidden (1)" }));
+    fireEvent.click(screen.getByRole("button", { name: /hidden \(1\)/i }));
     expect(screen.getByText(issues[0].title)).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Undo" }));
-    expect(screen.queryByRole("button", { name: "Show hidden (1)" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /hidden \(1\)/i })).not.toBeInTheDocument();
     expect(screen.getByText(issues[0].title)).toBeInTheDocument();
     const feedbackLinks = screen.getAllByRole("link", { name: /Report wrong match for/i });
     expect(feedbackLinks).toHaveLength(issues.length);

@@ -302,6 +302,8 @@ export default function IssueCard({
           {(isHidden ? onRestore : onHide) && (
             <button
               type="button"
+              data-testid={isHidden ? "restore-issue-button" : "not-interested-button"}
+              aria-label={isHidden ? "Undo" : "Not interested"}
               onClick={isHidden ? onRestore : onHide}
               className={`rounded text-xs underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
                 isDark ? "text-gray-400 hover:text-white" : "text-gray-600 hover:text-gray-900"

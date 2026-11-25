@@ -50,7 +50,7 @@ export default function RecommendedIssuesList({
     setInternalProgram(prog);
     onProgramChange?.(prog);
   };
-  const { hiddenIds, isHidden, hideIssue, restoreIssue } = useHiddenIssues();
+  const { hiddenIds, isHidden, hideIssue, restoreIssue, clearAll } = useHiddenIssues();
   const hiddenCount = issues.filter((issue) => hiddenIds.includes(hiddenIssueId(issue))).length;
 
   // Extract available languages dynamically
@@ -204,13 +204,33 @@ export default function RecommendedIssuesList({
       </div>
 
       {hiddenCount > 0 && (
-        <button
-          type="button"
-          onClick={() => setShowHidden((value) => !value)}
-          className="mt-4 rounded text-xs font-medium text-purple-400 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+        <div
+          data-testid="hidden-issues-control-bar"
+          className={`mt-4 flex flex-wrap items-center justify-between gap-3 rounded-2xl border p-3.5 text-xs transition-colors ${
+            isDark
+              ? "border-purple-500/20 bg-purple-500/5 text-purple-200"
+              : "border-purple-200 bg-purple-50/70 text-purple-900"
+          }`}
         >
-          {showHidden ? "Hide hidden" : `Show hidden (${hiddenCount})`}
-        </button>
+          <button
+            type="button"
+            onClick={() => setShowHidden((value) => !value)}
+            aria-expanded={showHidden}
+            className="inline-flex items-center gap-1.5 font-semibold text-purple-400 hover:text-purple-300 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+          >
+            {showHidden ? "Hide hidden" : `Hidden (${hiddenCount})`}
+          </button>
+
+          <button
+            type="button"
+            onClick={clearAll}
+            className={`font-semibold transition-colors hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 ${
+              isDark ? "text-gray-400" : "text-gray-600"
+            }`}
+          >
+            Clear all
+          </button>
+        </div>
       )}
 
       {/* Subtle Demo data indicator banner */}

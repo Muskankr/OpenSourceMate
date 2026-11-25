@@ -159,7 +159,7 @@ export default function Home() {
   const [minScoreFilter, setMinScoreFilter] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [showHidden, setShowHidden] = useState(false);
-  const { hiddenIds, isHidden, hideIssue, restoreIssue } = useHiddenIssues();
+  const { hiddenIds, isHidden, hideIssue, restoreIssue, clearAll } = useHiddenIssues();
   const hiddenCount = recommendations.filter((issue) =>
     hiddenIds.includes(hiddenIssueId(issue))
   ).length;
@@ -1158,13 +1158,24 @@ export default function Home() {
                           issues
                         </span>
                         {hiddenCount > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setShowHidden((value) => !value)}
-                            className="rounded text-xs font-medium text-purple-400 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
-                          >
-                            {showHidden ? "Hide hidden" : `Show hidden (${hiddenCount})`}
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setShowHidden((value) => !value)}
+                              aria-expanded={showHidden}
+                              className="rounded text-xs font-medium text-purple-400 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                            >
+                              {showHidden ? "Hide reviewed" : `Hidden (${hiddenCount})`}
+                            </button>
+                            <span className="text-gray-500">•</span>
+                            <button
+                              type="button"
+                              onClick={clearAll}
+                              className="rounded text-xs font-medium text-gray-400 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                            >
+                              Clear all
+                            </button>
+                          </div>
                         )}
                       </div>
                     )}

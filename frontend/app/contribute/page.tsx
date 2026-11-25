@@ -87,7 +87,7 @@ export default function ContributePage() {
   const [error, setError] = useState<string | null>(null);
   const [filterTag, setFilterTag] = useState<string>("all");
   const [showHidden, setShowHidden] = useState(false);
-  const { hiddenIds, isHidden, hideIssue, restoreIssue } = useHiddenIssues();
+  const { hiddenIds, isHidden, hideIssue, restoreIssue, clearAll } = useHiddenIssues();
   const hiddenCount = issues.filter((issue) => hiddenIds.includes(hiddenIssueId(issue))).length;
 
   useEffect(() => {
@@ -218,13 +218,24 @@ export default function ContributePage() {
         </div>
 
         {hiddenCount > 0 && (
-          <button
-            type="button"
-            onClick={() => setShowHidden((value) => !value)}
-            className="rounded text-xs font-medium text-emerald-400 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
-          >
-            {showHidden ? "Hide hidden" : `Show hidden (${hiddenCount})`}
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setShowHidden((value) => !value)}
+              aria-expanded={showHidden}
+              className="rounded text-xs font-medium text-emerald-400 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+            >
+              {showHidden ? "Hide reviewed" : `Hidden (${hiddenCount})`}
+            </button>
+            <span className="text-slate-600">•</span>
+            <button
+              type="button"
+              onClick={clearAll}
+              className="rounded text-xs font-medium text-slate-400 hover:text-red-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+            >
+              Clear all
+            </button>
+          </div>
         )}
 
         {/* Status / Error Notifications */}
