@@ -1,6 +1,7 @@
-from functools import lru_cache
 import json
-from typing import Any, Literal
+from functools import lru_cache
+from typing import Any
+
 from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -20,6 +21,8 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     environment: str = "development"
     debug: bool | None = None
+    # Resolve with the environment: production docs require an explicit opt-in.
+    api_docs_enabled: bool | None = None
     secret_key: str = "dev-insecure-secret-key-change-in-production"
 
     # -------------------------------------------------------------------------
@@ -118,7 +121,9 @@ class Settings(BaseSettings):
                 try:
                     parsed = json.loads(clean)
                     if isinstance(parsed, list):
-                        return [str(item).strip() for item in parsed if str(item).strip()]
+                        return [
+                            str(item).strip() for item in parsed if str(item).strip()
+                        ]
                 except json.JSONDecodeError:
                     pass
             return [item.strip() for item in clean.split(",") if item.strip()]
@@ -136,11 +141,16 @@ class Settings(BaseSettings):
         if self.debug is None:
             self.debug = False if is_prod else True
 
+        if self.api_docs_enabled is None:
+            self.api_docs_enabled = not is_prod
+
         # Resolve the HSTS default: on for production, off for local HTTP development
         if self.security_hsts_seconds is None:
             self.security_hsts_seconds = 31536000 if is_prod else 0
         if self.security_hsts_seconds < 0:
-            raise ValueError("SECURITY_HSTS_SECONDS must be 0 or a positive number of seconds.")
+            raise ValueError(
+                "SECURITY_HSTS_SECONDS must be 0 or a positive number of seconds."
+            )
 
         # 2. Strict production enforcement
         if is_prod:

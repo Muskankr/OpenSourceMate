@@ -317,6 +317,8 @@ http://localhost:8000
 
 इंटरएक्टिव OpenAPI दस्तावेज़ीकरण (Swagger UI) `http://localhost:8000/docs` पर उपलब्ध है।
 
+Production में API documentation डिफ़ॉल्ट रूप से बंद है। उसे जानबूझकर उपलब्ध कराने के लिए `API_DOCS_ENABLED=true` सेट करें; `false` development में भी उसे बंद करता है। [Documentation policy और offline schema check](docs/api-v1-and-openapi-docs.md)।
+
 प्रत्येक एंडपॉइंट के curl, Python और JavaScript उदाहरणों और Bruno अनुरोध संग्रह के लिए [API Usage Examples](docs/api-usage-examples.md) देखें।
 
 ### बैकएंड टेस्ट चलाएं (Run the backend tests)

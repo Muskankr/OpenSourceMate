@@ -5,19 +5,24 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.routes.ai import router as ai_router
+from app.api.routes.friendliness import router as friendliness_router
 from app.api.routes.github import router as github_router
 from app.api.routes.issues import router as issues_router
 from app.api.routes.matching import router as matching_router
-from app.api.routes.friendliness import router as friendliness_router
 from app.api.routes.text_skills import router as text_skills_router
 from app.config import get_settings
 from app.exceptions import APIException
+from app.middleware.logging import StructuredLoggingMiddleware
+from app.middleware.rate_limit import IPRateLimitMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.schemas.openapi_serializers import (
     ApiVersionOverviewSerializer,
 )
 from app.schemas.serializers import (
+    ErrorResponseSerializer,
     HealthDiagnosticsSerializer,
     HealthResponseSerializer,
     ReadinessResponseSerializer,
@@ -30,7 +35,7 @@ from app.services.github_service import (
     close_client,
     get_github_diagnostics,
 )
-from starlette.middleware.trustedhost import TrustedHostMiddleware
+from app.utils.logging import setup_structured_logging
 
 
 @asynccontextmanager
@@ -38,11 +43,6 @@ async def lifespan(app: FastAPI):
     yield
     await close_client()
 
-
-from app.middleware.logging import StructuredLoggingMiddleware
-from app.middleware.rate_limit import IPRateLimitMiddleware
-from app.middleware.security_headers import SecurityHeadersMiddleware
-from app.utils.logging import setup_structured_logging
 
 settings = get_settings()
 setup_structured_logging(level=settings.log_level)
@@ -88,10 +88,16 @@ for backward compatibility.
 * **OpenAPI Specification:** [/openapi.json](/openapi.json)
     """,
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    docs_url="/docs" if settings.api_docs_enabled else None,
+    redoc_url="/redoc" if settings.api_docs_enabled else None,
+    openapi_url="/openapi.json" if settings.api_docs_enabled else None,
     openapi_tags=tags_metadata,
+    responses={
+        "default": {
+            "model": ErrorResponseSerializer,
+            "description": "Unified error envelope for non-success HTTP responses.",
+        }
+    },
     debug=bool(settings.debug),
     lifespan=lifespan,
     contact={
@@ -289,9 +295,10 @@ async def api_version_directory():
         "documentation": {
             "title": "OpenSourceMate API",
             "version": "1.0.0",
-            "docs_url": "/docs",
-            "redoc_url": "/redoc",
-            "openapi_url": "/openapi.json",
+            "enabled": bool(settings.api_docs_enabled),
+            "docs_url": app.docs_url,
+            "redoc_url": app.redoc_url,
+            "openapi_url": app.openapi_url,
             "tags": [t["name"] for t in tags_metadata],
         },
     }
@@ -412,9 +419,12 @@ async def health_diagnostics():
 
 
 @app.get("/api/programs", tags=["Matching"], summary="List contributor programs")
-@app.get("/api/v1/programs", tags=["Matching"], summary="List contributor programs (v1)")
+@app.get(
+    "/api/v1/programs", tags=["Matching"], summary="List contributor programs (v1)"
+)
 async def get_programs_shortcut():
     from app.services.program_service import get_all_programs
+
     return {"programs": get_all_programs()}
 
 

@@ -336,6 +336,8 @@ http://localhost:8000
 
 Interactive OpenAPI documentation (Swagger UI) is accessible at `http://localhost:8000/docs`.
 
+API documentation defaults off in production. Set `API_DOCS_ENABLED=true` only when you intend to expose it; `false` also disables it in development. [Documentation policy and offline schema check](docs/api-v1-and-openapi-docs.md).
+
 For curl, Python and JavaScript examples of every endpoint, plus a Bruno request collection, see [API Usage Examples](docs/api-usage-examples.md).
 
 ### Run the backend tests
