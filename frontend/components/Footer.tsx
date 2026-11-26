@@ -38,6 +38,13 @@ export const Footer: React.FC<FooterProps> = ({ theme }) => {
           <Link href="/privacy" className="hover:text-emerald-400 transition-colors">
             Privacy Policy
           </Link>
+          <Link
+            href="/?tour=1"
+            data-testid="take-the-tour-link"
+            className="hover:text-emerald-400 transition-colors"
+          >
+            Take the tour
+          </Link>
           <a
             href="https://github.com/Muskankr/OpenSourceMate/blob/main/CONTRIBUTING.md"
             target="_blank"

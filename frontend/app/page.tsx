@@ -18,6 +18,7 @@ import { ThemeSegmentedToggle } from "../components/ThemeToggle";
 import { useTheme } from "../hooks/useTheme";
 import JobOpportunitiesList from "../components/JobOpportunitiesList";
 import ProgramSelector from "../components/ProgramSelector";
+import OnboardingTour, { ONBOARDING_TOUR_STORAGE_KEY } from "../components/OnboardingTour";
 import { issueMatchesProgram } from "../utils/programs";
 import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
 import { getMockRecommendedIssues } from "../data/mockIssues";
@@ -156,6 +157,39 @@ export default function Home() {
   const [loadingMatching, setLoadingMatching] = useState(false);
   const [matchingError, setMatchingError] = useState("");
   const [isDemoData, setIsDemoData] = useState(false);
+
+  // First-visit onboarding tour state (Issue #439)
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourStep, setTourStep] = useState(0);
+
+  useEffect(() => {
+    try {
+      const forceTour =
+        typeof window !== "undefined" &&
+        new URLSearchParams(window.location.search).get("tour") === "1";
+      const done = window.localStorage.getItem(ONBOARDING_TOUR_STORAGE_KEY);
+      if (forceTour || !done) {
+        setTourOpen(true);
+        setTourStep(0);
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, []);
+
+  const dismissTour = () => {
+    setTourOpen(false);
+    try {
+      window.localStorage.setItem(ONBOARDING_TOUR_STORAGE_KEY, "true");
+    } catch {
+      // Ignore localStorage errors
+    }
+  };
+
+  const startTour = () => {
+    setTourStep(0);
+    setTourOpen(true);
+  };
 
   // Learning Mode state
   const [isLearningMode, setIsLearningMode] = useState(false);
@@ -1884,6 +1918,15 @@ export default function Home() {
                 Privacy & Data Handling
               </Link>
               <span>•</span>
+              <button
+                type="button"
+                onClick={startTour}
+                data-testid="take-the-tour-link"
+                className="transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded underline underline-offset-2"
+              >
+                Take the tour
+              </button>
+              <span>•</span>
               <BuildVersionBadge theme={theme} />
               <span>•</span>
               <p>Built for the open-source community.</p>
@@ -1891,6 +1934,16 @@ export default function Home() {
             <GitHubLink className="transition hover:text-purple-400">View Repository ↗</GitHubLink>
           </div>
         </footer>
+
+        {/* First-Visit Onboarding Tour (Issue #439) */}
+        <OnboardingTour
+          isOpen={tourOpen}
+          currentStep={tourStep}
+          onStepChange={setTourStep}
+          onSkip={dismissTour}
+          onComplete={dismissTour}
+          theme={theme}
+        />
       </div>
     </>
   );
