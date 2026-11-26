@@ -1,7 +1,8 @@
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Response
 
+from app.cache import cache
 from app.config import get_settings
 from app.schemas.serializers import (
     ExtendedGitHubUserProfileSerializer,
@@ -10,13 +11,20 @@ from app.schemas.serializers import (
     TopRepositoriesResponseSerializer,
     UserSkillsSerializer,
 )
+from app.services.badge_service import (
+    DEFAULT_LABEL_BG,
+    DEFAULT_VALUE_BG,
+    NEUTRAL_VALUE_BG,
+    generate_badge_svg,
+    generate_neutral_badge_svg,
+)
 from app.services.github_service import (
     get_github_user,
     get_repository_details,
     get_user_repositories,
 )
 from app.services.skill_service import analyze_skills
-from app.utils.validation import validate_github_username
+from app.utils.validation import is_valid_github_username, normalize_github_username, validate_github_username
 
 router = APIRouter(
     prefix="/github",
@@ -270,3 +278,118 @@ async def get_external_prs(
         raise HTTPException(
             status_code=500, detail=f"Failed to fetch external PR history: {exc}"
         )
+
+
+BADGE_CACHE_TTL = 14400  # 4 hours
+
+
+@router.get(
+    "/users/{username}/badge.svg",
+    response_class=Response,
+    summary="Generate SVG skill badge for GitHub README profile",
+)
+@router.get(
+    "/users/{username}/badge",
+    response_class=Response,
+    include_in_schema=False,
+)
+async def get_user_skills_badge(
+    username: str,
+    label: str = Query(default="OpenSourceMate", description="Badge left label text"),
+    color: str | None = Query(default=None, description="Badge right background color (hex, e.g. #7c3aed)"),
+    style: str = Query(default="default", description="Badge visual style preset"),
+    refresh: bool = Query(default=False, description="Bypass cache and force recalculation"),
+) -> Response:
+    """Return an SVG badge showcasing the user's top three detected skills.
+
+    Designed for embedding in GitHub profile READMEs.
+    Caches responses for several hours and returns a clean neutral badge when the user
+    is unknown rather than an HTTP error page.
+    """
+    clean_label = label.strip() or "OpenSourceMate"
+    raw_user = username.strip()
+    cache_key = f"badge:svg:{raw_user.lower()}:{clean_label}:{color or ''}:{style}"
+
+    # Return cached badge if available to prevent GitHub API rate limit exhaustion
+    if not refresh:
+        cached_svg = cache.get(cache_key)
+        if cached_svg is not None:
+            return Response(
+                content=cached_svg,
+                media_type="image/svg+xml",
+                headers={
+                    "Content-Type": "image/svg+xml; charset=utf-8",
+                    "Cache-Control": f"max-age={BADGE_CACHE_TTL}, public, s-maxage={BADGE_CACHE_TTL}, stale-while-revalidate=3600",
+                    "X-Cache-Lookup": "HIT",
+                },
+            )
+
+    # Validate username: if malformed or invalid, return a neutral fallback badge
+    clean_user = normalize_github_username(raw_user)
+    if not is_valid_github_username(clean_user):
+        neutral_svg = generate_neutral_badge_svg(label=clean_label, message="Invalid User")
+        cache.set(cache_key, neutral_svg, BADGE_CACHE_TTL)
+        return Response(
+            content=neutral_svg,
+            media_type="image/svg+xml",
+            headers={
+                "Content-Type": "image/svg+xml; charset=utf-8",
+                "Cache-Control": f"max-age={BADGE_CACHE_TTL}, public, s-maxage={BADGE_CACHE_TTL}, stale-while-revalidate=3600",
+                "X-Cache-Lookup": "MISS",
+            },
+        )
+
+    # Fetch user repositories
+    try:
+        repositories = await get_user_repositories(clean_user, refresh=refresh)
+    except Exception:
+        repositories = None
+
+    # If user does not exist or has no repository access, return a neutral badge instead of error
+    if repositories is None:
+        neutral_svg = generate_neutral_badge_svg(label=clean_label, message="User Not Found")
+        cache.set(cache_key, neutral_svg, BADGE_CACHE_TTL)
+        return Response(
+            content=neutral_svg,
+            media_type="image/svg+xml",
+            headers={
+                "Content-Type": "image/svg+xml; charset=utf-8",
+                "Cache-Control": f"max-age={BADGE_CACHE_TTL}, public, s-maxage={BADGE_CACHE_TTL}, stale-while-revalidate=3600",
+                "X-Cache-Lookup": "MISS",
+            },
+        )
+
+    # Analyze skills
+    details = await get_repository_details(repositories, refresh=refresh)
+    analysis = analyze_skills(
+        repositories,
+        include_forks=False,
+        repo_details=details,
+        ignore_noise=True,
+    )
+
+    detected_skills = [s["name"] for s in analysis.get("skills", [])[:3]]
+    if detected_skills:
+        value_text = " • ".join(detected_skills)
+        value_bg = color or "#7c3aed"
+    else:
+        value_text = "Contributor"
+        value_bg = "#64748b"
+
+    svg_content = generate_badge_svg(
+        label=clean_label,
+        value=value_text,
+        value_bg=value_bg,
+    )
+
+    cache.set(cache_key, svg_content, BADGE_CACHE_TTL)
+
+    return Response(
+        content=svg_content,
+        media_type="image/svg+xml",
+        headers={
+            "Content-Type": "image/svg+xml; charset=utf-8",
+            "Cache-Control": f"max-age={BADGE_CACHE_TTL}, public, s-maxage={BADGE_CACHE_TTL}, stale-while-revalidate=3600",
+            "X-Cache-Lookup": "MISS",
+        },
+    )

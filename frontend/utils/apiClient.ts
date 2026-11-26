@@ -75,6 +75,59 @@ export function getApiBaseUrl(): string {
 }
 
 /**
+ * Returns the SVG badge URL for a user's top detected skills.
+ */
+export function getSkillBadgeUrl(
+  username: string,
+  options?: { label?: string; color?: string }
+): string {
+  const baseUrl = getApiBaseUrl().replace(/\/+$/, "");
+  const cleanUsername = username.trim().replace(/^@/, "");
+  const url = new URL(
+    `${baseUrl}/api/v1/github/users/${encodeURIComponent(cleanUsername)}/badge.svg`
+  );
+  if (options?.label) {
+    url.searchParams.set("label", options.label);
+  }
+  if (options?.color) {
+    url.searchParams.set("color", options.color);
+  }
+  return url.toString();
+}
+
+/**
+ * Generates the Markdown snippet to embed the skills badge inside a GitHub profile README.
+ */
+export function getSkillBadgeMarkdownSnippet(
+  username: string,
+  options?: { label?: string; siteUrl?: string }
+): string {
+  const cleanUsername = username.trim().replace(/^@/, "");
+  const badgeUrl = getSkillBadgeUrl(cleanUsername, { label: options?.label });
+  const siteUrl =
+    options?.siteUrl ||
+    (typeof window !== "undefined" ? window.location.origin : "https://opensourcemate.org");
+  const profileUrl = `${siteUrl}/?username=${encodeURIComponent(cleanUsername)}`;
+  return `[![OpenSourceMate Skills](${badgeUrl})](${profileUrl})`;
+}
+
+/**
+ * Generates the HTML snippet to embed the skills badge.
+ */
+export function getSkillBadgeHtmlSnippet(
+  username: string,
+  options?: { label?: string; siteUrl?: string }
+): string {
+  const cleanUsername = username.trim().replace(/^@/, "");
+  const badgeUrl = getSkillBadgeUrl(cleanUsername, { label: options?.label });
+  const siteUrl =
+    options?.siteUrl ||
+    (typeof window !== "undefined" ? window.location.origin : "https://opensourcemate.org");
+  const profileUrl = `${siteUrl}/?username=${encodeURIComponent(cleanUsername)}`;
+  return `<a href="${profileUrl}"><img src="${badgeUrl}" alt="OpenSourceMate Skills" /></a>`;
+}
+
+/**
  * Determines whether an error was caused by an aborted/cancelled request.
  */
 export function isAbortError(error: unknown): boolean {
