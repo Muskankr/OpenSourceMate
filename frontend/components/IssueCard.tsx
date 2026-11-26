@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import type { IssueRecommendation } from "../types/api";
 import { inferIssueDifficulty, type IssueDifficulty } from "../data/mockIssues";
 import ResponsivenessBadge from "./ResponsivenessBadge";
@@ -12,6 +12,7 @@ export interface IssueCardProps {
   isMock?: boolean;
   username?: string;
   isHidden?: boolean;
+  isSelected?: boolean;
   onHide?: () => void;
   onRestore?: () => void;
 }
@@ -22,10 +23,18 @@ export default function IssueCard({
   isMock = false,
   username = "",
   isHidden = false,
+  isSelected = false,
   onHide,
   onRestore,
 }: IssueCardProps) {
   const isDark = theme === "dark";
+  const cardRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (isSelected && cardRef.current && typeof cardRef.current.scrollIntoView === "function") {
+      cardRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }, [isSelected]);
 
   const isGoodFirst = issue.labels?.some((l) => l.toLowerCase().includes("good first"));
   const isHelpWanted = issue.labels?.some((l) => l.toLowerCase().includes("help wanted"));
@@ -77,11 +86,18 @@ export default function IssueCard({
 
   return (
     <article
+      ref={cardRef}
+      data-selected={isSelected ? "true" : "false"}
+      aria-selected={isSelected}
       aria-label={`${issue.title} in ${issue.repository}`}
       className={`rounded-2xl border p-5 transition-all duration-200 hover:border-purple-500/40 ${
-        isDark
-          ? "border-white/10 bg-white/[0.025] hover:bg-white/[0.04]"
-          : "border-gray-200 bg-white shadow-sm hover:shadow-md"
+        isSelected
+          ? isDark
+            ? "border-purple-400 ring-2 ring-purple-500 bg-purple-500/[0.08]"
+            : "border-purple-500 ring-2 ring-purple-500 bg-purple-50/80 shadow-md"
+          : isDark
+            ? "border-white/10 bg-white/[0.025] hover:bg-white/[0.04]"
+            : "border-gray-200 bg-white shadow-sm hover:shadow-md"
       }`}
     >
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">

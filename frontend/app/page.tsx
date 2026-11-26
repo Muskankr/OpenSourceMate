@@ -18,6 +18,7 @@ import { ThemeSegmentedToggle } from "../components/ThemeToggle";
 import { useTheme } from "../hooks/useTheme";
 import JobOpportunitiesList from "../components/JobOpportunitiesList";
 import ProgramSelector from "../components/ProgramSelector";
+import { KeyboardShortcutsDialog } from "../components/KeyboardShortcutsDialog";
 import { issueMatchesProgram } from "../utils/programs";
 import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
 import { getMockRecommendedIssues } from "../data/mockIssues";
@@ -80,27 +81,8 @@ export default function Home() {
 
   const [activeSection, setActiveSection] = useState<string>("analyzer");
   const usernameInputRef = useRef<HTMLInputElement>(null);
-
-  // Global keyboard shortcut: pressing "/" focuses the username input (ignored while typing in inputs)
-  useEffect(() => {
-    const handleGlobalKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey) {
-        const activeEl = document.activeElement;
-        const isEditing =
-          activeEl instanceof HTMLInputElement ||
-          activeEl instanceof HTMLTextAreaElement ||
-          activeEl instanceof HTMLSelectElement ||
-          (activeEl as HTMLElement)?.isContentEditable;
-        if (!isEditing) {
-          e.preventDefault();
-          usernameInputRef.current?.focus();
-          usernameInputRef.current?.select();
-        }
-      }
-    };
-    window.addEventListener("keydown", handleGlobalKeyDown);
-    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
-  }, []);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [selectedIssueIndex, setSelectedIssueIndex] = useState<number>(-1);
 
   // IntersectionObserver for active section highlighting in the navbar
   useEffect(() => {
@@ -449,6 +431,69 @@ export default function Home() {
     minScoreFilter,
     searchQuery,
   ]);
+
+  // Reset selected issue index when filtered list shrinks or clears
+  useEffect(() => {
+    if (filteredRecommendations.length === 0) {
+      setSelectedIssueIndex(-1);
+    } else if (selectedIssueIndex >= filteredRecommendations.length) {
+      setSelectedIssueIndex(filteredRecommendations.length - 1);
+    }
+  }, [filteredRecommendations.length, selectedIssueIndex]);
+
+  // Global keyboard shortcuts: "/" (focus input), "?" (help dialog), "j"/"k" (navigate issues), "o" (open selected issue)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      const activeEl = document.activeElement;
+      const isEditing =
+        activeEl instanceof HTMLInputElement ||
+        activeEl instanceof HTMLTextAreaElement ||
+        activeEl instanceof HTMLSelectElement ||
+        (activeEl as HTMLElement)?.isContentEditable;
+
+      if (isEditing) return;
+
+      if (e.key === "/") {
+        e.preventDefault();
+        usernameInputRef.current?.focus();
+        usernameInputRef.current?.select();
+        return;
+      }
+
+      if (e.key === "?") {
+        e.preventDefault();
+        setShortcutsOpen((prev) => !prev);
+        return;
+      }
+
+      if (shortcutsOpen || filteredRecommendations.length === 0) return;
+
+      if (e.key === "j") {
+        e.preventDefault();
+        setSelectedIssueIndex((prev) =>
+          prev < filteredRecommendations.length - 1 ? prev + 1 : 0
+        );
+      } else if (e.key === "k") {
+        e.preventDefault();
+        setSelectedIssueIndex((prev) =>
+          prev > 0 ? prev - 1 : filteredRecommendations.length - 1
+        );
+      } else if (e.key === "o") {
+        if (selectedIssueIndex >= 0 && selectedIssueIndex < filteredRecommendations.length) {
+          e.preventDefault();
+          const targetIssue = filteredRecommendations[selectedIssueIndex];
+          if (targetIssue?.url) {
+            window.open(targetIssue.url, "_blank", "noopener,noreferrer");
+          }
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleGlobalKeyDown);
+    return () => window.removeEventListener("keydown", handleGlobalKeyDown);
+  }, [filteredRecommendations, selectedIssueIndex, shortcutsOpen]);
 
   const hasActiveFilters =
     languageFilter !== "all" ||
@@ -1730,7 +1775,7 @@ export default function Home() {
                   {/* Issue list */}
                   {!loadingMatching && filteredRecommendations.length > 0 && (
                     <div className="mt-6 space-y-4">
-                      {filteredRecommendations.map((issue) => (
+                      {filteredRecommendations.map((issue, index) => (
                         <IssueCard
                           key={issue.id}
                           issue={issue}
@@ -1738,6 +1783,7 @@ export default function Home() {
                           isMock={isDemoData}
                           username={profile?.username || username}
                           isHidden={isHidden(issue)}
+                          isSelected={index === selectedIssueIndex}
                           onHide={() => hideIssue(issue)}
                           onRestore={() => restoreIssue(issue)}
                         />
@@ -1884,6 +1930,15 @@ export default function Home() {
                 Privacy & Data Handling
               </Link>
               <span>•</span>
+              <button
+                type="button"
+                onClick={() => setShortcutsOpen(true)}
+                data-testid="open-shortcuts-button"
+                className="transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded"
+              >
+                Shortcuts (?)
+              </button>
+              <span>•</span>
               <BuildVersionBadge theme={theme} />
               <span>•</span>
               <p>Built for the open-source community.</p>
@@ -1891,6 +1946,13 @@ export default function Home() {
             <GitHubLink className="transition hover:text-purple-400">View Repository ↗</GitHubLink>
           </div>
         </footer>
+
+        {/* Keyboard Shortcuts Help Dialog (Issue #438) */}
+        <KeyboardShortcutsDialog
+          isOpen={shortcutsOpen}
+          onClose={() => setShortcutsOpen(false)}
+          theme={theme}
+        />
       </div>
     </>
   );

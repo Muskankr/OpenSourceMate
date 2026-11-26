@@ -20,6 +20,21 @@ export const DEFAULT_KEYBOARD_SHORTCUTS: ShortcutItem[] = [
     category: "Navigation",
   },
   {
+    keyCombo: ["j"],
+    description: "Select next recommended issue",
+    category: "Navigation",
+  },
+  {
+    keyCombo: ["k"],
+    description: "Select previous recommended issue",
+    category: "Navigation",
+  },
+  {
+    keyCombo: ["o"],
+    description: "Open the selected issue in a new tab",
+    category: "Actions",
+  },
+  {
     keyCombo: ["Esc"],
     description: "Close active modals, dialogs, or mobile navigation menu",
     category: "General",
