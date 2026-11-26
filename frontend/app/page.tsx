@@ -36,7 +36,9 @@ import {
   cancelPendingSearch,
   isAbortError,
   ApiClientError,
+  getAtomFeedUrl,
 } from "../utils/apiClient";
+import SubscribeFeedButton from "../components/SubscribeFeedButton";
 import {
   isNetworkOrServerError,
   resolveServiceErrorDetails,
@@ -165,6 +167,22 @@ export default function Home() {
   ).length;
 
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+  // Dynamic Atom feed discovery link in <head> for feed readers and browser extensions
+  useEffect(() => {
+    const activeUser = profile?.username || username;
+    if (!activeUser || typeof document === "undefined") return;
+    const feedUrl = getAtomFeedUrl(activeUser, { program: selectedProgram || undefined });
+    let link = document.querySelector<HTMLLinkElement>("link[type='application/atom+xml']");
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "alternate";
+      link.type = "application/atom+xml";
+      document.head.appendChild(link);
+    }
+    link.title = `OpenSourceMate matches for @${activeUser}`;
+    link.href = feedUrl;
+  }, [profile?.username, username, selectedProgram]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -1017,6 +1035,11 @@ export default function Home() {
                         {linkCopied ? "Link copied" : "Copy link"}
                       </button>
                       <ExportMenu onExport={handleExport} />
+                      <SubscribeFeedButton
+                        username={profile.username}
+                        program={selectedProgram || undefined}
+                        theme={theme}
+                      />
                     </div>
                   )}
                 </div>
@@ -1149,14 +1172,24 @@ export default function Home() {
 
                     {recommendations.length > 0 && (
                       <div className="flex flex-col items-end gap-2">
-                        <span
-                          className={`text-xs sm:text-sm ${
-                            theme === "dark" ? "text-gray-400" : "text-gray-600"
-                          }`}
-                        >
-                          Showing {filteredRecommendations.length} of {recommendations.length}{" "}
-                          issues
-                        </span>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span
+                            className={`text-xs sm:text-sm ${
+                              theme === "dark" ? "text-gray-400" : "text-gray-600"
+                            }`}
+                          >
+                            Showing {filteredRecommendations.length} of {recommendations.length}{" "}
+                            issues
+                          </span>
+                          {(profile?.username || username) && (
+                            <SubscribeFeedButton
+                              username={profile?.username || username}
+                              program={selectedProgram || undefined}
+                              theme={theme}
+                              variant="link"
+                            />
+                          )}
+                        </div>
                         {hiddenCount > 0 && (
                           <button
                             type="button"
