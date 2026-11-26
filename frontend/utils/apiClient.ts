@@ -75,6 +75,22 @@ export function getApiBaseUrl(): string {
 }
 
 /**
+ * Returns the Atom feed URL for a user's matched issue recommendations.
+ * Feed readers can subscribe to this URL directly without requiring an account.
+ */
+export function getAtomFeedUrl(username: string, options?: { program?: string }): string {
+  const baseUrl = getApiBaseUrl().replace(/\/+$/, "");
+  const cleanUsername = username.trim().replace(/^@/, "");
+  const url = new URL(
+    `${baseUrl}/api/v1/matching/users/${encodeURIComponent(cleanUsername)}/feed.atom`
+  );
+  if (options?.program) {
+    url.searchParams.set("program", options.program);
+  }
+  return url.toString();
+}
+
+/**
  * Determines whether an error was caused by an aborted/cancelled request.
  */
 export function isAbortError(error: unknown): boolean {

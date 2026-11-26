@@ -162,6 +162,42 @@ export function handleMockApiRequest(url: string, method?: string): MockResponse
     };
   }
 
+  // 5b. Matched Issues Atom Feed: /api/matching/users/:username/feed.atom or /api/v1/matching/users/:username/feed.atom
+  const feedMatch = pathname.match(/^\/(?:api\/v1|api)\/matching\/users\/([^/]+)\/feed\.atom\/?$/);
+  if (feedMatch && feedMatch[1]) {
+    const rawUsername = decodeURIComponent(feedMatch[1]);
+    const mockCheck = checkSpecialMockConditions(rawUsername);
+    if (mockCheck) return mockCheck;
+
+    const xml = `<?xml version='1.0' encoding='utf-8'?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <id>http://localhost:8000/api/v1/matching/users/${rawUsername}/feed.atom</id>
+  <title>OpenSourceMate matches for @${rawUsername}</title>
+  <updated>${new Date().toISOString()}</updated>
+  <link href="http://localhost:8000/api/v1/matching/users/${rawUsername}/feed.atom" rel="self" type="application/atom+xml"/>
+  <author><name>OpenSourceMate</name></author>
+  <entry>
+    <id>https://github.com/mock/repo/issues/1</id>
+    <title>Mock Issue for ${rawUsername}</title>
+    <updated>${new Date().toISOString()}</updated>
+    <link href="https://github.com/mock/repo/issues/1" rel="alternate" type="text/html"/>
+    <category term="mock/repo" label="Repository: mock/repo"/>
+    <summary type="text">Repository: mock/repo; match score: 92%; match reason: Matches your skills</summary>
+    <content type="text">Repository: mock/repo&#10;Match score: 92%&#10;Match reason: Matches your skills</content>
+  </entry>
+</feed>`;
+
+    return {
+      status: 200,
+      headers: {
+        "Content-Type": "application/atom+xml; charset=utf-8",
+        "Cache-Control": "max-age=300, public",
+        "X-Cache-Lookup": "MISS",
+      },
+      body: xml,
+    };
+  }
+
   // 6. Contributor Programs: /api/matching/programs or /api/programs
   if (
     pathname === "/api/matching/programs" ||

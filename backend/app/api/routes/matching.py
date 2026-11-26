@@ -1,10 +1,13 @@
 from datetime import UTC, datetime
+import re
 from typing import Any
 from xml.etree import ElementTree
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
 
 from app.ai.ai_service import generate_issue_match_explanation
+from app.cache import cache
+from app.config import get_settings
 from app.services.embedding_service import similarities
 from app.services.github_service import (
     GitHubRateLimitError,
@@ -37,19 +40,40 @@ async def list_contributor_programs():
     }
 
 
+def _clean_xml_text(value: Any) -> str:
+    """Ensure value is a string and contains only characters valid in XML 1.0."""
+    if value is None:
+        return ""
+    text = str(value)
+    # Strip characters forbidden in XML 1.0:
+    # Valid: #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]
+    return re.sub(
+        r"[^\x09\x0A\x0D\x20-\uD7FF\uE000-\uFFFD\U00010000-\U0010FFFF]",
+        "",
+        text,
+    )
+
+
 def _atom_date(value: str | None) -> str:
     """Return an Atom-compatible UTC timestamp, tolerating incomplete issue data."""
     try:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00")) if value else None
         if parsed is None or parsed.tzinfo is None:
             raise ValueError("Missing timezone")
-    except ValueError:
+    except (ValueError, TypeError):
         parsed = datetime.now(UTC)
     return parsed.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
-def _atom_element(parent: ElementTree.Element, name: str, text: str) -> None:
-    ElementTree.SubElement(parent, f"{{{ATOM_NS}}}{name}").text = text
+def _atom_element(
+    parent: ElementTree.Element,
+    name: str,
+    text: str,
+    attrib: dict[str, str] | None = None,
+) -> ElementTree.Element:
+    el = ElementTree.SubElement(parent, f"{{{ATOM_NS}}}{name}", attrib or {})
+    el.text = _clean_xml_text(text)
+    return el
 
 
 @router.get("/users/{username}/issues")
@@ -270,8 +294,34 @@ async def get_matched_issues_feed(
     request: Request,
     skills: list[str] | None = Query(default=None),
     program: str | None = Query(default=None),
+    refresh: bool = Query(default=False, description="Bypass cache and force fresh recommendations"),
 ) -> Response:
-    """Expose the same ranked matches as an Atom feed for feed readers."""
+    """Expose the same ranked matches as an Atom feed for feed readers.
+
+    Includes title, repository, link, and match reasons. Uses stable entry IDs
+    and caches responses to respect GitHub API rate limits.
+    """
+    clean_user = username.strip().lstrip("@").lower()
+    skills_key = ",".join(sorted(skills)) if skills else ""
+    prog_key = (program or "").strip().lower()
+    feed_cache_key = f"feed:atom:{clean_user}:{skills_key}:{prog_key}"
+
+    settings = get_settings()
+    ttl = getattr(settings, "github_cache_ttl", 300)
+
+    if not refresh:
+        cached_xml = cache.get(feed_cache_key)
+        if cached_xml is not None:
+            return Response(
+                content=cached_xml,
+                media_type="application/atom+xml",
+                headers={
+                    "Content-Type": "application/atom+xml; charset=utf-8",
+                    "Cache-Control": f"max-age={ttl}, public",
+                    "X-Cache-Lookup": "HIT",
+                },
+            )
+
     matches = await get_matched_issues(username, exclude_stale=False, skills=skills, program=program)
     recommendations = matches["recommendations"]
     feed = ElementTree.Element(f"{{{ATOM_NS}}}feed")
@@ -286,10 +336,36 @@ async def get_matched_issues_feed(
         ),
     )
     ElementTree.SubElement(
-        feed, f"{{{ATOM_NS}}}link", {"href": str(request.url), "rel": "self"}
+        feed,
+        f"{{{ATOM_NS}}}link",
+        {
+            "href": str(request.url),
+            "rel": "self",
+            "type": "application/atom+xml",
+        },
     )
+
+    base_url = str(request.base_url).rstrip("/")
+    html_url = f"{base_url}/?username={matches['username']}"
+    ElementTree.SubElement(
+        feed,
+        f"{{{ATOM_NS}}}link",
+        {
+            "href": html_url,
+            "rel": "alternate",
+            "type": "text/html",
+        },
+    )
+
     author = ElementTree.SubElement(feed, f"{{{ATOM_NS}}}author")
     _atom_element(author, "name", "OpenSourceMate")
+
+    generator = ElementTree.SubElement(
+        feed,
+        f"{{{ATOM_NS}}}generator",
+        {"uri": "https://github.com/Muskankr/OpenSourceMate", "version": "1.0.0"},
+    )
+    generator.text = "OpenSourceMate"
 
     for issue in recommendations:
         entry = ElementTree.SubElement(feed, f"{{{ATOM_NS}}}entry")
@@ -298,17 +374,55 @@ async def get_matched_issues_feed(
         _atom_element(entry, "id", issue_url)
         _atom_element(entry, "title", issue["title"])
         _atom_element(entry, "updated", _atom_date(issue.get("updated_at")))
-        ElementTree.SubElement(entry, f"{{{ATOM_NS}}}link", {"href": issue_url})
-        ElementTree.SubElement(entry, f"{{{ATOM_NS}}}category", {"term": repository})
-        _atom_element(
+        ElementTree.SubElement(
             entry,
-            "summary",
-            f"Repository: {repository}; match score: {issue['match_score']}%",
+            f"{{{ATOM_NS}}}link",
+            {
+                "href": issue_url,
+                "rel": "alternate",
+                "type": "text/html",
+            },
+        )
+        ElementTree.SubElement(
+            entry,
+            f"{{{ATOM_NS}}}category",
+            {
+                "term": repository,
+                "label": f"Repository: {repository}",
+            },
         )
 
+        reason = (
+            issue.get("why_it_matches")
+            or issue.get("explanation")
+            or ("; ".join(issue["match_reasons"]) if issue.get("match_reasons") else None)
+            or (f"Matched skills: {', '.join(issue['matched_skills'])}" if issue.get("matched_skills") else None)
+        )
+
+        summary_text = f"Repository: {repository}; match score: {issue['match_score']}%"
+        if reason:
+            summary_text += f"; match reason: {reason}"
+        _atom_element(entry, "summary", summary_text, {"type": "text"})
+
+        content_lines = [
+            f"Repository: {repository}",
+            f"Match score: {issue['match_score']}%",
+        ]
+        if reason:
+            content_lines.append(f"Match reason: {reason}")
+        _atom_element(entry, "content", "\n".join(content_lines), {"type": "text"})
+
+    xml_content = ElementTree.tostring(feed, encoding="utf-8", xml_declaration=True)
+    cache.set(feed_cache_key, xml_content, ttl)
+
     return Response(
-        content=ElementTree.tostring(feed, encoding="utf-8", xml_declaration=True),
+        content=xml_content,
         media_type="application/atom+xml",
+        headers={
+            "Content-Type": "application/atom+xml; charset=utf-8",
+            "Cache-Control": f"max-age={ttl}, public",
+            "X-Cache-Lookup": "MISS",
+        },
     )
 
 
