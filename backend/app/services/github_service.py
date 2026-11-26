@@ -10,6 +10,7 @@ import httpx
 
 from app.cache import TTLCache, cache
 from app.config import get_settings
+from app.services.session_service import get_current_user_token
 from app.utils.logging import get_logger, sanitize_sensitive_data
 
 logger = get_logger("app.services.github")
@@ -138,6 +139,10 @@ async def github_get(
     etag_cache_key = f"{url}?{param_str}" if param_str else url
 
     request_headers: dict[str, str] = {}
+    user_token = get_current_user_token()
+    if user_token:
+        request_headers["Authorization"] = f"Bearer {user_token}"
+
     cached_etag_entry = cache.get_etag(etag_cache_key) if use_etag else None
     if cached_etag_entry:
         etag_val, cached_body = cached_etag_entry

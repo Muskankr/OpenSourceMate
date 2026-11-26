@@ -361,3 +361,21 @@ class IssueAnalysisResponseSerializer(BaseModel):
     explanation: str | None = Field(
         default=None, description="Comprehensive AI explanation"
     )
+
+
+# ---------------------------------------------------------
+# Optional GitHub OAuth Session Serializers (Issue #437)
+# ---------------------------------------------------------
+class AuthSessionSerializer(BaseModel):
+    """Public session status response (never exposes OAuth access tokens)."""
+
+    authenticated: bool = Field(..., description="Whether the user has an active OAuth session")
+    username: str | None = Field(default=None, description="Signed-in GitHub login, if authenticated")
+    avatar_url: str | None = Field(default=None, description="Signed-in user avatar URL, if authenticated")
+
+
+class AuthLogoutSerializer(BaseModel):
+    """Sign-out confirmation response."""
+
+    authenticated: bool = Field(default=False, description="Always false after sign-out")
+    signed_out: bool = Field(default=True, description="Whether the session was terminated")
