@@ -105,6 +105,30 @@ export interface UserRepositoriesResponse {
   repositories: RepositoryItem[];
 }
 
+export interface RepositoryLanguageBreakdown {
+  name: string;
+  percentage: number;
+}
+
+export interface RepositoryDetails {
+  repository: string;
+  owner: string;
+  name: string;
+  description: string | null;
+  url: string;
+  stars: number;
+  forks: number;
+  open_issues_count: number;
+  languages: string[];
+  language_breakdown?: RepositoryLanguageBreakdown[];
+  last_commit_date: string | null;
+  contributing_url: string | null;
+  default_branch?: string | null;
+  license?: string | null;
+  topics?: string[];
+  cached?: boolean;
+}
+
 export interface HealthResponse {
   status: string;
   service: string;
