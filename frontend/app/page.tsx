@@ -20,6 +20,8 @@ import JobOpportunitiesList from "../components/JobOpportunitiesList";
 import ProgramSelector from "../components/ProgramSelector";
 import { issueMatchesProgram } from "../utils/programs";
 import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
+import { useIssueKeyboardNavigation } from "../hooks/useIssueKeyboardNavigation";
+import KeyboardShortcutsDialog from "../components/KeyboardShortcutsDialog";
 import { getMockRecommendedIssues } from "../data/mockIssues";
 import { rankIssuesForLearningMode, COMMON_TARGET_SKILLS } from "../utils/learningMode";
 import {
@@ -379,6 +381,16 @@ export default function Home() {
     minScoreFilter,
     searchQuery,
   ]);
+
+  // Keyboard navigation for results list (j/k to move, o/Enter to open, ? for help) (Issue #449)
+  const {
+    focusedIndex: focusedRecommendationIndex,
+    isHelpOpen: isShortcutsHelpOpen,
+    setIsHelpOpen: setIsShortcutsHelpOpen,
+  } = useIssueKeyboardNavigation({
+    issues: filteredRecommendations,
+    enabled: filteredRecommendations.length > 0,
+  });
 
   const hasActiveFilters =
     languageFilter !== "all" ||
@@ -1521,7 +1533,7 @@ export default function Home() {
                   {/* Issue list */}
                   {!loadingMatching && filteredRecommendations.length > 0 && (
                     <div className="mt-6 space-y-4">
-                      {filteredRecommendations.map((issue) => (
+                      {filteredRecommendations.map((issue, idx) => (
                         <IssueCard
                           key={issue.id}
                           issue={issue}
@@ -1531,8 +1543,17 @@ export default function Home() {
                           isHidden={isHidden(issue)}
                           onHide={() => hideIssue(issue)}
                           onRestore={() => restoreIssue(issue)}
+                          isFocused={focusedRecommendationIndex === idx}
+                          issueIndex={idx}
                         />
                       ))}
+                    </div>
+                  )}
+
+                  {/* Screen reader live announcement for keyboard navigation */}
+                  {focusedRecommendationIndex >= 0 && focusedRecommendationIndex < filteredRecommendations.length && (
+                    <div className="sr-only" aria-live="polite" aria-atomic="true">
+                      Selected issue {focusedRecommendationIndex + 1} of {filteredRecommendations.length}: {filteredRecommendations[focusedRecommendationIndex].title} in {filteredRecommendations[focusedRecommendationIndex].repository}
                     </div>
                   )}
                 </div>
@@ -1682,6 +1703,13 @@ export default function Home() {
             <GitHubLink className="transition hover:text-purple-400">View Repository ↗</GitHubLink>
           </div>
         </footer>
+
+        {/* Keyboard Shortcuts Help Dialog (Issue #449) */}
+        <KeyboardShortcutsDialog
+          isOpen={isShortcutsHelpOpen}
+          onClose={() => setIsShortcutsHelpOpen(false)}
+          theme={theme}
+        />
       </div>
     </>
   );

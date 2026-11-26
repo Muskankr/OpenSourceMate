@@ -8,6 +8,8 @@ import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
 import { rankIssuesForLearningMode, COMMON_TARGET_SKILLS } from "../utils/learningMode";
 import { issueMatchesProgram } from "../utils/programs";
 import ProgramSelector from "./ProgramSelector";
+import { useIssueKeyboardNavigation } from "../hooks/useIssueKeyboardNavigation";
+import KeyboardShortcutsDialog from "./KeyboardShortcutsDialog";
 
 export interface RecommendedIssuesListProps {
   issues: IssueRecommendation[];
@@ -139,6 +141,12 @@ export default function RecommendedIssuesList({
     minScoreFilter,
     searchQuery,
   ]);
+
+  // Keyboard navigation for results list (j/k to move, o/Enter to open, ? for help) (Issue #449)
+  const { focusedIndex, isHelpOpen, setIsHelpOpen } = useIssueKeyboardNavigation({
+    issues: filteredIssues,
+    enabled: filteredIssues.length > 0,
+  });
 
   const hasActiveFilters =
     activeProgram !== "" ||
@@ -559,7 +567,7 @@ export default function RecommendedIssuesList({
       {/* Render list of cards */}
       {filteredIssues.length > 0 && (
         <div className="mt-6 space-y-4" role="feed" aria-label="Issue list">
-          {filteredIssues.map((issue) => (
+          {filteredIssues.map((issue, idx) => (
             <IssueCard
               key={issue.id}
               issue={issue}
@@ -569,10 +577,26 @@ export default function RecommendedIssuesList({
               isHidden={isHidden(issue)}
               onHide={() => hideIssue(issue)}
               onRestore={() => restoreIssue(issue)}
+              isFocused={focusedIndex === idx}
+              issueIndex={idx}
             />
           ))}
         </div>
       )}
+
+      {/* Screen reader live announcement for keyboard navigation */}
+      {focusedIndex >= 0 && focusedIndex < filteredIssues.length && (
+        <div className="sr-only" aria-live="polite" aria-atomic="true">
+          Selected issue {focusedIndex + 1} of {filteredIssues.length}: {filteredIssues[focusedIndex].title} in {filteredIssues[focusedIndex].repository}
+        </div>
+      )}
+
+      {/* Keyboard Shortcuts Help Dialog */}
+      <KeyboardShortcutsDialog
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
+        theme={theme}
+      />
     </section>
   );
 }

@@ -14,6 +14,8 @@ export interface IssueCardProps {
   isHidden?: boolean;
   onHide?: () => void;
   onRestore?: () => void;
+  isFocused?: boolean;
+  issueIndex?: number;
 }
 
 export default function IssueCard({
@@ -24,6 +26,8 @@ export default function IssueCard({
   isHidden = false,
   onHide,
   onRestore,
+  isFocused = false,
+  issueIndex,
 }: IssueCardProps) {
   const isDark = theme === "dark";
 
@@ -78,10 +82,18 @@ export default function IssueCard({
   return (
     <article
       aria-label={`${issue.title} in ${issue.repository}`}
-      className={`rounded-2xl border p-5 transition-all duration-200 hover:border-purple-500/40 ${
-        isDark
-          ? "border-white/10 bg-white/[0.025] hover:bg-white/[0.04]"
-          : "border-gray-200 bg-white shadow-sm hover:shadow-md"
+      aria-current={isFocused ? "true" : undefined}
+      data-issue-index={issueIndex}
+      data-focused={isFocused ? "true" : undefined}
+      tabIndex={isFocused ? 0 : undefined}
+      className={`rounded-2xl border p-5 transition-all duration-200 ${
+        isFocused
+          ? isDark
+            ? "border-purple-400 bg-purple-500/10 ring-2 ring-purple-400 ring-offset-2 ring-offset-slate-950 shadow-lg shadow-purple-500/20"
+            : "border-purple-500 bg-purple-50 ring-2 ring-purple-500 ring-offset-2 ring-offset-white shadow-md shadow-purple-500/20"
+          : isDark
+          ? "border-white/10 bg-white/[0.025] hover:border-purple-500/40 hover:bg-white/[0.04]"
+          : "border-gray-200 bg-white shadow-sm hover:border-purple-500/40 hover:shadow-md"
       }`}
     >
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">

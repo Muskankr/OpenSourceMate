@@ -20,6 +20,21 @@ export const DEFAULT_KEYBOARD_SHORTCUTS: ShortcutItem[] = [
     category: "Navigation",
   },
   {
+    keyCombo: ["j"],
+    description: "Move to next recommended issue card",
+    category: "Navigation",
+  },
+  {
+    keyCombo: ["k"],
+    description: "Move to previous recommended issue card",
+    category: "Navigation",
+  },
+  {
+    keyCombo: ["o", "Enter"],
+    description: "Open focused issue on GitHub in a new tab",
+    category: "Actions",
+  },
+  {
     keyCombo: ["Esc"],
     description: "Close active modals, dialogs, or mobile navigation menu",
     category: "General",
