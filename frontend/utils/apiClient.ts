@@ -12,6 +12,7 @@ import {
   type ApiErrorResponse,
   type CompleteAnalysisResult,
   type ProgramsResponse,
+  type RepositoryDetails,
 } from "../types/api";
 
 export interface RequestOptions extends RequestInit {
@@ -325,6 +326,23 @@ export async function fetchMatchedIssues(
  */
 export async function fetchPrograms(options?: RequestOptions): Promise<ProgramsResponse> {
   return typedRequest<ProgramsResponse>("/api/matching/programs", options);
+}
+
+/**
+ * Fetches cached repository details (description, stars, languages, last commit, open issues, CONTRIBUTING link).
+ */
+export async function fetchRepositoryDetails(
+  repository: string,
+  options?: RequestOptions & { refresh?: boolean }
+): Promise<RepositoryDetails> {
+  const parts = repository.trim().split("/").filter(Boolean);
+  if (parts.length < 2) {
+    throw new ApiClientError(`Invalid repository slug: "${repository}"`, 422, "VALIDATION_ERROR");
+  }
+  const owner = encodeURIComponent(parts[0]);
+  const repo = encodeURIComponent(parts[1]);
+  const query = options?.refresh ? "?refresh=true" : "";
+  return typedRequest<RepositoryDetails>(`/api/github/repos/${owner}/${repo}${query}`, options);
 }
 
 /**

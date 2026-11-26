@@ -361,3 +361,38 @@ class IssueAnalysisResponseSerializer(BaseModel):
     explanation: str | None = Field(
         default=None, description="Comprehensive AI explanation"
     )
+
+
+# ---------------------------------------------------------
+# Repository Details Drawer Serializers (Issue #444)
+# ---------------------------------------------------------
+class RepositoryLanguageBreakdownSerializer(BaseModel):
+    """Language share entry for a repository."""
+
+    name: str = Field(..., description="Programming language name")
+    percentage: float = Field(..., ge=0.0, le=100.0, description="Percentage share of repository bytes")
+
+
+class RepositoryDetailsSerializer(BaseModel):
+    """Detailed cached metadata for a single GitHub repository."""
+
+    repository: str = Field(..., description="Full repository slug (owner/repo)")
+    owner: str = Field(..., description="Repository owner login")
+    name: str = Field(..., description="Repository name")
+    description: str | None = Field(default=None, description="Repository description")
+    url: str = Field(..., description="HTML URL to the repository on GitHub")
+    stars: int = Field(default=0, ge=0, description="Stargazers count")
+    forks: int = Field(default=0, ge=0, description="Forks count")
+    open_issues_count: int = Field(default=0, ge=0, description="Open issues count")
+    languages: list[str] = Field(default_factory=list, description="Main programming languages sorted by usage")
+    language_breakdown: list[RepositoryLanguageBreakdownSerializer] = Field(
+        default_factory=list, description="Language percentages breakdown"
+    )
+    last_commit_date: str | None = Field(default=None, description="ISO timestamp of the latest commit")
+    contributing_url: str | None = Field(
+        default=None, description="URL to the repository CONTRIBUTING guide when present"
+    )
+    default_branch: str | None = Field(default=None, description="Default branch name")
+    license: str | None = Field(default=None, description="SPDX or human-readable license name")
+    topics: list[str] = Field(default_factory=list, description="Repository topics")
+    cached: bool = Field(default=False, description="Whether the response was served from cache")

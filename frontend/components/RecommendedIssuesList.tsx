@@ -3,6 +3,7 @@
 import React, { useMemo, useState } from "react";
 import type { IssueRecommendation } from "../types/api";
 import IssueCard from "./IssueCard";
+import RepositoryDetailsDrawer from "./RepositoryDetailsDrawer";
 import { inferIssueDifficulty, type IssueDifficulty } from "../data/mockIssues";
 import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
 import { rankIssuesForLearningMode, COMMON_TARGET_SKILLS } from "../utils/learningMode";
@@ -35,6 +36,10 @@ export default function RecommendedIssuesList({
   // Learning mode states
   const [isLearningMode, setIsLearningMode] = useState<boolean>(initialLearningMode);
   const [targetSkills, setTargetSkills] = useState<string[]>(initialTargetSkills);
+
+  // Repository details drawer state (Issue #444)
+  const [selectedRepo, setSelectedRepo] = useState<string | null>(null);
+  const [drawerTrigger, setDrawerTrigger] = useState<HTMLElement | null>(null);
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState("");
@@ -569,10 +574,23 @@ export default function RecommendedIssuesList({
               isHidden={isHidden(issue)}
               onHide={() => hideIssue(issue)}
               onRestore={() => restoreIssue(issue)}
+              onOpenRepoDetails={(repo, trigger) => {
+                setDrawerTrigger(trigger);
+                setSelectedRepo(repo);
+              }}
             />
           ))}
         </div>
       )}
+
+      {/* Repository Details Side Drawer (Issue #444) */}
+      <RepositoryDetailsDrawer
+        repository={selectedRepo}
+        isOpen={Boolean(selectedRepo)}
+        onClose={() => setSelectedRepo(null)}
+        theme={theme}
+        triggerElement={drawerTrigger}
+      />
     </section>
   );
 }

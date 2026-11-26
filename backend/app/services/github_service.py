@@ -760,3 +760,130 @@ async def fetch_merged_external_pull_requests(
 
     cache.set(cache_key, result, ttl=900)
     return result
+
+
+async def get_single_repository_details(
+    owner: str,
+    repo: str,
+    refresh: bool = False,
+) -> dict[str, Any] | None:
+    """Fetch and cache detailed metadata for a single repository (Issue #444).
+
+    Retrieves description, stars, main languages, last commit date, open issue count,
+    and CONTRIBUTING guide link when present. Uses TTL caching and GitHub ETag
+    conditional requests to respect rate limits.
+    """
+    full_name = f"{owner.strip()}/{repo.strip()}"
+    cache_key = f"github:repo-summary:{full_name.lower()}"
+
+    if not refresh:
+        cached = cache.get(cache_key)
+        if cached is not None:
+            return {**cached, "cached": True}
+
+    repo_coro = github_get(f"{GITHUB_API_URL}/repos/{full_name}")
+    langs_coro = github_get(f"{GITHUB_API_URL}/repos/{full_name}/languages")
+    commits_coro = github_get(
+        f"{GITHUB_API_URL}/repos/{full_name}/commits",
+        params={"per_page": 1},
+    )
+    community_coro = github_get(f"{GITHUB_API_URL}/repos/{full_name}/community/profile")
+
+    repo_res, langs_res, commits_res, community_res = await asyncio.gather(
+        repo_coro,
+        langs_coro,
+        commits_coro,
+        community_coro,
+        return_exceptions=True,
+    )
+
+    if isinstance(repo_res, BaseException):
+        raise repo_res
+
+    if repo_res.status_code == 404:
+        return None
+
+    if repo_res.status_code >= 400:
+        raise GitHubUpstreamError(
+            f"{GITHUB_API_URL}/repos/{full_name}",
+            repo_res.status_code,
+            repo_res.text[:200],
+        )
+
+    repo_data = repo_res.json()
+
+    # Parse main languages sorted by bytes descending
+    languages: list[str] = []
+    language_breakdown: list[dict[str, Any]] = []
+    if not isinstance(langs_res, BaseException) and langs_res.status_code == 200:
+        langs_json = langs_res.json()
+        if isinstance(langs_json, dict) and langs_json:
+            total_bytes = sum(v for v in langs_json.values() if isinstance(v, (int, float)) and v > 0)
+            sorted_langs = sorted(
+                ((k, v) for k, v in langs_json.items() if isinstance(v, (int, float)) and v > 0),
+                key=lambda item: item[1],
+                reverse=True,
+            )
+            languages = [name for name, _ in sorted_langs]
+            if total_bytes > 0:
+                language_breakdown = [
+                    {
+                        "name": name,
+                        "percentage": round((byte_count / total_bytes) * 100, 1),
+                    }
+                    for name, byte_count in sorted_langs[:6]
+                ]
+
+    if not languages and repo_data.get("language"):
+        languages = [repo_data["language"]]
+        language_breakdown = [{"name": repo_data["language"], "percentage": 100.0}]
+
+    # Parse last commit date
+    last_commit_date: str | None = None
+    if not isinstance(commits_res, BaseException) and commits_res.status_code == 200:
+        commits_json = commits_res.json()
+        if isinstance(commits_json, list) and len(commits_json) > 0:
+            commit_obj = commits_json[0].get("commit", {})
+            last_commit_date = (
+                commit_obj.get("committer", {}).get("date")
+                or commit_obj.get("author", {}).get("date")
+            )
+    if not last_commit_date:
+        last_commit_date = repo_data.get("pushed_at") or repo_data.get("updated_at")
+
+    # Parse CONTRIBUTING guide URL from community profile
+    contributing_url: str | None = None
+    if not isinstance(community_res, BaseException) and community_res.status_code == 200:
+        community_json = community_res.json()
+        files = community_json.get("files", {}) if isinstance(community_json, dict) else {}
+        contributing_info = files.get("contributing") if isinstance(files, dict) else None
+        if isinstance(contributing_info, dict):
+            contributing_url = contributing_info.get("html_url") or contributing_info.get("url")
+
+    license_obj = repo_data.get("license")
+    license_name: str | None = None
+    if isinstance(license_obj, dict):
+        spdx = license_obj.get("spdx_id")
+        license_name = spdx if spdx and spdx != "NOASSERTION" else license_obj.get("name")
+
+    result: dict[str, Any] = {
+        "repository": repo_data.get("full_name") or full_name,
+        "owner": (repo_data.get("owner") or {}).get("login") or owner.strip(),
+        "name": repo_data.get("name") or repo.strip(),
+        "description": repo_data.get("description"),
+        "url": repo_data.get("html_url") or f"https://github.com/{full_name}",
+        "stars": repo_data.get("stargazers_count", 0),
+        "forks": repo_data.get("forks_count", 0),
+        "open_issues_count": repo_data.get("open_issues_count", 0),
+        "languages": languages,
+        "language_breakdown": language_breakdown,
+        "last_commit_date": last_commit_date,
+        "contributing_url": contributing_url,
+        "default_branch": repo_data.get("default_branch"),
+        "license": license_name,
+        "topics": repo_data.get("topics") or [],
+        "cached": False,
+    }
+
+    cache.set(cache_key, result, get_settings().github_cache_ttl)
+    return result

@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import re
 
 from fastapi import APIRouter, HTTPException, Query
 
@@ -6,6 +7,7 @@ from app.config import get_settings
 from app.schemas.serializers import (
     ExtendedGitHubUserProfileSerializer,
     GitHubUserProfileSerializer,
+    RepositoryDetailsSerializer,
     RepositoryListSerializer,
     TopRepositoriesResponseSerializer,
     UserSkillsSerializer,
@@ -13,6 +15,7 @@ from app.schemas.serializers import (
 from app.services.github_service import (
     get_github_user,
     get_repository_details,
+    get_single_repository_details,
     get_user_repositories,
 )
 from app.services.skill_service import analyze_skills
@@ -270,3 +273,32 @@ async def get_external_prs(
         raise HTTPException(
             status_code=500, detail=f"Failed to fetch external PR history: {exc}"
         )
+
+
+_VALID_REPO_NAME_RE = re.compile(r"^[A-Za-z0-9._-]{1,100}$")
+
+
+@router.get(
+    "/repos/{owner}/{repo}",
+    response_model=RepositoryDetailsSerializer,
+    summary="Get cached repository details (Issue #444)",
+)
+async def get_repository_summary(
+    owner: str,
+    repo: str,
+    refresh: bool = Query(default=False, description="Bypass cache and fetch fresh repository details"),
+):
+    validated_owner = validate_github_username(owner)
+    clean_repo = repo.strip()
+    if not _VALID_REPO_NAME_RE.match(clean_repo) or clean_repo in {".", ".."}:
+        raise HTTPException(status_code=422, detail="Invalid repository name")
+
+    details = await get_single_repository_details(
+        validated_owner,
+        clean_repo,
+        refresh=refresh,
+    )
+    if details is None:
+        raise HTTPException(status_code=404, detail="Repository not found")
+
+    return details
