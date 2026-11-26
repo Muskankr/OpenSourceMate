@@ -64,10 +64,7 @@ export async function assertNoSeriousA11yViolations(
   container: Element,
   options?: AxeCheckOptions
 ): Promise<void> {
-  const { seriousOrCriticalViolations, passes } = await checkA11yViolations(
-    container,
-    options
-  );
+  const { seriousOrCriticalViolations, passes } = await checkA11yViolations(container, options);
 
   if (!passes) {
     const errorDetails = seriousOrCriticalViolations

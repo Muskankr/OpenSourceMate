@@ -86,4 +86,3 @@ describe("SkillProficiencyBadge Component (Issue #131)", () => {
     expect(lightContainer.querySelector("button")?.className).toContain("text-emerald-800");
   });
 });
-

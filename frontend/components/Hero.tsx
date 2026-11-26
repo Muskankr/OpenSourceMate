@@ -37,18 +37,13 @@ export const Hero: React.FC<HeroProps> = ({ theme, onExploreClick }) => {
             isDark ? "text-slate-400" : "text-slate-600"
           }`}
         >
-          OpenSourceMate analyzes your repositories, extracts technical skills,
-          estimates proficiency, and matches you with beginner-friendly issues tailored
-          to your exact developer profile.
+          OpenSourceMate analyzes your repositories, extracts technical skills, estimates
+          proficiency, and matches you with beginner-friendly issues tailored to your exact
+          developer profile.
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-          <Button
-            size="lg"
-            variant="primary"
-            theme={theme}
-            onClick={onExploreClick}
-          >
+          <Button size="lg" variant="primary" theme={theme} onClick={onExploreClick}>
             <span>Analyze Your Profile</span>
             <span aria-hidden="true">&darr;</span>
           </Button>

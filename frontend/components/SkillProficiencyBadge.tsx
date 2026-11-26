@@ -2,10 +2,7 @@
 
 import React, { useState, useId } from "react";
 import { ProficiencyLevel } from "../types/api";
-import {
-  computeSkillProficiency,
-  getProficiencyTheme,
-} from "../utils/proficiency";
+import { computeSkillProficiency, getProficiencyTheme } from "../utils/proficiency";
 
 export interface SkillProficiencyBadgeProps {
   /** Optional pre-computed proficiency level from backend */
@@ -79,10 +76,7 @@ export default function SkillProficiencyBadge({
         aria-label={`Proficiency estimate: ${level}. ${reason}`}
         className={`group inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium tracking-tight transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${colors.badgeBg} ${colors.badgeBorder} ${colors.badgeText}`}
       >
-        <span
-          className={`h-1.5 w-1.5 rounded-full ${colors.dotColor}`}
-          aria-hidden="true"
-        />
+        <span className={`h-1.5 w-1.5 rounded-full ${colors.dotColor}`} aria-hidden="true" />
         <span>{level}</span>
 
         {/* Small info icon hint */}
@@ -120,9 +114,7 @@ export default function SkillProficiencyBadge({
             </span>
           </div>
 
-          <p className="mt-1.5 leading-relaxed text-[11px] opacity-90">
-            {reason}
-          </p>
+          <p className="mt-1.5 leading-relaxed text-[11px] opacity-90">{reason}</p>
 
           <div className="mt-2 text-[10px] italic text-gray-400">
             ℹ️ Calculated from repository breadth, code share, and commit recency.
@@ -131,9 +123,7 @@ export default function SkillProficiencyBadge({
           {/* Tooltip downward caret arrow */}
           <div
             className={`absolute top-full left-1/2 -mt-1 h-2 w-2 -translate-x-1/2 rotate-45 border-r border-b ${
-              isDark
-                ? "border-white/10 bg-[#0d1117]"
-                : "border-gray-200 bg-white"
+              isDark ? "border-white/10 bg-[#0d1117]" : "border-gray-200 bg-white"
             }`}
             aria-hidden="true"
           />
@@ -142,4 +132,3 @@ export default function SkillProficiencyBadge({
     </div>
   );
 }
-

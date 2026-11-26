@@ -155,7 +155,9 @@ describe("ContributorsWall component", () => {
 
     expect(await screen.findByText(login)).toHaveAttribute("title", login);
     expect(
-      screen.getByRole("link", { name: `${login}, 12 contributions. Opens GitHub profile in a new tab` })
+      screen.getByRole("link", {
+        name: `${login}, 12 contributions. Opens GitHub profile in a new tab`,
+      })
     ).toBeInTheDocument();
   });
 

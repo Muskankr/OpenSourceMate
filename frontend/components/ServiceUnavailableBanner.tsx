@@ -95,16 +95,12 @@ export default function ServiceUnavailableBanner({
               <div className="flex flex-wrap items-center gap-2">
                 <span
                   className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                    isDark
-                      ? "bg-amber-500/20 text-amber-300"
-                      : "bg-amber-200 text-amber-800"
+                    isDark ? "bg-amber-500/20 text-amber-300" : "bg-amber-200 text-amber-800"
                   }`}
                 >
                   {statusCode ? `Status ${statusCode}` : "Offline"}
                 </span>
-                <h3 className="text-base font-bold tracking-tight sm:text-lg">
-                  {title}
-                </h3>
+                <h3 className="text-base font-bold tracking-tight sm:text-lg">{title}</h3>
               </div>
 
               <p
@@ -133,7 +129,13 @@ export default function ServiceUnavailableBanner({
                   : "text-amber-700 hover:bg-amber-100 hover:text-amber-900"
               } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400`}
             >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                className="h-4 w-4"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <line x1="18" y1="6" x2="6" y2="18" />
                 <line x1="6" y1="6" x2="18" y2="18" />
               </svg>
@@ -200,12 +202,11 @@ export default function ServiceUnavailableBanner({
             </svg>
           </a>
 
-          <span
-            className={`text-xs ${
-              isDark ? "text-amber-400/70" : "text-amber-800/70"
-            }`}
-          >
-            Backend endpoint: <code className="rounded bg-black/20 px-1.5 py-0.5 font-mono text-[11px]">{process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}</code>
+          <span className={`text-xs ${isDark ? "text-amber-400/70" : "text-amber-800/70"}`}>
+            Backend endpoint:{" "}
+            <code className="rounded bg-black/20 px-1.5 py-0.5 font-mono text-[11px]">
+              {process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}
+            </code>
           </span>
         </div>
       </div>

@@ -79,9 +79,7 @@ export default function PreferencesPanel({
     const currentList = prefs[targetKey];
     const exists = currentList.includes(lang);
 
-    const nextList = exists
-      ? currentList.filter((item) => item !== lang)
-      : [...currentList, lang];
+    const nextList = exists ? currentList.filter((item) => item !== lang) : [...currentList, lang];
 
     updatePreference(targetKey, nextList);
   };
@@ -130,9 +128,7 @@ export default function PreferencesPanel({
 
         <div className="flex items-center gap-3">
           {savedToast && (
-            <span className="text-[11px] font-medium text-emerald-400 animate-pulse">
-              Saved
-            </span>
+            <span className="text-[11px] font-medium text-emerald-400 animate-pulse">Saved</span>
           )}
           <span
             className={`transform text-xs transition-transform duration-200 ${
@@ -172,8 +168,8 @@ export default function PreferencesPanel({
                         ? "border-purple-500 bg-purple-500/20 text-white"
                         : "border-purple-600 bg-purple-50 text-purple-900"
                       : isDark
-                      ? "border-white/10 hover:border-white/20"
-                      : "border-gray-200 hover:border-gray-300"
+                        ? "border-white/10 hover:border-white/20"
+                        : "border-gray-200 hover:border-gray-300"
                   }`}
                 >
                   <div className="text-xs font-semibold">{g.label}</div>
@@ -203,8 +199,8 @@ export default function PreferencesPanel({
                     prefs.difficulty === diff.id
                       ? "border-purple-500 bg-purple-500/20 text-purple-300"
                       : isDark
-                      ? "border-white/10 bg-white/5"
-                      : "border-gray-200 bg-gray-50"
+                        ? "border-white/10 bg-white/5"
+                        : "border-gray-200 bg-gray-50"
                   }`}
                 >
                   {diff.label}
@@ -232,8 +228,8 @@ export default function PreferencesPanel({
                     prefs.timeAvailability === time.id
                       ? "border-purple-500 bg-purple-500/20 text-purple-300"
                       : isDark
-                      ? "border-white/10 bg-white/5"
-                      : "border-gray-200 bg-gray-50"
+                        ? "border-white/10 bg-white/5"
+                        : "border-gray-200 bg-gray-50"
                   }`}
                 >
                   <div className="text-xs font-semibold">{time.label}</div>
@@ -260,8 +256,8 @@ export default function PreferencesPanel({
                       isSelected
                         ? "border-emerald-500 bg-emerald-500/20 text-emerald-300 font-semibold"
                         : isDark
-                        ? "border-white/10 bg-white/5 opacity-70"
-                        : "border-gray-200 bg-gray-50 opacity-80"
+                          ? "border-white/10 bg-white/5 opacity-70"
+                          : "border-gray-200 bg-gray-50 opacity-80"
                     }`}
                   >
                     {isSelected ? `✓ ${lang}` : `+ ${lang}`}
@@ -273,9 +269,7 @@ export default function PreferencesPanel({
 
           {/* Reset Action */}
           <div className="flex items-center justify-between pt-2 border-t border-white/5 text-xs">
-            <span className="opacity-60">
-              Preferences stored locally in your browser.
-            </span>
+            <span className="opacity-60">Preferences stored locally in your browser.</span>
             <button
               type="button"
               onClick={handleReset}

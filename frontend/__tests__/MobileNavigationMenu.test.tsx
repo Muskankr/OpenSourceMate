@@ -1,8 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, within } from "@testing-library/react";
-import MobileNavigationMenu, {
-  DEFAULT_NAV_ITEMS,
-} from "../components/MobileNavigationMenu";
+import MobileNavigationMenu, { DEFAULT_NAV_ITEMS } from "../components/MobileNavigationMenu";
 import Navbar from "../components/Navbar";
 
 describe("MobileNavigationMenu Component (#259)", () => {
@@ -74,12 +72,7 @@ describe("MobileNavigationMenu Component (#259)", () => {
 
   it("closes the disclosure panel and triggers onNavigateSection on section link click", () => {
     const onNavigateSection = jest.fn();
-    render(
-      <MobileNavigationMenu
-        {...defaultProps}
-        onNavigateSection={onNavigateSection}
-      />
-    );
+    render(<MobileNavigationMenu {...defaultProps} onNavigateSection={onNavigateSection} />);
 
     const toggleBtn = screen.getByRole("button", { name: /Open navigation menu/i });
     fireEvent.click(toggleBtn);
@@ -111,7 +104,11 @@ describe("MobileNavigationMenu Component (#259)", () => {
     expect(screen.getByTestId("mobile-navigation-panel")).toBeInTheDocument();
 
     // Simulate window resize to desktop viewport (1024px)
-    Object.defineProperty(window, "innerWidth", { writable: true, configurable: true, value: 1024 });
+    Object.defineProperty(window, "innerWidth", {
+      writable: true,
+      configurable: true,
+      value: 1024,
+    });
     fireEvent(window, new Event("resize"));
 
     expect(screen.queryByTestId("mobile-navigation-panel")).not.toBeInTheDocument();
@@ -166,7 +163,9 @@ describe("Navbar Component Mobile Navigation Integration (#259)", () => {
 
   it("triggers onToggleMobileMenu on Escape key when dropdown is open", () => {
     const onToggleMobileMenu = jest.fn();
-    render(<Navbar {...navbarProps} mobileMenuOpen={true} onToggleMobileMenu={onToggleMobileMenu} />);
+    render(
+      <Navbar {...navbarProps} mobileMenuOpen={true} onToggleMobileMenu={onToggleMobileMenu} />
+    );
 
     fireEvent.keyDown(window, { key: "Escape" });
     expect(onToggleMobileMenu).toHaveBeenCalledTimes(1);

@@ -15,9 +15,7 @@ describe("CompareSkeleton Component (Issue #179)", () => {
 
   it("renders screen-reader accessible loading announcement", () => {
     render(<CompareSkeleton />);
-    expect(
-      screen.getByText("Loading developer comparison interface...")
-    ).toHaveClass("sr-only");
+    expect(screen.getByText("Loading developer comparison interface...")).toHaveClass("sr-only");
   });
 
   it("applies dark mode background and border styling by default", () => {
@@ -50,24 +48,22 @@ describe("CompareSkeleton Component (Issue #179)", () => {
   });
 });
 
+it("renders navbar skeleton placeholders", () => {
+  const { container } = render(<CompareSkeleton />);
+  const header = container.querySelector("header");
+  expect(header).toBeInTheDocument();
+  expect(header).toHaveClass("sticky");
+});
 
-  it("renders navbar skeleton placeholders", () => {
-    const { container } = render(<CompareSkeleton />);
-    const header = container.querySelector("header");
-    expect(header).toBeInTheDocument();
-    expect(header).toHaveClass("sticky");
-  });
+it("renders centered comparison CTA action button skeleton", () => {
+  const { container } = render(<CompareSkeleton />);
+  const buttonSkeleton = container.querySelector(".bg-purple-600\\/30, .bg-purple-600\\/20");
+  expect(buttonSkeleton).toBeInTheDocument();
+});
 
-  it("renders centered comparison CTA action button skeleton", () => {
-    const { container } = render(<CompareSkeleton />);
-    const buttonSkeleton = container.querySelector(".bg-purple-600\\/30, .bg-purple-600\\/20");
-    expect(buttonSkeleton).toBeInTheDocument();
-  });
-
-
-  it("verifies noscript message styling contrast and role", () => {
-    const { container } = render(<CompareSkeleton />);
-    const alertBox = container.querySelector('noscript [role="alert"]');
-    expect(alertBox).toBeInTheDocument();
-    expect(alertBox).toHaveClass("border-amber-500/30");
-  });
+it("verifies noscript message styling contrast and role", () => {
+  const { container } = render(<CompareSkeleton />);
+  const alertBox = container.querySelector('noscript [role="alert"]');
+  expect(alertBox).toBeInTheDocument();
+  expect(alertBox).toHaveClass("border-amber-500/30");
+});

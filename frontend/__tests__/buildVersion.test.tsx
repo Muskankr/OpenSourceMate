@@ -3,10 +3,7 @@
  */
 
 import { render, screen } from "@testing-library/react";
-import {
-  getBuildVersionInfo,
-  getBuildCommitSha,
-} from "../utils/buildVersion";
+import { getBuildVersionInfo, getBuildCommitSha } from "../utils/buildVersion";
 import BuildVersionBadge from "../components/BuildVersionBadge";
 
 describe("Footer Build Version Suite (Issue #188)", () => {
@@ -46,9 +43,7 @@ describe("Footer Build Version Suite (Issue #188)", () => {
       expect(info.isDev).toBe(false);
       expect(info.shortSha).toBe("4f258de");
       expect(info.commitSha).toBe(fullSha);
-      expect(info.commitUrl).toBe(
-        `https://github.com/Muskankr/OpenSourceMate/commit/${fullSha}`
-      );
+      expect(info.commitUrl).toBe(`https://github.com/Muskankr/OpenSourceMate/commit/${fullSha}`);
     });
 
     it("rejects invalid or too-short commit SHA strings", () => {
@@ -93,36 +88,34 @@ describe("Footer Build Version Suite (Issue #188)", () => {
   });
 });
 
+describe("Repository URL Fallback Behavior", () => {
+  it("uses NEXT_PUBLIC_GITHUB_REPO_URL when provided in environment", () => {
+    const customRepo = "https://github.com/custom/repo";
+    process.env.NEXT_PUBLIC_GITHUB_REPO_URL = customRepo;
+    process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA = "abcdef1234567";
 
-  describe("Repository URL Fallback Behavior", () => {
-    it("uses NEXT_PUBLIC_GITHUB_REPO_URL when provided in environment", () => {
-      const customRepo = "https://github.com/custom/repo";
-      process.env.NEXT_PUBLIC_GITHUB_REPO_URL = customRepo;
-      process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA = "abcdef1234567";
-
-      const info = getBuildVersionInfo();
-      expect(info.repositoryUrl).toBe(customRepo);
-      expect(info.commitUrl).toBe(`${customRepo}/commit/abcdef1234567`);
-    });
-
-    it("handles whitespace in commit SHA strings gracefully", () => {
-      process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA = "  1234567890abcdef  ";
-      const info = getBuildVersionInfo();
-      expect(info.shortSha).toBe("1234567");
-    });
-  });
-
-  describe("Accessibility and Aria Attributes", () => {
-    it("includes accessible aria-label with the short commit SHA", () => {
-      process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA = "aabbccddee1122";
-      render(<BuildVersionBadge />);
-      expect(screen.getByLabelText("Build version: aabbccd")).toBeInTheDocument();
-    });
-  });
-
-
-  it("handles null/undefined buildTime without throwing", () => {
-    delete process.env.NEXT_PUBLIC_BUILD_TIME;
     const info = getBuildVersionInfo();
-    expect(info.buildTime).toBeNull();
+    expect(info.repositoryUrl).toBe(customRepo);
+    expect(info.commitUrl).toBe(`${customRepo}/commit/abcdef1234567`);
   });
+
+  it("handles whitespace in commit SHA strings gracefully", () => {
+    process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA = "  1234567890abcdef  ";
+    const info = getBuildVersionInfo();
+    expect(info.shortSha).toBe("1234567");
+  });
+});
+
+describe("Accessibility and Aria Attributes", () => {
+  it("includes accessible aria-label with the short commit SHA", () => {
+    process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA = "aabbccddee1122";
+    render(<BuildVersionBadge />);
+    expect(screen.getByLabelText("Build version: aabbccd")).toBeInTheDocument();
+  });
+});
+
+it("handles null/undefined buildTime without throwing", () => {
+  delete process.env.NEXT_PUBLIC_BUILD_TIME;
+  const info = getBuildVersionInfo();
+  expect(info.buildTime).toBeNull();
+});

@@ -112,10 +112,7 @@ export default function ExportMenu({
   // Close menu on click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
         setFocusedIndex(-1);
       }
@@ -134,11 +131,7 @@ export default function ExportMenu({
     if (disabled) return;
 
     if (!isOpen) {
-      if (
-        event.key === "ArrowDown" ||
-        event.key === "Enter" ||
-        event.key === " "
-      ) {
+      if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
         event.preventDefault();
         setIsOpen(true);
         setFocusedIndex(0);
@@ -159,9 +152,7 @@ export default function ExportMenu({
         break;
       case "ArrowUp":
         event.preventDefault();
-        setFocusedIndex((prev) =>
-          prev <= 0 ? FORMAT_OPTIONS.length - 1 : prev - 1
-        );
+        setFocusedIndex((prev) => (prev <= 0 ? FORMAT_OPTIONS.length - 1 : prev - 1));
         break;
       case "Home":
         event.preventDefault();
@@ -212,8 +203,8 @@ export default function ExportMenu({
           disabled
             ? "opacity-50 cursor-not-allowed bg-slate-800 text-slate-400 border-slate-700"
             : isOpen
-            ? "bg-slate-800 text-white border-blue-500/50 shadow-blue-500/10 ring-2 ring-blue-500/20"
-            : "bg-slate-900/80 text-slate-200 border-slate-700/80 hover:bg-slate-800 hover:text-white hover:border-slate-600"
+              ? "bg-slate-800 text-white border-blue-500/50 shadow-blue-500/10 ring-2 ring-blue-500/20"
+              : "bg-slate-900/80 text-slate-200 border-slate-700/80 hover:bg-slate-800 hover:text-white hover:border-slate-600"
         }`}
       >
         <svg
@@ -240,12 +231,7 @@ export default function ExportMenu({
           viewBox="0 0 24 24"
           aria-hidden="true"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
@@ -261,9 +247,7 @@ export default function ExportMenu({
             <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
               Download Analysis Report
             </p>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Select your preferred export format
-            </p>
+            <p className="text-xs text-slate-400 mt-0.5">Select your preferred export format</p>
           </div>
 
           <div className="space-y-1">
@@ -288,9 +272,7 @@ export default function ExportMenu({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-semibold text-slate-200">
-                        {opt.label}
-                      </span>
+                      <span className="text-xs font-semibold text-slate-200">{opt.label}</span>
                       <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-400 border border-slate-700/60">
                         {opt.badge}
                       </span>

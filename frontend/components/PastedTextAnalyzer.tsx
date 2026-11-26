@@ -109,7 +109,8 @@ export default function PastedTextAnalyzer({
         aria-label="Privacy disclaimer"
         className="mb-4 text-xs text-slate-500 dark:text-slate-400 bg-slate-100/70 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200/80 dark:border-slate-700/60"
       >
-        <strong>Privacy Assurance:</strong> Your pasted text is processed in-memory solely to detect skills. It is never stored on disk, written to a database, or shared.
+        <strong>Privacy Assurance:</strong> Your pasted text is processed in-memory solely to detect
+        skills. It is never stored on disk, written to a database, or shared.
       </div>
 
       <form onSubmit={handleSubmit}>
@@ -125,7 +126,9 @@ export default function PastedTextAnalyzer({
           />
           <div className="flex justify-between items-center text-xs text-slate-400 mt-1.5 px-1">
             <span>Minimum 5 characters</span>
-            <span className={characterCount > maxCharacters * 0.9 ? "text-amber-500 font-medium" : ""}>
+            <span
+              className={characterCount > maxCharacters * 0.9 ? "text-amber-500 font-medium" : ""}
+            >
               {characterCount.toLocaleString()} / {maxCharacters.toLocaleString()} characters
             </span>
           </div>
@@ -161,11 +164,7 @@ export default function PastedTextAnalyzer({
                     stroke="currentColor"
                     strokeWidth="4"
                   />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8H4z"
-                  />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                 </svg>
                 Extracting Skills...
               </>
@@ -199,7 +198,8 @@ export default function PastedTextAnalyzer({
 
           {result.skills.length === 0 ? (
             <p className="text-xs text-slate-500 italic">
-              No matching technical skills detected in the provided text. Try including specific technologies, languages, or frameworks.
+              No matching technical skills detected in the provided text. Try including specific
+              technologies, languages, or frameworks.
             </p>
           ) : (
             <div className="flex flex-wrap gap-2">

@@ -8,9 +8,7 @@ const UPDATE_EVENT = "osm_hidden_issues_updated";
 
 /** Repository plus issue ID avoids collisions between different repositories. */
 export function hiddenIssueId(issue: IssueRecommendation): string {
-  return issue.id != null
-    ? `${issue.repository}#${issue.id}`
-    : `${issue.url}#${issue.title}`;
+  return issue.id != null ? `${issue.repository}#${issue.id}` : `${issue.url}#${issue.title}`;
 }
 
 export function parseHiddenIssueIds(raw: string | null): string[] {
@@ -49,9 +47,7 @@ export function useHiddenIssues() {
     try {
       const current = parseHiddenIssueIds(window.localStorage.getItem(STORAGE_KEY));
       const id = hiddenIssueId(issue);
-      const next = hide
-        ? [...new Set([...current, id])]
-        : current.filter((value) => value !== id);
+      const next = hide ? [...new Set([...current, id])] : current.filter((value) => value !== id);
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
       window.dispatchEvent(new Event(UPDATE_EVENT));
     } catch {

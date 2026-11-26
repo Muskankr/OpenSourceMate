@@ -12,7 +12,10 @@ const FAQ_ITEMS: FAQItem[] = [
     question: "What data does OpenSourceMate use?",
     answer: (
       <span>
-        Only public GitHub data: your public profile and your public repositories, including their languages and topics. For your 5 most recently updated repositories that are not forks, it also reads the language breakdown and any package.json, requirements.txt or pyproject.toml file. Read our full{" "}
+        Only public GitHub data: your public profile and your public repositories, including their
+        languages and topics. For your 5 most recently updated repositories that are not forks, it
+        also reads the language breakdown and any package.json, requirements.txt or pyproject.toml
+        file. Read our full{" "}
         <Link href="/privacy" className="text-purple-400 underline hover:text-purple-300">
           Privacy & Data Handling policy
         </Link>{" "}
@@ -29,7 +32,8 @@ const FAQ_ITEMS: FAQItem[] = [
     question: "Are my private repositories read?",
     answer: (
       <span>
-        No. OpenSourceMate only calls GitHub&apos;s public endpoints, so private repositories are never seen, read, or analyzed. Learn more in our{" "}
+        No. OpenSourceMate only calls GitHub&apos;s public endpoints, so private repositories are
+        never seen, read, or analyzed. Learn more in our{" "}
         <Link href="/privacy" className="text-purple-400 underline hover:text-purple-300">
           Privacy Policy
         </Link>
@@ -46,7 +50,8 @@ const FAQ_ITEMS: FAQItem[] = [
     question: "Is my data stored?",
     answer: (
       <span>
-        No account or profile is saved. GitHub responses are only cached in memory for a few minutes so repeat searches are faster and stay within GitHub&apos;s rate limits. See our{" "}
+        No account or profile is saved. GitHub responses are only cached in memory for a few minutes
+        so repeat searches are faster and stay within GitHub&apos;s rate limits. See our{" "}
         <Link href="/privacy" className="text-purple-400 underline hover:text-purple-300">
           Privacy Policy
         </Link>{" "}

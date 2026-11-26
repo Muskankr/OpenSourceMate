@@ -174,7 +174,12 @@ export const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = (
             className="p-1.5 rounded-xl border border-transparent text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -193,7 +198,9 @@ export const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = (
                     <div
                       key={shortcut.description}
                       className={`flex items-center justify-between p-2 rounded-xl text-sm ${
-                        isDark ? "bg-slate-950/40 hover:bg-slate-800/40" : "bg-slate-50 hover:bg-slate-100"
+                        isDark
+                          ? "bg-slate-950/40 hover:bg-slate-800/40"
+                          : "bg-slate-50 hover:bg-slate-100"
                       } transition-colors`}
                     >
                       <span className={isDark ? "text-slate-300" : "text-slate-700"}>
@@ -221,8 +228,13 @@ export const KeyboardShortcutsDialog: React.FC<KeyboardShortcutsDialogProps> = (
         </div>
 
         {/* Footer */}
-        <div className={`mt-5 pt-3 border-t text-xs flex justify-between items-center ${isDark ? "border-slate-800 text-slate-400" : "border-slate-200 text-slate-500"}`}>
-          <span>Press <kbd className="px-1.5 py-0.5 rounded border text-[10px] font-mono">Esc</kbd> anytime to dismiss</span>
+        <div
+          className={`mt-5 pt-3 border-t text-xs flex justify-between items-center ${isDark ? "border-slate-800 text-slate-400" : "border-slate-200 text-slate-500"}`}
+        >
+          <span>
+            Press <kbd className="px-1.5 py-0.5 rounded border text-[10px] font-mono">Esc</kbd>{" "}
+            anytime to dismiss
+          </span>
           <button
             type="button"
             onClick={onClose}

@@ -22,12 +22,8 @@ describe("Landing Page Modular Components", () => {
 
   it("renders Hero with headline and call-to-action buttons", () => {
     render(<Hero theme="dark" onExploreClick={jest.fn()} />);
-    expect(
-      screen.getByText(/Turn your GitHub history into/i)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /analyze your profile/i })
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Turn your GitHub history into/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /analyze your profile/i })).toBeInTheDocument();
   });
 
   it("renders HowItWorks with 3 pipeline steps", () => {

@@ -83,13 +83,16 @@ export function parseCompany(company?: string | null): { text: string; url?: str
 export default function ProfileCard({ profile, onExport, className = "" }: ProfileCardProps) {
   const [imgError, setImgError] = useState(false);
 
-  const displayName = profile.name && profile.name.trim().length > 0 ? profile.name.trim() : profile.username;
+  const displayName =
+    profile.name && profile.name.trim().length > 0 ? profile.name.trim() : profile.username;
   const hasBio = Boolean(profile.bio && profile.bio.trim().length > 0);
   const memberSince = formatMemberSince(profile.created_at);
   const websiteUrl = normalizeWebsiteUrl(profile.blog);
   const companyInfo = parseCompany(profile.company);
   const hasLocation = Boolean(profile.location && profile.location.trim().length > 0);
-  const hasTwitter = Boolean(profile.twitter_username && profile.twitter_username.trim().length > 0);
+  const hasTwitter = Boolean(
+    profile.twitter_username && profile.twitter_username.trim().length > 0
+  );
   const gistsCount = profile.public_gists ?? 0;
 
   const hasAnyMetadata = Boolean(
@@ -159,9 +162,7 @@ export default function ProfileCard({ profile, onExport, className = "" }: Profi
                     {profile.bio}
                   </p>
                 ) : (
-                  <p className="text-sm italic text-gray-500">
-                    No bio provided
-                  </p>
+                  <p className="text-sm italic text-gray-500">No bio provided</p>
                 )}
               </div>
             </div>
@@ -320,12 +321,7 @@ export default function ProfileCard({ profile, onExport, className = "" }: Profi
                 className="flex items-center gap-1.5 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-1.5 text-sky-400 transition hover:border-sky-500/30 hover:bg-sky-500/10 hover:text-sky-300"
                 title={`Twitter/X: @${profile.twitter_username}`}
               >
-                <svg
-                  className="h-4 w-4"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
+                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>
                 <span>@{profile.twitter_username}</span>

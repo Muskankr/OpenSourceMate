@@ -37,9 +37,7 @@ export const ProfileHealthChecklist = memo(function ProfileHealthChecklist({
           <span className="text-sm font-bold text-purple-400">
             {health.passedCount} of {health.totalCount}
           </span>
-          <div className="text-[10px] uppercase font-semibold opacity-60">
-            Checklist Completed
-          </div>
+          <div className="text-[10px] uppercase font-semibold opacity-60">Checklist Completed</div>
         </div>
       </div>
 
@@ -53,8 +51,8 @@ export const ProfileHealthChecklist = memo(function ProfileHealthChecklist({
                   ? "border-emerald-500/20 bg-emerald-500/[0.04]"
                   : "border-emerald-200 bg-emerald-50/50"
                 : isDark
-                ? "border-white/5 bg-white/[0.01]"
-                : "border-gray-100 bg-gray-50/60"
+                  ? "border-white/5 bg-white/[0.01]"
+                  : "border-gray-100 bg-gray-50/60"
             }`}
           >
             <div
@@ -62,8 +60,8 @@ export const ProfileHealthChecklist = memo(function ProfileHealthChecklist({
                 item.passed
                   ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/40"
                   : isDark
-                  ? "bg-white/10 text-gray-400 border border-white/10"
-                  : "bg-gray-200 text-gray-500 border border-gray-300"
+                    ? "bg-white/10 text-gray-400 border border-white/10"
+                    : "bg-gray-200 text-gray-500 border border-gray-300"
               }`}
               aria-hidden="true"
             >
@@ -81,11 +79,7 @@ export const ProfileHealthChecklist = memo(function ProfileHealthChecklist({
                   </span>
                 )}
               </div>
-              <p
-                className={`mt-0.5 leading-relaxed ${
-                  isDark ? "text-gray-400" : "text-gray-600"
-                }`}
-              >
+              <p className={`mt-0.5 leading-relaxed ${isDark ? "text-gray-400" : "text-gray-600"}`}>
                 {item.tip}
               </p>
             </div>

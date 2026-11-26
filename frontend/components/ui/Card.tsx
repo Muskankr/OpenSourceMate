@@ -29,10 +29,7 @@ export const Card: React.FC<CardProps> = ({
   }[variant];
 
   return (
-    <div
-      className={`rounded-2xl p-6 ${baseStyle} ${variantStyle} ${className}`}
-      {...props}
-    >
+    <div className={`rounded-2xl p-6 ${baseStyle} ${variantStyle} ${className}`} {...props}>
       {children}
     </div>
   );

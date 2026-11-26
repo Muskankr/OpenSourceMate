@@ -1,22 +1,22 @@
-import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import UsernameAutocomplete from '../components/UsernameAutocomplete';
+import React from "react";
+import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import UsernameAutocomplete from "../components/UsernameAutocomplete";
 
-describe('UsernameAutocomplete Component', () => {
+describe("UsernameAutocomplete Component", () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('renders input with combobox accessibility attributes', () => {
+  it("renders input with combobox accessibility attributes", () => {
     render(<UsernameAutocomplete value="" onChange={jest.fn()} />);
-    const input = screen.getByRole('combobox');
+    const input = screen.getByRole("combobox");
     expect(input).toBeInTheDocument();
-    expect(input).toHaveAttribute('aria-autocomplete', 'list');
-    expect(input).toHaveAttribute('aria-expanded', 'false');
+    expect(input).toHaveAttribute("aria-autocomplete", "list");
+    expect(input).toHaveAttribute("aria-expanded", "false");
   });
 
-  it('does not trigger fetch if input is less than minChars (3)', async () => {
+  it("does not trigger fetch if input is less than minChars (3)", async () => {
     const fetchMock = jest.fn();
     global.fetch = fetchMock;
 
@@ -26,10 +26,10 @@ describe('UsernameAutocomplete Component', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('fetches and displays suggestions after debounce', async () => {
+  it("fetches and displays suggestions after debounce", async () => {
     const mockUsers = [
-      { username: 'octocat', avatar_url: 'https://example.com/avatar1.png' },
-      { username: 'octocat-pro', avatar_url: 'https://example.com/avatar2.png' },
+      { username: "octocat", avatar_url: "https://example.com/avatar1.png" },
+      { username: "octocat-pro", avatar_url: "https://example.com/avatar2.png" },
     ];
 
     global.fetch = jest.fn().mockResolvedValue({
@@ -51,22 +51,19 @@ describe('UsernameAutocomplete Component', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByRole('listbox')).toBeInTheDocument();
-      expect(screen.getByText('@octocat')).toBeInTheDocument();
-      expect(screen.getByText('@octocat-pro')).toBeInTheDocument();
+      expect(screen.getByRole("listbox")).toBeInTheDocument();
+      expect(screen.getByText("@octocat")).toBeInTheDocument();
+      expect(screen.getByText("@octocat-pro")).toBeInTheDocument();
     });
 
     // Click first suggestion
-    fireEvent.click(screen.getByText('@octocat'));
-    expect(onChangeMock).toHaveBeenCalledWith('octocat');
+    fireEvent.click(screen.getByText("@octocat"));
+    expect(onChangeMock).toHaveBeenCalledWith("octocat");
     expect(onSelectMock).toHaveBeenCalledWith(mockUsers[0]);
   });
 
-  it('supports keyboard arrow navigation and Enter selection', async () => {
-    const mockUsers = [
-      { username: 'babin1' },
-      { username: 'babin2' },
-    ];
+  it("supports keyboard arrow navigation and Enter selection", async () => {
+    const mockUsers = [{ username: "babin1" }, { username: "babin2" }];
 
     global.fetch = jest.fn().mockResolvedValue({
       ok: true,
@@ -75,27 +72,21 @@ describe('UsernameAutocomplete Component', () => {
     });
 
     const onChangeMock = jest.fn();
-    render(
-      <UsernameAutocomplete
-        value="babin"
-        onChange={onChangeMock}
-        debounceMs={20}
-      />
-    );
+    render(<UsernameAutocomplete value="babin" onChange={onChangeMock} debounceMs={20} />);
 
     await waitFor(() => {
-      expect(screen.getByRole('listbox')).toBeInTheDocument();
+      expect(screen.getByRole("listbox")).toBeInTheDocument();
     });
 
-    const input = screen.getByRole('combobox');
-    fireEvent.keyDown(input, { key: 'ArrowDown' }); // Highlight babin1
-    fireEvent.keyDown(input, { key: 'ArrowDown' }); // Highlight babin2
-    fireEvent.keyDown(input, { key: 'Enter' });
+    const input = screen.getByRole("combobox");
+    fireEvent.keyDown(input, { key: "ArrowDown" }); // Highlight babin1
+    fireEvent.keyDown(input, { key: "ArrowDown" }); // Highlight babin2
+    fireEvent.keyDown(input, { key: "Enter" });
 
-    expect(onChangeMock).toHaveBeenCalledWith('babin2');
+    expect(onChangeMock).toHaveBeenCalledWith("babin2");
   });
 
-  it('falls back to plain input on rate-limit 429 response', async () => {
+  it("falls back to plain input on rate-limit 429 response", async () => {
     global.fetch = jest.fn().mockResolvedValue({
       ok: false,
       status: 429,
@@ -104,7 +95,7 @@ describe('UsernameAutocomplete Component', () => {
     render(<UsernameAutocomplete value="rate_limited_user" onChange={jest.fn()} debounceMs={20} />);
 
     await waitFor(() => {
-      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+      expect(screen.queryByRole("listbox")).not.toBeInTheDocument();
     });
   });
 });

@@ -20,9 +20,7 @@ export const TopRepositoriesDisplay: React.FC<TopRepositoriesDisplayProps> = ({
 
   const filtered = repositories.filter((r) => !excludeForks || !r.is_fork);
 
-  const topByStars = [...filtered]
-    .sort((a, b) => (b.stars || 0) - (a.stars || 0))
-    .slice(0, 5);
+  const topByStars = [...filtered].sort((a, b) => (b.stars || 0) - (a.stars || 0)).slice(0, 5);
 
   const mostRecent = [...filtered]
     .sort((a, b) => {
@@ -59,11 +57,7 @@ export const TopRepositoriesDisplay: React.FC<TopRepositoriesDisplayProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h3 className="text-lg font-bold tracking-tight">{title}</h3>
-          <p
-            className={`text-xs mt-0.5 ${
-              isDark ? "text-slate-400" : "text-slate-500"
-            }`}
-          >
+          <p className={`text-xs mt-0.5 ${isDark ? "text-slate-400" : "text-slate-500"}`}>
             Key repository signals used by the open-source matching engine.
           </p>
         </div>
@@ -77,17 +71,13 @@ export const TopRepositoriesDisplay: React.FC<TopRepositoriesDisplayProps> = ({
               onChange={(e) => setExcludeForks(e.target.checked)}
               className="rounded border-slate-700 text-emerald-500 focus:ring-emerald-400 focus:ring-offset-slate-950"
             />
-            <span className={isDark ? "text-slate-400" : "text-slate-600"}>
-              Exclude forks
-            </span>
+            <span className={isDark ? "text-slate-400" : "text-slate-600"}>Exclude forks</span>
           </label>
 
           {/* Tab selector */}
           <div
             className={`p-1 rounded-xl border flex items-center gap-1 ${
-              isDark
-                ? "bg-slate-950/60 border-slate-800"
-                : "bg-slate-100 border-slate-200"
+              isDark ? "bg-slate-950/60 border-slate-800" : "bg-slate-100 border-slate-200"
             }`}
           >
             <button
@@ -99,8 +89,8 @@ export const TopRepositoriesDisplay: React.FC<TopRepositoriesDisplayProps> = ({
                     ? "bg-slate-800 text-emerald-400 shadow-sm"
                     : "bg-white text-emerald-700 shadow-sm"
                   : isDark
-                  ? "text-slate-400 hover:text-slate-200"
-                  : "text-slate-600 hover:text-slate-900"
+                    ? "text-slate-400 hover:text-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Top Starred
@@ -114,8 +104,8 @@ export const TopRepositoriesDisplay: React.FC<TopRepositoriesDisplayProps> = ({
                     ? "bg-slate-800 text-emerald-400 shadow-sm"
                     : "bg-white text-emerald-700 shadow-sm"
                   : isDark
-                  ? "text-slate-400 hover:text-slate-200"
-                  : "text-slate-600 hover:text-slate-900"
+                    ? "text-slate-400 hover:text-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Recently Active
@@ -184,21 +174,14 @@ export const TopRepositoriesDisplay: React.FC<TopRepositoriesDisplayProps> = ({
                     </span>
                   )}
                   <span className="flex items-center gap-1 text-amber-400 font-semibold">
-                    <svg
-                      className="w-3.5 h-3.5 fill-current"
-                      viewBox="0 0 20 20"
-                    >
+                    <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                     {repo.stars ?? 0}
                   </span>
                 </div>
 
-                <span
-                  className={`text-[11px] ${
-                    isDark ? "text-slate-500" : "text-slate-500"
-                  }`}
-                >
+                <span className={`text-[11px] ${isDark ? "text-slate-500" : "text-slate-500"}`}>
                   {formatDate(repo.updated_at)}
                 </span>
               </div>
