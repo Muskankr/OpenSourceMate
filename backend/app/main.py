@@ -265,6 +265,7 @@ async def api_version_directory():
                     "/api/v1/github/users/{username}",
                     "/api/v1/github/users/{username}/skills",
                     "/api/v1/github/users/{username}/repositories",
+                    "/api/v1/github/users/{username}/badge.svg",
                     "/api/v1/matching/users/{username}/issues",
                     "/api/v1/issues/search",
                     "/api/v1/ai/analyze-issue",
@@ -416,6 +417,20 @@ async def health_diagnostics():
 async def get_programs_shortcut():
     from app.services.program_service import get_all_programs
     return {"programs": get_all_programs()}
+
+
+@app.get("/users/{username}/badge.svg", response_class=Response, tags=["GitHub"], summary="SVG skills badge for GitHub profile (root shortcut)", include_in_schema=False)
+@app.get("/api/users/{username}/badge.svg", response_class=Response, tags=["GitHub"], summary="SVG skills badge for GitHub profile (api shortcut)", include_in_schema=False)
+@app.get("/api/v1/users/{username}/badge.svg", response_class=Response, tags=["GitHub"], summary="SVG skills badge for GitHub profile (v1 shortcut)", include_in_schema=False)
+async def user_badge_shortcut(username: str, request: Request):
+    from app.api.routes.github import get_user_skills_badge
+    return await get_user_skills_badge(
+        username=username,
+        label=request.query_params.get("label", "OpenSourceMate"),
+        color=request.query_params.get("color"),
+        style=request.query_params.get("style", "default"),
+        refresh=request.query_params.get("refresh", "false").lower() == "true",
+    )
 
 
 # ---------------------------------------------------------

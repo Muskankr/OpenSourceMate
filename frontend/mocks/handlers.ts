@@ -121,6 +121,27 @@ export function handleMockApiRequest(url: string, method?: string): MockResponse
     };
   }
 
+  // 4b. Skills Badge: /api/github/users/:username/badge.svg or /api/v1/github/users/:username/badge.svg
+  const badgeMatch = pathname.match(
+    /^\/(?:api\/v1|api)\/github\/users\/([^/]+)\/badge(?:\.svg)?\/?$/
+  );
+  if (badgeMatch && badgeMatch[1]) {
+    const rawUsername = decodeURIComponent(badgeMatch[1]);
+    const mockCheck = checkSpecialMockConditions(rawUsername);
+    const label = urlObj.searchParams.get("label") || "OpenSourceMate";
+    const value = mockCheck ? "Skills • Not Found" : "TypeScript • Python • React";
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="220" height="20" role="img" aria-label="${label}: ${value}"><title>${label}: ${value}</title><rect width="90" height="20" fill="#1e293b"/><rect x="90" width="130" height="20" fill="#7c3aed"/><text x="45" y="14" fill="#fff" text-anchor="middle" font-size="11">${label}</text><text x="155" y="14" fill="#fff" text-anchor="middle" font-size="11">${value}</text></svg>`;
+    return {
+      status: 200,
+      headers: {
+        "Content-Type": "image/svg+xml; charset=utf-8",
+        "Cache-Control": "max-age=14400, public",
+        "X-Cache-Lookup": "MISS",
+      },
+      body: svg,
+    };
+  }
+
   // 5. Matched Issues: /api/matching/users/:username/issues
   const matchingMatch = pathname.match(/^\/api\/matching\/users\/([^/]+)\/issues\/?$/);
   if (matchingMatch && matchingMatch[1]) {

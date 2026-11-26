@@ -11,6 +11,7 @@ import ServiceUnavailableBanner from "../components/ServiceUnavailableBanner";
 import SkillChart from "../components/SkillChart";
 import SkillProficiencyBadge from "../components/SkillProficiencyBadge";
 import SkillsToLearn from "../components/SkillsToLearn";
+import ReadmeBadgeSnippet from "../components/ReadmeBadgeSnippet";
 import TechIcon from "../components/TechIcon";
 import SkillsEditor from "../components/SkillsEditor";
 import IssueCard from "../components/IssueCard";
@@ -1017,6 +1018,13 @@ export default function Home() {
                         {linkCopied ? "Link copied" : "Copy link"}
                       </button>
                       <ExportMenu onExport={handleExport} />
+                      <a
+                        href="#readme-badge"
+                        className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                        title="Jump to GitHub README badge snippet"
+                      >
+                        README Badge
+                      </a>
                     </div>
                   )}
                 </div>
@@ -1113,6 +1121,13 @@ export default function Home() {
                         </div>
 
                         <SkillsToLearn skills={activeSkills} theme={theme} className="mt-8" />
+                        <div id="readme-badge">
+                          <ReadmeBadgeSnippet
+                            username={profile.username}
+                            theme={theme}
+                            className="mt-8"
+                          />
+                        </div>
                       </>
                     )}
                   </div>
