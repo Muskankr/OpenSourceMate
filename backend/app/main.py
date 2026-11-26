@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.routes.ai import router as ai_router
+from app.api.routes.auth import router as auth_router
 from app.api.routes.friendliness import router as friendliness_router
 from app.api.routes.github import router as github_router
 from app.api.routes.issues import router as issues_router
@@ -31,6 +32,12 @@ from app.services.github_service import (
     cache,
     close_client,
     get_github_diagnostics,
+)
+from app.services.session_service import (
+    SESSION_COOKIE_NAME,
+    reset_current_user_token,
+    session_store,
+    set_current_user_token,
 )
 
 
@@ -122,6 +129,18 @@ app.add_middleware(
 # Added last so it is the outermost middleware and also covers 429 and CORS responses
 if settings.security_headers_enabled:
     app.add_middleware(SecurityHeadersMiddleware, settings=settings)
+
+
+@app.middleware("http")
+async def oauth_session_context_middleware(request: Request, call_next):
+    """Bind the signed-in user's server-side OAuth token to the request context."""
+    session_id = request.cookies.get(SESSION_COOKIE_NAME)
+    session = session_store.get_session(session_id)
+    ctx_token = set_current_user_token(session.access_token if session else None)
+    try:
+        return await call_next(request)
+    finally:
+        reset_current_user_token(ctx_token)
 
 
 def format_error_content(
@@ -442,6 +461,7 @@ async def get_programs_shortcut():
 # Routers (Dual-mounted: /api/ and /api/v1/ for compatibility)
 # ---------------------------------------------------------
 # v1 Prefix Routers
+app.include_router(auth_router, prefix="/api/v1", include_in_schema=True)
 app.include_router(github_router, prefix="/api/v1", include_in_schema=True)
 app.include_router(issues_router, prefix="/api/v1", include_in_schema=True)
 app.include_router(ai_router, prefix="/api/v1", include_in_schema=True)
@@ -450,6 +470,7 @@ app.include_router(friendliness_router, prefix="/api/v1", include_in_schema=True
 app.include_router(text_skills_router, prefix="/api/v1", include_in_schema=True)
 
 # Legacy /api/ Routers (Backward Compatibility)
+app.include_router(auth_router, prefix="/api", include_in_schema=False)
 app.include_router(github_router, prefix="/api", include_in_schema=False)
 app.include_router(issues_router, prefix="/api", include_in_schema=False)
 app.include_router(ai_router, prefix="/api", include_in_schema=False)

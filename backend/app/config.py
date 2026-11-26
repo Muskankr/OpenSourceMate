@@ -51,6 +51,13 @@ class Settings(BaseSettings):
     # Optional. Raises GitHub rate limit from 60 to 5,000 requests/hour.
     github_token: str | None = None
 
+    # Optional GitHub OAuth Sign-In (Issue #437)
+    github_oauth_client_id: str | None = None
+    github_oauth_client_secret: str | None = None
+    github_oauth_redirect_uri: str = "http://localhost:8000/api/auth/github/callback"
+    frontend_url: str = "http://localhost:3000"
+    oauth_session_ttl_seconds: int = 86400
+
     # How long (in seconds) GitHub responses are cached in memory. 0 to disable.
     github_cache_ttl: int = 300
 
