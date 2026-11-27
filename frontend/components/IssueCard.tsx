@@ -5,6 +5,8 @@ import type { IssueRecommendation } from "../types/api";
 import { inferIssueDifficulty, type IssueDifficulty } from "../data/mockIssues";
 import ResponsivenessBadge from "./ResponsivenessBadge";
 import FriendlinessBadge from "./FriendlinessBadge";
+import FirstPrChecklistPanel from "./FirstPrChecklistPanel";
+import { KNOWN_REPO_FRIENDLINESS } from "../utils/repoFriendliness";
 
 export interface IssueCardProps {
   issue: IssueRecommendation;
@@ -259,6 +261,13 @@ export default function IssueCard({
               </ul>
             </div>
           )}
+
+          {/* First Pull Request Checklist (Issue #475) */}
+          <FirstPrChecklistPanel
+            issue={issue}
+            theme={theme}
+            hasContributing={KNOWN_REPO_FRIENDLINESS[issue.repository]?.hasContributing !== false}
+          />
         </div>
 
         {/* Right Action / Score Column */}
