@@ -99,10 +99,11 @@ class Settings(BaseSettings):
     ai_model: str = "gpt-4o-mini"
 
     # -------------------------------------------------------------------------
-    # Logging Configuration
+    # Logging & Metrics Configuration (Issue #452)
     # -------------------------------------------------------------------------
     log_level: str = "INFO"
     log_json_format: bool = True
+    metrics_enabled: bool = False
 
     # -------------------------------------------------------------------------
     # Validators

@@ -441,6 +441,36 @@ async def get_programs_shortcut():
     return {"programs": get_all_programs()}
 
 
+@app.get(
+    "/metrics",
+    tags=["Health"],
+    summary="Application and upstream service metrics (Issue #452)",
+)
+@app.get(
+    "/api/metrics",
+    tags=["Health"],
+    summary="Application metrics (api)",
+)
+@app.get(
+    "/api/v1/metrics",
+    tags=["Health"],
+    summary="Application metrics (v1)",
+)
+async def get_metrics():
+    """Optional metrics endpoint providing request counts, latencies, and GitHub error counts.
+
+    Disabled by default. Enabled by setting METRICS_ENABLED=true in the environment.
+    """
+    settings = get_settings()
+    if not settings.metrics_enabled:
+        raise HTTPException(
+            status_code=404,
+            detail="Metrics collection is disabled. Set METRICS_ENABLED=true to enable.",
+        )
+    from app.services.metrics_service import get_metrics_collector
+    return get_metrics_collector().get_metrics_snapshot()
+
+
 # ---------------------------------------------------------
 # Routers (Dual-mounted: /api/ and /api/v1/ for compatibility)
 # ---------------------------------------------------------
