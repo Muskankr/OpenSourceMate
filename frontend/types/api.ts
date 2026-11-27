@@ -23,6 +23,14 @@ export interface GitHubUserProfile {
 
 export type ProficiencyLevel = "Learning" | "Comfortable" | "Strong";
 
+export interface SkillEvidenceRepository {
+  name: string;
+  url?: string | null;
+  bytes?: number | null;
+  share?: number | null;
+  last_updated?: string | null;
+}
+
 export interface SkillItem {
   name: string;
   repository_count: number;
@@ -33,6 +41,7 @@ export interface SkillItem {
   proficiency_score?: number;
   proficiency_reason?: string;
   group?: string | null;
+  evidence?: SkillEvidenceRepository[];
 }
 
 export interface UserSkillsResponse {

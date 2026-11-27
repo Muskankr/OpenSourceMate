@@ -11,6 +11,7 @@ import RefreshAnalysisButton from "../components/RefreshAnalysisButton";
 import ServiceUnavailableBanner from "../components/ServiceUnavailableBanner";
 import SkillChart from "../components/SkillChart";
 import SkillProficiencyBadge from "../components/SkillProficiencyBadge";
+import SkillEvidenceToggle from "../components/SkillEvidenceToggle";
 import SkillsToLearn from "../components/SkillsToLearn";
 import TechIcon from "../components/TechIcon";
 import SkillsEditor from "../components/SkillsEditor";
@@ -2011,6 +2012,11 @@ function SkillCard({ skill, theme }: { skill: Skill; theme?: "dark" | "light" })
               reason={skill.proficiency_reason}
               repositoryCount={skill.repository_count}
               percentage={skill.percentage}
+              theme={theme}
+            />
+            <SkillEvidenceToggle
+              skillName={skill.name}
+              evidence={skill.evidence}
               theme={theme}
             />
           </div>

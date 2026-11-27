@@ -115,3 +115,30 @@ Every badge features an interactive, accessible tooltip (`role="tooltip"`, `aria
 - Dark and light theme style adherence.
 - Deterministic client-side fallback calculation.
 
+---
+
+## 6. Skill Evidence Drill-Down ('Why?' Toggle) (Issue #480)
+
+To provide transparency into how skills were detected, each detected skill includes an evidence list of contributing repositories and an interactive 'Why?' toggle.
+
+### 6.1 Payload & Capping
+- **Contributing Repositories**: Returns repository name, link, approximate share of bytes or repository count, and last updated timestamp from data already fetched during analysis.
+- **Payload Capping**: Each skill's evidence list is capped to at most **5 repositories** (`max_items = 5`) sorted by bytes/recency to minimize payload size.
+- **Data Structure (`SkillEvidenceRepository`)**:
+  ```json
+  {
+    "name": "octocat/Hello-World",
+    "url": "https://github.com/octocat/Hello-World",
+    "bytes": 125000,
+    "share": 65.5,
+    "last_updated": "2026-03-10T12:00:00Z"
+  }
+  ```
+
+### 6.2 UI & Accessibility (`SkillEvidenceToggle.tsx`)
+- Provides a compact 'Why?' pill button next to each skill card.
+- Accessible disclosure widget with `aria-expanded` and `aria-controls`.
+- Fully operable via keyboard (Enter / Space) and screen readers.
+- Renders direct links to contributing GitHub repositories with byte counts and formatted update dates.
+
+
