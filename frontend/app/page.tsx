@@ -462,6 +462,14 @@ export default function Home() {
       followers: profile.followers,
       following: profile.following,
       skills: skills?.skills || [],
+      recommendedIssues: recommendations.map((rec) => ({
+        repository: rec.repository,
+        title: rec.title,
+        url: rec.url,
+        language: rec.language,
+        difficulty: rec.difficulty,
+        match_score: rec.match_score ?? rec.score,
+      })),
       totalRepositoriesAnalyzed: skills?.total_repositories_analyzed || 0,
       exportedAt: new Date().toISOString().split("T")[0],
     };
@@ -1293,6 +1301,30 @@ export default function Home() {
                         className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
                       >
                         {linkCopied ? "Link copied" : "Copy link"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleExport("markdown")}
+                        data-testid="export-markdown-button"
+                        className={`rounded-xl border px-3 py-2 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
+                          theme === "dark"
+                            ? "border-white/15 bg-white/5 text-gray-200 hover:bg-white/10"
+                            : "border-gray-300 bg-white text-gray-800 hover:bg-gray-100"
+                        }`}
+                      >
+                        Export as Markdown
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleExport("csv")}
+                        data-testid="export-csv-button"
+                        className={`rounded-xl border px-3 py-2 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
+                          theme === "dark"
+                            ? "border-white/15 bg-white/5 text-gray-200 hover:bg-white/10"
+                            : "border-gray-300 bg-white text-gray-800 hover:bg-gray-100"
+                        }`}
+                      >
+                        Export as CSV
                       </button>
                       <ExportMenu onExport={handleExport} />
                     </div>
