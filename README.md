@@ -361,6 +361,59 @@ A minimum 80% coverage threshold is enforced by CI.
 
 ---
 
+## 💻 Terminal CLI Interface
+
+OpenSourceMate includes an installable command-line interface (CLI) to query recommendations directly from the terminal or automate discovery in scripts and workflows.
+
+### Installation
+
+Install the package in editable mode from the `backend/` directory:
+
+```bash
+cd backend
+pip install -e .
+```
+
+### Usage
+
+Run recommendations using either the console script `opensourcemate` or the module execution `python -m opensourcemate`:
+
+```bash
+# Recommended issues formatted as an aligned terminal table
+opensourcemate recommend <username>
+# or
+python -m opensourcemate recommend <username>
+```
+
+#### Options & Flags
+
+| Flag | Description | Default |
+|---|---|---|
+| `--limit, -n <int>` | Maximum number of top recommendations to display | `10` |
+| `--language, -l <string>` | Filter recommendations by programming language (e.g. `python`, `typescript`) | None |
+| `--json` | Output results in structured JSON format | `false` |
+| `--token <string>` | GitHub Personal Access Token (can also be provided via `GITHUB_TOKEN` env var) | None |
+
+#### Examples
+
+```bash
+# Retrieve top 5 matches for a user
+opensourcemate recommend octocat --limit 5
+
+# Filter for Python issues
+opensourcemate recommend octocat --language Python
+
+# Output as valid JSON (piped to jq or files)
+opensourcemate recommend octocat --json > recommendations.json
+
+# Provide a personal GitHub token to avoid rate limits
+GITHUB_TOKEN=ghp_yourToken opensourcemate recommend octocat
+```
+
+> 🔒 **Security Notice**: Tokens are read securely from the environment or flag and are never printed or leaked in output or error messages.
+
+---
+
 ## ⚡ Root Development Commands (Makefile & PowerShell)
 
 For developer convenience, common tasks can be run directly from the repository root using `make` (macOS/Linux) or the PowerShell helper script (Windows):
