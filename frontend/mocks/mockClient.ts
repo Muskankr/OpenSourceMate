@@ -54,11 +54,9 @@ export function disableMockApi(): void {
  * Higher-order fetch function that intercepts matching mock routes.
  */
 function createMockFetch(nativeFetch: typeof fetch, latencyMs: number): typeof fetch {
-  return async function mockFetch(
-    input: RequestInfo | URL,
-    init?: RequestInit
-  ): Promise<Response> {
-    const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+  return async function mockFetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response> {
+    const url =
+      typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
     const method = init?.method || "GET";
 
     const mockRes: MockResponse | null = handleMockApiRequest(url, method);
@@ -84,4 +82,3 @@ function createMockFetch(nativeFetch: typeof fetch, latencyMs: number): typeof f
 if (isMockApiEnabled() && typeof window !== "undefined") {
   enableMockApi();
 }
-

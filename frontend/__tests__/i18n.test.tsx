@@ -28,9 +28,7 @@ describe("Internationalization (i18n) Scaffolding", () => {
     );
 
     expect(screen.getByTestId("current-locale")).toHaveTextContent("en");
-    expect(screen.getByTestId("hero-title")).toHaveTextContent(
-      "Turn your GitHub history into"
-    );
+    expect(screen.getByTestId("hero-title")).toHaveTextContent("Turn your GitHub history into");
     expect(screen.getByTestId("fallback")).toHaveTextContent("Default Fallback");
   });
 
@@ -46,9 +44,7 @@ describe("Internationalization (i18n) Scaffolding", () => {
     fireEvent.change(select, { target: { value: "hi" } });
 
     expect(screen.getByTestId("current-locale")).toHaveTextContent("hi");
-    expect(screen.getByTestId("hero-title")).toHaveTextContent(
-      "अपने गिटहब इतिहास को बदलें"
-    );
+    expect(screen.getByTestId("hero-title")).toHaveTextContent("अपने गिटहब इतिहास को बदलें");
     expect(document.documentElement.lang).toBe("hi");
     expect(localStorage.getItem("preferred_locale")).toBe("hi");
   });
@@ -63,8 +59,6 @@ describe("Internationalization (i18n) Scaffolding", () => {
     );
 
     expect(screen.getByTestId("current-locale")).toHaveTextContent("hi");
-    expect(screen.getByTestId("hero-title")).toHaveTextContent(
-      "अपने गिटहब इतिहास को बदलें"
-    );
+    expect(screen.getByTestId("hero-title")).toHaveTextContent("अपने गिटहब इतिहास को बदलें");
   });
 });

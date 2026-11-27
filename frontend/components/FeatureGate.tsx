@@ -49,9 +49,7 @@ export function ComingSoonPlaceholder({
         <span className="w-1.5 h-1.5 rounded-full bg-primary-500 animate-pulse" />
         Feature Coming Soon
       </div>
-      <h4 className="text-base font-medium text-slate-800 dark:text-slate-200">
-        {featureName}
-      </h4>
+      <h4 className="text-base font-medium text-slate-800 dark:text-slate-200">{featureName}</h4>
       {description && (
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-md mx-auto">
           {description}

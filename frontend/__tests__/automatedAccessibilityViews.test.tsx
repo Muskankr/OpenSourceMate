@@ -53,11 +53,7 @@ describe("Automated Accessibility Suite - Interactive & Analyzer Views (#266)", 
 
   it("verifies PreferencesPanel controls pass accessibility checks", async () => {
     const { container } = render(
-      <PreferencesPanel
-        theme="dark"
-        isOpen={true}
-        onToggleOpen={jest.fn()}
-      />
+      <PreferencesPanel theme="dark" isOpen={true} onToggleOpen={jest.fn()} />
     );
 
     await assertNoSeriousA11yViolations(container);

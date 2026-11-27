@@ -210,7 +210,12 @@ button {
   }
 
   /* Headings typography and break hygiene */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     page-break-after: avoid !important;
     break-after: avoid !important;
     color: #111827 !important;

@@ -32,9 +32,7 @@ describe("BackToTopButton Component", () => {
     Object.defineProperty(window, "scrollY", { value: 100, writable: true });
     render(<BackToTopButton threshold={300} />);
 
-    expect(
-      screen.queryByRole("button", { name: /scroll back to top/i })
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /scroll back to top/i })).not.toBeInTheDocument();
   });
 
   it("becomes visible when scrolling past threshold", () => {

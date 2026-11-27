@@ -21,9 +21,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
         {t("common.language.select", "Language")}
       </label>
       <svg
-        className={`w-4 h-4 pointer-events-none ${
-          isDark ? "text-slate-400" : "text-slate-600"
-        }`}
+        className={`w-4 h-4 pointer-events-none ${isDark ? "text-slate-400" : "text-slate-600"}`}
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"

@@ -48,7 +48,9 @@ export function generateCsvReport(data: ExportPayload): string {
   lines.push(`Profile,Username,${escapeCsvField(data.username)}`);
   lines.push(`Profile,Name,${escapeCsvField(data.name || "")}`);
   lines.push(`Profile,Bio,${escapeCsvField(data.bio || "")}`);
-  lines.push(`Profile,Profile URL,${escapeCsvField(data.profileUrl || `https://github.com/${data.username}`)}`);
+  lines.push(
+    `Profile,Profile URL,${escapeCsvField(data.profileUrl || `https://github.com/${data.username}`)}`
+  );
   lines.push(`Profile,Analysis Date,${escapeCsvField(exportDate)}`);
   lines.push(`Activity,Public Repositories,${data.repositoriesCount ?? 0}`);
   lines.push(`Activity,Followers,${data.followers ?? 0}`);
@@ -60,9 +62,7 @@ export function generateCsvReport(data: ExportPayload): string {
   lines.push("Skill,Repository Count,Percentage");
   if (data.skills && data.skills.length > 0) {
     for (const skill of data.skills) {
-      lines.push(
-        `${escapeCsvField(skill.name)},${skill.repository_count},${skill.percentage}%`
-      );
+      lines.push(`${escapeCsvField(skill.name)},${skill.repository_count},${skill.percentage}%`);
     }
   } else {
     lines.push("No technical skills detected,0,0%");
@@ -126,7 +126,11 @@ export function generateJsonReport(data: ExportPayload): string {
  * Returns a standardized export filename based on the GitHub username and format.
  */
 export function getExportFilename(username: string, format: ExportFormat): string {
-  const sanitized = username.trim().toLowerCase().replace(/[^a-z0-9_-]/g, "") || "profile";
+  const sanitized =
+    username
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, "") || "profile";
   const dateStr = new Date().toISOString().split("T")[0];
   switch (format) {
     case "json":
@@ -176,11 +180,7 @@ export function exportAnalysisData(data: ExportPayload, format: ExportFormat): v
 /**
  * Triggers a native browser file download using an object URL.
  */
-export function downloadFile(
-  content: string,
-  filename: string,
-  mimeType: string
-): void {
+export function downloadFile(content: string, filename: string, mimeType: string): void {
   if (typeof window === "undefined") return;
 
   const blob = new Blob([content], { type: mimeType });

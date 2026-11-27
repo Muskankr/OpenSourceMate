@@ -103,4 +103,3 @@ describe("TechIcon Component (#299)", () => {
     expect(icon).toHaveClass("custom-rust-class");
   });
 });
-

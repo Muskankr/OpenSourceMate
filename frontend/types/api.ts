@@ -149,7 +149,6 @@ export interface CompleteAnalysisResult {
   issues?: MatchedIssuesResponse;
 }
 
-
 /**
  * Type-level utility guards and assertion helpers for strict typing (Issue #139).
  */
@@ -161,7 +160,10 @@ export type Maybe<T> = T | null | undefined;
 /**
  * Asserts that a value is non-null and non-undefined.
  */
-export function assertNonNull<T>(val: Maybe<T>, message = "Value cannot be null or undefined"): asserts val is T {
+export function assertNonNull<T>(
+  val: Maybe<T>,
+  message = "Value cannot be null or undefined"
+): asserts val is T {
   if (val === null || val === undefined) {
     throw new TypeError(message);
   }

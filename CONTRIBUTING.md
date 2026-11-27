@@ -419,13 +419,13 @@ We enforce automated code formatting and static analysis using pre-commit, Ruff 
    pre-commit run --all-files
    ```
 
-Pre-commit runs automatically before each commit, checking for trailing whitespace, newline endings, valid YAML, Ruff linting/formatting, and Prettier formatting.
+Pre-commit runs automatically before each commit, checking for trailing whitespace, newline endings, valid YAML, Ruff linting/formatting, Prettier formatting, and ESLint checks on staged frontend files.
 
 ### Backend (Python / FastAPI)
 
-- **Linter & Formatter**: [Ruff](https://docs.astral.sh/ruff/) configured in `pyproject.toml`.
-- Run linter: `ruff check backend` (or `ruff check --fix backend`)
-- Run formatter: `ruff format backend` (or `ruff format --check backend`)
+- **Linter & Formatter**: [Ruff](https://docs.astral.sh/ruff/) configured in `pyproject.toml` and exposed via `backend/Makefile`.
+- Run linter: `cd backend && make lint` (or `ruff check backend`)
+- Run formatter: `cd backend && make format` (or `ruff format backend`)
 - Run tests: `pytest`
 
 ### Frontend (Next.js / TypeScript)

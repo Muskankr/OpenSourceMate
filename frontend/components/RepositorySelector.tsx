@@ -73,9 +73,7 @@ export default function RepositorySelector({
     const nextState = !selectedMap[fullName];
     const updated = { ...selectedMap, [fullName]: nextState };
     setSelectedMap(updated);
-    setAnnouncement(
-      `${fullName} ${nextState ? "included in" : "excluded from"} analysis.`
-    );
+    setAnnouncement(`${fullName} ${nextState ? "included in" : "excluded from"} analysis.`);
     notifyChange(updated);
   };
 
@@ -146,7 +144,8 @@ export default function RepositorySelector({
             </span>
           </h3>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Select which repositories best reflect your skills. Forks and archived repositories are excluded by default.
+            Select which repositories best reflect your skills. Forks and archived repositories are
+            excluded by default.
           </p>
         </div>
 
@@ -273,9 +272,7 @@ export default function RepositorySelector({
                       </span>
                     )}
                     {typeof repo.stargazers_count === "number" && repo.stargazers_count > 0 && (
-                      <span className="text-[11px] text-amber-500">
-                        ★ {repo.stargazers_count}
-                      </span>
+                      <span className="text-[11px] text-amber-500">★ {repo.stargazers_count}</span>
                     )}
                   </div>
                   {repo.description && (

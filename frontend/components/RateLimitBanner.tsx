@@ -36,7 +36,8 @@ export const RateLimitBanner: React.FC<RateLimitBannerProps> = ({
           <p className="text-sm mt-0.5 text-amber-200/90">{message}</p>
           {retryAfterSeconds && retryAfterSeconds > 0 && (
             <p className="text-xs text-amber-300/80 mt-1">
-              Estimated reset in: <span className="font-mono font-medium">{retryAfterSeconds}s</span>
+              Estimated reset in:{" "}
+              <span className="font-mono font-medium">{retryAfterSeconds}s</span>
             </p>
           )}
         </div>

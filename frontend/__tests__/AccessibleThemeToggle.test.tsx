@@ -86,13 +86,7 @@ describe("Accessible ThemeToggle Component", () => {
   });
 
   it("accepts custom id and additional className properties", () => {
-    render(
-      <ThemeToggle
-        id="custom-toggle-id"
-        className="custom-container-class"
-        theme="light"
-      />
-    );
+    render(<ThemeToggle id="custom-toggle-id" className="custom-container-class" theme="light" />);
     const button = screen.getByRole("switch");
     expect(button.id).toBe("custom-toggle-id");
     expect(button.parentElement?.className).toContain("custom-container-class");

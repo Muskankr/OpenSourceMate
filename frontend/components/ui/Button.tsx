@@ -1,7 +1,6 @@
 import React from "react";
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
   size?: "sm" | "md" | "lg";
   isLoading?: boolean;
@@ -51,11 +50,7 @@ export const Button: React.FC<ButtonProps> = ({
       {...props}
     >
       {isLoading && (
-        <svg
-          className="animate-spin -ml-0.5 h-4 w-4 text-current"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
+        <svg className="animate-spin -ml-0.5 h-4 w-4 text-current" fill="none" viewBox="0 0 24 24">
           <circle
             className="opacity-25"
             cx="12"

@@ -58,12 +58,8 @@ describe("ContributorFriendlinessChecklist Component (#270)", () => {
   it("renders input field and inspect button initially", () => {
     render(<ContributorFriendlinessChecklist theme="dark" />);
 
-    expect(
-      screen.getByPlaceholderText(/e.g. facebook\/react/i)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Inspect Repository/i })
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/e.g. facebook\/react/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Inspect Repository/i })).toBeInTheDocument();
   });
 
   it("submits repository and renders checklist items with explanations", async () => {
@@ -112,9 +108,7 @@ describe("ContributorFriendlinessChecklist Component (#270)", () => {
     fireEvent.click(screen.getByRole("button", { name: /Inspect Repository/i }));
 
     await waitFor(() => {
-      expect(
-        screen.getByText("Repository not found or is private.")
-      ).toBeInTheDocument();
+      expect(screen.getByText("Repository not found or is private.")).toBeInTheDocument();
     });
   });
 });

@@ -152,6 +152,9 @@ export function getColorForIndex(index: number): ColorBlindSafeColor {
 /**
  * Returns accessible SVG pattern definitions for charts to avoid sole color reliance.
  */
-export function getSvgPatternId(pattern: ColorBlindSafeColor["pattern"], idPrefix: string = "cb"): string {
+export function getSvgPatternId(
+  pattern: ColorBlindSafeColor["pattern"],
+  idPrefix: string = "cb"
+): string {
   return `${idPrefix}-pattern-${pattern}`;
 }
