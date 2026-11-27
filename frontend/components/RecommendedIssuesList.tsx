@@ -8,6 +8,12 @@ import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
 import { rankIssuesForLearningMode, COMMON_TARGET_SKILLS } from "../utils/learningMode";
 import { issueMatchesProgram } from "../utils/programs";
 import ProgramSelector from "./ProgramSelector";
+import ExportMenu from "./ExportMenu";
+import {
+  exportRecommendationsData,
+  type ExportFormat as RecExportFormat,
+  type ActiveFilters,
+} from "../utils/exportRecommendations";
 
 export interface RecommendedIssuesListProps {
   issues: IssueRecommendation[];
@@ -196,11 +202,38 @@ export default function RecommendedIssuesList({
           </p>
         </div>
 
-        {hasIssues && (
-          <div className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-            Showing {filteredIssues.length} of {issues.length} issues
-          </div>
-        )}
+        <div className="flex flex-col items-start gap-2 sm:items-end">
+          <ExportMenu
+            onExport={(fmt) => {
+              const activeFilters: ActiveFilters = {
+                language: languageFilter,
+                label: labelFilter,
+                difficulty: difficultyFilter,
+                minScore: minScoreFilter,
+                program: activeProgram,
+                searchQuery: searchQuery,
+                learningMode: isLearningMode,
+                targetSkills: targetSkills,
+              };
+              exportRecommendationsData(
+                {
+                  username,
+                  filters: activeFilters,
+                  issues: filteredIssues,
+                },
+                fmt as RecExportFormat
+              );
+            }}
+            disabled={filteredIssues.length === 0}
+            label="Export Issues"
+            ariaLabel="Export recommendations as CSV, Markdown or JSON"
+          />
+          {hasIssues && (
+            <div className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              Showing {filteredIssues.length} of {issues.length} issues
+            </div>
+          )}
+        </div>
       </div>
 
       {hiddenCount > 0 && (

@@ -7,6 +7,8 @@ export interface ExportMenuProps {
   onExport: (format: ExportFormat) => void;
   disabled?: boolean;
   className?: string;
+  label?: string;
+  ariaLabel?: string;
 }
 
 interface FormatOption {
@@ -102,12 +104,17 @@ export default function ExportMenu({
   onExport,
   disabled = false,
   className = "",
+  label = "Export",
+  ariaLabel,
 }: ExportMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+
+  const effectiveAriaLabel =
+    ariaLabel || (label && label !== "Export" ? `Export ${label.toLowerCase()} as JSON, CSV or Markdown` : "Export analysis results as JSON, CSV or Markdown");
 
   // Close menu on click outside
   useEffect(() => {
@@ -198,7 +205,7 @@ export default function ExportMenu({
         onClick={() => setIsOpen((prev) => !prev)}
         aria-haspopup="menu"
         aria-expanded={isOpen}
-        aria-label="Export analysis results as JSON, CSV or Markdown"
+        aria-label={effectiveAriaLabel}
         className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 border shadow-xs ${
           disabled
             ? "opacity-50 cursor-not-allowed bg-slate-800 text-slate-400 border-slate-700"
@@ -221,7 +228,7 @@ export default function ExportMenu({
             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
           />
         </svg>
-        <span>Export</span>
+        <span>{label}</span>
         <svg
           className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
             isOpen ? "rotate-180 text-blue-400" : ""
