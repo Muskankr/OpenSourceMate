@@ -338,6 +338,8 @@ Interactive OpenAPI documentation (Swagger UI) is accessible at `http://localhos
 
 API documentation defaults off in production. Set `API_DOCS_ENABLED=true` only when you intend to expose it; `false` also disables it in development. [Documentation policy and offline schema check](docs/api-v1-and-openapi-docs.md).
 
+For automated schema-based property testing, see [API Contract Testing with Schemathesis](docs/schemathesis-api-contract-testing.md).
+
 For curl, Python and JavaScript examples of every endpoint, plus a Bruno request collection, see [API Usage Examples](docs/api-usage-examples.md).
 
 ### Run the backend tests
@@ -347,6 +349,12 @@ The tests mock the GitHub API, so no network or token is needed.
 ```bash
 pip install -r requirements-dev.txt
 pytest --cov=app --cov-report=term-missing
+```
+
+Run property-based OpenAPI contract tests:
+
+```bash
+pytest tests/test_schemathesis_contract.py -v
 ```
 
 A minimum 80% coverage threshold is enforced by CI.
@@ -425,6 +433,16 @@ Common error codes:
 - `VALIDATION_ERROR` (HTTP 422): Request parameters or body payload failed schema validation.
 - `RATE_LIMIT_EXCEEDED` (HTTP 429): Upstream GitHub rate limit reached; includes `reset_at` timestamp.
 - `INTERNAL_SERVER_ERROR` (HTTP 500): Unhandled exception during processing.
+
+---
+
+## ⚡ Performance & Bundle Budgets (Issue #454)
+
+Continuous integration runs automated checks to protect application performance and prevent silent bundle bloat:
+
+- **Lighthouse CI**: Audits performance, accessibility, and best practices for the homepage and results view (`frontend/lighthouserc.json`).
+- **JavaScript Bundle Size Check**: Fails the build if any page's generated script payload exceeds the size threshold configured in `frontend/bundle-budget.json`.
+- **Updating Budgets**: See [docs/PERFORMANCE_BUDGETS.md](docs/PERFORMANCE_BUDGETS.md) for how to run audits locally and update budgets.
 
 ---
 

@@ -7,6 +7,8 @@ All notable changes to OpenSourceMate are recorded here. The format follows
 
 ### Added
 
+- Frontend & PWA: Progressive Web App offline caching and service worker (`frontend/public/sw.js`) that caches application shell assets, static bundles, and GitHub profile/recommendation results. Features automatic cache version invalidation upon new deployment, auto-restoration of the last analysis when opening offline, an accessible `OfflineBanner` component, and timestamp badges showing when cached results were fetched.
+
 - DevOps & Infrastructure: Dockerfiles for backend (Python 3.12 slim, non-root user `appuser`, healthcheck) and frontend (Node 22 alpine, non-root user `node`), root `docker-compose.yml` for one-command startup, and `/health` (liveness) plus `/ready` (readiness with GitHub reachability check and short timeout) endpoints (#425).
 - Frontend: Light, Dark, and System theme toggle in the navbar, default system preference detection with OS change listener, synchronous inline blocking script to prevent theme flash (FOUC) on load, persistent choice across reloads, and readable contrast across all components and charts.
 - Frontend: Repository Friendliness Score and badge on recommended issues, computing a deterministic 0–100 score from community signals (CONTRIBUTING guide, Code of Conduct, issue templates, README length, recent merged PRs) with an interactive breakdown popover and client-side caching to respect GitHub rate limits.
@@ -43,6 +45,7 @@ All notable changes to OpenSourceMate are recorded here. The format follows
 
 ### Changed
 
+- API documentation now requires opt-in in production, and request errors match the documented response schema (#440).
 - Improved GitHub profile card and username form validation.
 - TypeScript strict mode is on for the frontend.
 - Responsive layout and accessibility fixes across the app.

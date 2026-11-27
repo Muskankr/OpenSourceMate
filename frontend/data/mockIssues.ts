@@ -171,8 +171,6 @@ export const MOCK_RECOMMENDED_ISSUES: IssueRecommendation[] = [
   },
 ];
 
-import { inferIssueDifficulty, type IssueDifficulty } from "./mockIssues";
-import { rankIssuesForLearningMode } from "../utils/learningMode";
 import { filterIssuesByProgram } from "../utils/programs";
 
 export interface MockIssuesOptions {

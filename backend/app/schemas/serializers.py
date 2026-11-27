@@ -1,4 +1,5 @@
 from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -28,9 +29,9 @@ class ErrorResponseSerializer(BaseModel):
     """Unified error envelope returned for all API error responses."""
 
     error: ErrorDetailSerializer
-    detail: str = Field(
+    detail: str | list[dict[str, Any]] = Field(
         ...,
-        description="Top-level error message for backward compatibility",
+        description="Legacy error message or list of request validation errors",
     )
     reset_at: str | None = Field(
         default=None,

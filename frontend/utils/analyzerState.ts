@@ -32,6 +32,7 @@ export type AnalyzerState =
 export type AnalyzerAction =
   | { type: "submit"; requestId: number; username: string; data?: AnalyzerData }
   | { type: "success"; requestId: number; data: AnalyzerData }
+  | { type: "load-cache"; requestId: number; username: string; data: AnalyzerData }
   | {
       type: "error";
       requestId: number;
@@ -73,6 +74,13 @@ export function analyzerReducer(state: AnalyzerState, action: AnalyzerAction): A
         status: "success",
         requestId: action.requestId,
         username: state.username,
+        data: action.data,
+      };
+    case "load-cache":
+      return {
+        status: "success",
+        requestId: action.requestId,
+        username: action.username,
         data: action.data,
       };
     case "error":

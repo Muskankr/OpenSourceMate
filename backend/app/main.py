@@ -1,10 +1,12 @@
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.routes.ai import router as ai_router
@@ -164,8 +166,8 @@ async def api_exception_handler(request: Request, exc: APIException):
     )
 
 
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     detail_msg = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
     code_map = {
         400: "BAD_REQUEST",
@@ -190,15 +192,31 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     )
 
 
+def sanitize_validation_errors(obj: Any) -> Any:
+    """Recursively sanitize validation error structures, converting non-UTF8 bytes to safe strings."""
+    if isinstance(obj, bytes):
+        return obj.decode("utf-8", errors="replace")
+    if isinstance(obj, dict):
+        return {k: sanitize_validation_errors(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [sanitize_validation_errors(v) for v in obj]
+    return obj
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    raw_errors = exc.errors()
+    safe_errors = jsonable_encoder(sanitize_validation_errors(raw_errors))
     return JSONResponse(
         status_code=422,
-        content=format_error_content(
-            code="VALIDATION_ERROR",
-            message="Request validation failed.",
-            details=exc.errors(),
-        ),
+        content={
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "Request validation failed.",
+                "details": safe_errors,
+            },
+            "detail": safe_errors,
+        },
     )
 
 

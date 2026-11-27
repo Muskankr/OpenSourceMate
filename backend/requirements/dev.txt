@@ -8,3 +8,4 @@ pre-commit>=4.0.0
 mypy>=2.4.1
 types-requests
 types-PyYAML
+schemathesis>=4.3.0

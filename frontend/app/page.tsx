@@ -53,6 +53,15 @@ import { validateGitHubUsername, resolveAnalyzerErrorMessage } from "../utils/va
 import { analyzerReducer, initialAnalyzerState, type AnalyzerData } from "../utils/analyzerState";
 import BuildVersionBadge from "../components/BuildVersionBadge";
 import ContributorsWall from "../components/ContributorsWall";
+import OfflineBanner from "../components/OfflineBanner";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
+import {
+  saveLastAnalysisResult,
+  getLastAnalysisResult,
+  formatFetchedAt,
+  formatRelativeTime,
+  type CachedAnalysisData,
+} from "../utils/offlineStorage";
 export default function Home() {
   const { theme, themePreference, setThemePreference, toggleTheme } = useTheme();
 
@@ -166,6 +175,36 @@ export default function Home() {
 
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
 
+  const { isOnline } = useOnlineStatus();
+  const [cachedData, setCachedData] = useState<CachedAnalysisData | null>(null);
+  const [isViewingCached, setIsViewingCached] = useState(false);
+  const [cachedFetchedAt, setCachedFetchedAt] = useState<string | null>(null);
+
+  const loadCachedAnalysis = (data: CachedAnalysisData) => {
+    setUsername(data.username);
+    dispatchAnalyzer({
+      type: "load-cache",
+      requestId: ++requestIdRef.current,
+      username: data.username,
+      data: { profile: data.profile, skills: data.skills },
+    });
+    setRecommendations(data.recommendations || []);
+    setIsViewingCached(true);
+    setCachedFetchedAt(data.fetchedAt);
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const lastResult = getLastAnalysisResult();
+    if (lastResult) {
+      setCachedData(lastResult);
+      // Auto-restore last analysis if opening while offline
+      if (!isOnline && (!profile || analyzerState.status === "idle")) {
+        loadCachedAnalysis(lastResult);
+      }
+    }
+  }, [isOnline]);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setRecentSearches(getRecentSearches());
@@ -224,11 +263,37 @@ export default function Home() {
     }
   };
 
+  const saveAnalysisToCache = (
+    targetUser: string,
+    recs: Recommendation[],
+    overrideProfile?: Profile,
+    overrideSkills?: SkillsData
+  ) => {
+    const prof = overrideProfile || profile;
+    const sk = overrideSkills || skills;
+    if (prof && sk) {
+      const timestamp = new Date().toISOString();
+      const payload: CachedAnalysisData = {
+        username: targetUser,
+        profile: prof,
+        skills: sk,
+        recommendations: recs,
+        fetchedAt: timestamp,
+      };
+      saveLastAnalysisResult(payload);
+      setCachedData(payload);
+      setCachedFetchedAt(timestamp);
+      setIsViewingCached(false);
+    }
+  };
+
   const fetchMatchedIssues = async (
     targetUsername: string,
     signal?: AbortSignal,
     overrideSkills?: string[],
-    overrideProgram?: string
+    overrideProgram?: string,
+    freshProfile?: Profile,
+    freshSkills?: SkillsData
   ) => {
     setLoadingMatching(true);
     setMatchingError("");
@@ -252,10 +317,12 @@ export default function Home() {
       if (matchData.recommendations && matchData.recommendations.length > 0) {
         setRecommendations(matchData.recommendations);
         setIsDemoData(false);
+        saveAnalysisToCache(targetUsername, matchData.recommendations, freshProfile, freshSkills);
       } else if (skillsToUse && skillsToUse.length === 0) {
         // User explicitly removed all skills
         setRecommendations([]);
         setIsDemoData(false);
+        saveAnalysisToCache(targetUsername, [], freshProfile, freshSkills);
       } else {
         const fallback = getMockRecommendedIssues(skillsToUse, {
           filterBySkills: customSkills !== null || overrideSkills !== undefined,
@@ -263,12 +330,14 @@ export default function Home() {
         });
         setRecommendations(fallback);
         setIsDemoData(true);
+        saveAnalysisToCache(targetUsername, fallback, freshProfile, freshSkills);
       }
     } catch (err: unknown) {
       if (isAbortError(err)) return;
       if (skillsToUse && skillsToUse.length === 0) {
         setRecommendations([]);
         setIsDemoData(false);
+        saveAnalysisToCache(targetUsername, [], freshProfile, freshSkills);
       } else {
         const fallback = getMockRecommendedIssues(skillsToUse, {
           filterBySkills: customSkills !== null || overrideSkills !== undefined,
@@ -276,6 +345,7 @@ export default function Home() {
         });
         setRecommendations(fallback);
         setIsDemoData(true);
+        saveAnalysisToCache(targetUsername, fallback, freshProfile, freshSkills);
       }
     } finally {
       setLoadingMatching(false);
@@ -411,6 +481,24 @@ export default function Home() {
 
     if (loading) return;
 
+    // Handle offline state: restore cached result if matches, or inform user
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      const saved = getLastAnalysisResult();
+      if (saved && saved.username.toLowerCase() === cleanUsername.toLowerCase()) {
+        loadCachedAnalysis(saved);
+        return;
+      }
+      setUsername(cleanUsername);
+      const requestId = ++requestIdRef.current;
+      dispatchAnalyzer({
+        type: "error",
+        requestId,
+        message: `You are currently offline. Cannot analyze @${cleanUsername} without an internet connection.`,
+        canRetry: true,
+      });
+      return;
+    }
+
     setUsername(cleanUsername);
     const requestId = ++requestIdRef.current;
     const previousData =
@@ -448,7 +536,17 @@ export default function Home() {
       const updatedSearches = saveRecentSearch(cleanUsername);
       setRecentSearches(updatedSearches);
 
-      fetchMatchedIssues(cleanUsername, searchSignal);
+      setIsViewingCached(false);
+      setCachedFetchedAt(null);
+
+      fetchMatchedIssues(
+        cleanUsername,
+        searchSignal,
+        undefined,
+        undefined,
+        profileData,
+        skillsData
+      );
     } catch (err: unknown) {
       if (isAbortError(err)) {
         return; // Prior in-flight search was aborted by a new search
@@ -539,7 +637,16 @@ export default function Home() {
           data: { profile: profileData, skills: skillsData },
         });
       }
-      fetchMatchedIssues(profile.username, searchSignal);
+      setIsViewingCached(false);
+      setCachedFetchedAt(null);
+      fetchMatchedIssues(
+        profile.username,
+        searchSignal,
+        undefined,
+        undefined,
+        profileData,
+        skillsData
+      );
     } catch (err: unknown) {
       if (isAbortError(err)) return;
       if (err instanceof ApiClientError && err.status === 429) {
@@ -575,6 +682,22 @@ export default function Home() {
           <div className="absolute left-1/2 top-[-250px] h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-purple-500/10 blur-[120px]" />
           <div className="absolute right-[-200px] top-[400px] h-[400px] w-[400px] rounded-full bg-blue-500/5 blur-[100px]" />
         </div>
+
+        {/* Offline Banner (PWA Offline Support) */}
+        <OfflineBanner
+          isOnline={isOnline}
+          isViewingCached={isViewingCached}
+          cachedUsername={cachedData?.username || profile?.username}
+          cachedFetchedAt={cachedFetchedAt || undefined}
+          onRefresh={handleRefresh}
+          onRetryConnection={() => {
+            if (typeof navigator !== "undefined" && navigator.onLine) {
+              if (profile?.username) {
+                handleRefresh();
+              }
+            }
+          }}
+        />
 
         {/* Header and Navigation */}
         <header
@@ -904,6 +1027,32 @@ export default function Home() {
                   theme={theme}
                 />
 
+                {cachedData && (!profile || !isViewingCached) && (
+                  <div className="mt-3 flex items-center justify-center border-t border-white/5 pt-3">
+                    <button
+                      type="button"
+                      onClick={() => loadCachedAnalysis(cachedData)}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3.5 py-1 text-xs font-semibold text-purple-600 dark:text-purple-300 transition hover:bg-purple-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                    >
+                      <svg
+                        className="h-3.5 w-3.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <span>Open last cached result (@{cachedData.username})</span>
+                    </button>
+                  </div>
+                )}
+
                 <span id="username-hint" className="sr-only">
                   Provide a public GitHub username to analyze technical skills, language
                   proficiencies, and repository breakdowns.
@@ -943,6 +1092,15 @@ export default function Home() {
                       className="rounded-lg border border-red-400/40 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
                     >
                       Retry
+                    </button>
+                  )}
+                  {cachedData && !isOnline && (
+                    <button
+                      type="button"
+                      onClick={() => loadCachedAnalysis(cachedData)}
+                      className="rounded-lg border border-red-400/40 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                    >
+                      View cached @{cachedData.username}
                     </button>
                   )}
                 </div>
@@ -999,6 +1157,32 @@ export default function Home() {
                     >
                       Here&apos;s what OpenSourceMate discovered from your GitHub activity.
                     </p>
+
+                    {isViewingCached && cachedFetchedAt && (
+                      <div
+                        data-testid="cached-result-badge"
+                        className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300"
+                      >
+                        <svg
+                          className="h-3.5 w-3.5 flex-shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        <span>
+                          Cached Result • Fetched {formatFetchedAt(cachedFetchedAt)} (
+                          {formatRelativeTime(cachedFetchedAt)})
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {profile && (
@@ -1145,6 +1329,31 @@ export default function Home() {
                         Opportunities matching your skills and experience, ranked by compatibility
                         score.
                       </p>
+
+                      {isViewingCached && cachedFetchedAt && (
+                        <div
+                          data-testid="recommendations-cached-badge"
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300"
+                        >
+                          <svg
+                            className="h-3 w-3 flex-shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          <span>
+                            Cached recommendations from {formatFetchedAt(cachedFetchedAt)}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {recommendations.length > 0 && (

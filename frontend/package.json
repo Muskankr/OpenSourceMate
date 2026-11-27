@@ -18,7 +18,8 @@
     "test:coverage": "jest --coverage",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "mock-server": "node scripts/mock-server.mjs"
+    "mock-server": "node scripts/mock-server.mjs",
+    "check:bundle-budget": "node scripts/check-bundle-budget.mjs"
   },
   "dependencies": {
     "next": "16.4.6",

@@ -62,6 +62,8 @@ The implementation is verified via comprehensive unit tests in `backend/tests/te
 - API directory discovery endpoints (`/api` and `/api/v1`).
 - `/api/v1/` route invocation alongside legacy `/api/` backwards compatibility.
 
+The [Schemathesis contract tests](schemathesis-api-contract-testing.md) also exercise documented operations and check that response bodies conform to the generated schema.
+
 ## Offline schema validation (#440)
 
 The schema comes from the real FastAPI routes and response models; there is no

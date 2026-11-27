@@ -36,9 +36,22 @@ describe("analyzerReducer", () => {
       requestId: 1,
       username: "octocat",
     });
-    expect(
-      analyzerReducer(loading, { type: "success", requestId: 1, data })
-    ).toEqual({
+    expect(analyzerReducer(loading, { type: "success", requestId: 1, data })).toEqual({
+      status: "success",
+      requestId: 1,
+      username: "octocat",
+      data,
+    });
+  });
+
+  it("transitions directly from idle to success via load-cache", () => {
+    const loaded = analyzerReducer(initialAnalyzerState, {
+      type: "load-cache",
+      requestId: 1,
+      username: "octocat",
+      data,
+    });
+    expect(loaded).toEqual({
       status: "success",
       requestId: 1,
       username: "octocat",
@@ -132,9 +145,9 @@ describe("analyzerReducer", () => {
       username: "octocat",
     });
 
-    expect(
-      analyzerReducer(loading, { type: "submit", requestId: 6, username: "torvalds" })
-    ).toBe(loading);
+    expect(analyzerReducer(loading, { type: "submit", requestId: 6, username: "torvalds" })).toBe(
+      loading
+    );
     expect(analyzerReducer(loading, { type: "success", requestId: 4, data })).toBe(loading);
     expect(
       analyzerReducer(loading, {
@@ -165,9 +178,7 @@ describe("analyzerReducer", () => {
       message: "Please enter a GitHub username.",
       canRetry: false,
     });
-    expect(analyzerReducer(validationError, { type: "clear-error" })).toEqual(
-      initialAnalyzerState
-    );
+    expect(analyzerReducer(validationError, { type: "clear-error" })).toEqual(initialAnalyzerState);
     expect(analyzerReducer(validationError, { type: "reset" })).toEqual(initialAnalyzerState);
   });
 });

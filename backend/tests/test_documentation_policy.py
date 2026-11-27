@@ -124,11 +124,23 @@ def test_documented_health_and_error_models_match_real_api_responses():
     assert HealthResponseSerializer.model_validate(health.json()).status == "healthy"
     invalid_query = client.get("/api/v1/github/users/autocomplete", params={"q": "x"})
     assert invalid_query.status_code == 422
-    assert (
-        ErrorResponseSerializer.model_validate(invalid_query.json()).error.code
-        == "VALIDATION_ERROR"
-    )
+    error = ErrorResponseSerializer.model_validate(invalid_query.json())
+    assert error.error.code == "VALIDATION_ERROR"
+    assert isinstance(error.detail, list)
+    assert error.detail == error.error.details
     operation = app.openapi()["paths"]["/api/v1/github/users/autocomplete"]["get"]
     assert operation["responses"]["default"]["content"]["application/json"]["schema"][
         "$ref"
     ].endswith("/ErrorResponseSerializer")
+
+
+def test_request_parser_errors_use_the_documented_error_envelope():
+    response = TestClient(app).post(
+        "/api/v1/skills/analyze-text",
+        content=b"\xff",
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 400
+    error = ErrorResponseSerializer.model_validate(response.json())
+    assert error.error.code == "BAD_REQUEST"
+    assert error.detail == error.error.message
