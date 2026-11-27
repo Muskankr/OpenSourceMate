@@ -292,12 +292,15 @@ export async function fetchUserSkills(
 export interface FetchMatchedIssuesOptions extends RequestOptions {
   skills?: string[];
   program?: string;
+  limit?: number;
+  cursor?: number;
 }
 
 /**
  * Fetches open-source issue recommendations matching a user's skills.
  * Optionally accepts an explicit skills array to customize matched technologies,
- * and a program identifier to filter for program-specific issues (e.g. NSoC, Hacktoberfest).
+ * a program identifier to filter for program-specific issues (e.g. NSoC, Hacktoberfest),
+ * and pagination parameters (limit, cursor) (Issue #481).
  */
 export async function fetchMatchedIssues(
   username: string,
@@ -314,6 +317,12 @@ export async function fetchMatchedIssues(
   }
   if (options?.program) {
     query.append("program", options.program);
+  }
+  if (options?.limit !== undefined) {
+    query.append("limit", options.limit.toString());
+  }
+  if (options?.cursor !== undefined) {
+    query.append("cursor", options.cursor.toString());
   }
   const queryString = query.toString() ? `?${query.toString()}` : "";
   return typedRequest<MatchedIssuesResponse>(

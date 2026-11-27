@@ -157,6 +157,9 @@ export default function Home() {
   const [loadingMatching, setLoadingMatching] = useState(false);
   const [matchingError, setMatchingError] = useState("");
   const [isDemoData, setIsDemoData] = useState(false);
+  const [nextCursor, setNextCursor] = useState<number | null>(null);
+  const [totalRecommendations, setTotalRecommendations] = useState<number>(0);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Learning Mode state
   const [isLearningMode, setIsLearningMode] = useState(false);
@@ -314,14 +317,20 @@ export default function Home() {
         signal,
         skills: skillsToUse,
         program: programToUse || undefined,
+        limit: 20,
+        cursor: 0,
       });
       if (matchData.recommendations && matchData.recommendations.length > 0) {
         setRecommendations(matchData.recommendations);
+        setTotalRecommendations(matchData.total ?? matchData.recommendations.length);
+        setNextCursor(matchData.next_cursor ?? null);
         setIsDemoData(false);
         saveAnalysisToCache(targetUsername, matchData.recommendations, freshProfile, freshSkills);
       } else if (skillsToUse && skillsToUse.length === 0) {
         // User explicitly removed all skills
         setRecommendations([]);
+        setTotalRecommendations(0);
+        setNextCursor(null);
         setIsDemoData(false);
         saveAnalysisToCache(targetUsername, [], freshProfile, freshSkills);
       } else {
@@ -330,6 +339,8 @@ export default function Home() {
           program: programToUse || undefined,
         });
         setRecommendations(fallback);
+        setTotalRecommendations(fallback.length);
+        setNextCursor(null);
         setIsDemoData(true);
         saveAnalysisToCache(targetUsername, fallback, freshProfile, freshSkills);
       }
@@ -337,6 +348,8 @@ export default function Home() {
       if (isAbortError(err)) return;
       if (skillsToUse && skillsToUse.length === 0) {
         setRecommendations([]);
+        setTotalRecommendations(0);
+        setNextCursor(null);
         setIsDemoData(false);
         saveAnalysisToCache(targetUsername, [], freshProfile, freshSkills);
       } else {
@@ -345,11 +358,52 @@ export default function Home() {
           program: programToUse || undefined,
         });
         setRecommendations(fallback);
+        setTotalRecommendations(fallback.length);
+        setNextCursor(null);
         setIsDemoData(true);
         saveAnalysisToCache(targetUsername, fallback, freshProfile, freshSkills);
       }
     } finally {
       setLoadingMatching(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (loadingMore || nextCursor === null) return;
+    const targetUsername = profile?.username || username;
+    if (!targetUsername) return;
+
+    setLoadingMore(true);
+    const skillsToUse =
+      customSkills !== null
+        ? customSkills
+        : skills?.skills.map((s) => s.name);
+
+    try {
+      const matchData = await apiFetchMatchedIssues(targetUsername, {
+        skills: skillsToUse,
+        program: selectedProgram || undefined,
+        limit: 20,
+        cursor: nextCursor,
+      });
+
+      if (matchData.recommendations && matchData.recommendations.length > 0) {
+        setRecommendations((prev) => {
+          const existingIds = new Set(prev.map((i) => i.id));
+          const newItems = matchData.recommendations.filter((i) => !existingIds.has(i.id));
+          const combined = [...prev, ...newItems];
+          saveAnalysisToCache(targetUsername, combined, profile || undefined, skills || undefined);
+          return combined;
+        });
+        setTotalRecommendations(matchData.total ?? recommendations.length + matchData.recommendations.length);
+        setNextCursor(matchData.next_cursor ?? null);
+      } else {
+        setNextCursor(null);
+      }
+    } catch (err: unknown) {
+      console.error("Failed to load more recommendations:", err);
+    } finally {
+      setLoadingMore(false);
     }
   };
 
@@ -1747,6 +1801,40 @@ export default function Home() {
                           onRestore={() => restoreIssue(issue)}
                         />
                       ))}
+
+                      {/* Load More Button (Issue #481) */}
+                      {nextCursor !== null && (
+                        <div className="mt-8 flex flex-col items-center justify-center gap-2 pt-4">
+                          <button
+                            type="button"
+                            onClick={handleLoadMore}
+                            disabled={loadingMore}
+                            className={`inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
+                              loadingMore
+                                ? "opacity-60 cursor-not-allowed"
+                                : "hover:scale-[1.02] active:scale-[0.98]"
+                            } ${
+                              theme === "dark"
+                                ? "bg-purple-600 text-white hover:bg-purple-500 shadow-lg shadow-purple-900/30"
+                                : "bg-purple-600 text-white hover:bg-purple-700 shadow-md shadow-purple-600/20"
+                            }`}
+                          >
+                            {loadingMore ? (
+                              <>
+                                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                <span>Loading more recommendations...</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>Load more issues</span>
+                                <span className="text-xs opacity-75">
+                                  ({recommendations.length} of {totalRecommendations})
+                                </span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>

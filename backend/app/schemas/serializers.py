@@ -323,6 +323,16 @@ class MatchedIssuesResponseSerializer(BaseModel):
     recommendations: list[MatchedIssueRecommendationSerializer] = Field(
         default_factory=list, description="Ranked list of recommended issues"
     )
+    total: int = Field(
+        default=0, description="Total count of matching recommendations before pagination (Issue #481)"
+    )
+    next_cursor: int | None = Field(
+        default=None,
+        description="Offset cursor to request the next page of recommendations, or null if no more items (Issue #481)",
+    )
+    limit: int = Field(
+        default=20, description="Pagination page limit applied (Issue #481)"
+    )
 
 
 # ---------------------------------------------------------
