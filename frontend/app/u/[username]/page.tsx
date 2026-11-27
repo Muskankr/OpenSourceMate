@@ -14,6 +14,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title: "User not found – OpenSourceMate",
       description: "User not found on OpenSourceMate.",
+      robots: {
+        index: false,
+        follow: false,
+      },
       openGraph: {
         title: "User not found – OpenSourceMate",
         description: "User not found on OpenSourceMate.",
@@ -50,6 +54,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    alternates: {
+      canonical: `/u/${encodedName}`,
+    },
+    robots: {
+      index: false,
+      follow: false,
+    },
     openGraph: {
       title,
       description,

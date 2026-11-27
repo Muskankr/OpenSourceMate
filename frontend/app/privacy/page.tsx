@@ -5,6 +5,9 @@ export const metadata: Metadata = {
   title: "Privacy & Data Handling | OpenSourceMate",
   description:
     "Learn how OpenSourceMate reads public GitHub data, our strict policy against accessing private repositories, and how caching and storage work.",
+  alternates: {
+    canonical: "/privacy",
+  },
 };
 
 export default function PrivacyPage() {

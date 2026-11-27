@@ -16,6 +16,27 @@ export interface PageMetadataConfig {
 const DEFAULT_SITE_TITLE = "OpenSourceMate – Find open-source issues that fit your skills";
 const DEFAULT_SITE_URL = "https://open-source-mate-tawny.vercel.app";
 
+export interface PublicStaticRoute {
+  path: string;
+  changeFrequency: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
+  priority: number;
+}
+
+/**
+ * Single source of truth for public static pages included in sitemap.xml.
+ * Add new public static routes here so they are automatically included in the sitemap.
+ */
+export const PUBLIC_STATIC_ROUTES: PublicStaticRoute[] = [
+  { path: "/", changeFrequency: "weekly", priority: 1.0 },
+  { path: "/compare", changeFrequency: "weekly", priority: 0.8 },
+  { path: "/contribute", changeFrequency: "weekly", priority: 0.8 },
+  { path: "/privacy", changeFrequency: "monthly", priority: 0.5 },
+];
+
+export function getSiteUrl(): string {
+  return (process.env.NEXT_PUBLIC_SITE_URL || DEFAULT_SITE_URL).replace(/\/$/, "");
+}
+
 /**
  * Constructs a fully normalized Next.js Metadata object adhering to root title templates.
  */
