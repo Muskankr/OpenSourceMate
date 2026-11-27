@@ -85,8 +85,6 @@ describe("Prefers-Reduced-Motion Accessibility Suite (Issue #182)", () => {
       expect(resetContract.animationDuration).toContain("0.001ms");
     });
   });
-});
-
 
   describe("Fallback for Legacy Browsers without addEventListener on MediaQueryList", () => {
     it("safely falls back to addListener and removeListener", () => {
@@ -123,7 +121,6 @@ describe("Prefers-Reduced-Motion Accessibility Suite (Issue #182)", () => {
     });
   });
 
-
   describe("WCAG 2.2 Level AAA Compliance", () => {
     it("confirms animation duration falls well below 1ms under reduced motion", () => {
       const reducedDurationMs = 0.001;
@@ -136,7 +133,6 @@ describe("Prefers-Reduced-Motion Accessibility Suite (Issue #182)", () => {
     });
   });
 
-
   describe("Multi-property Motion-Safe Combinations", () => {
     it("handles complex combinations of transform and transition classes", () => {
       const complex = getMotionSafeClass("transition-all duration-300 hover:scale-105 hover:-translate-y-1");
@@ -144,3 +140,5 @@ describe("Prefers-Reduced-Motion Accessibility Suite (Issue #182)", () => {
       expect(complex).toContain("motion-reduce:transform-none");
     });
   });
+});
+

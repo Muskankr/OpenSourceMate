@@ -54,7 +54,10 @@ export function usePrefersReducedMotion(): boolean {
  */
 export function getMotionSafeClass(
   standardClass: string,
-  reducedClass = "transition-none transform-none animate-none"
+  customReduced?: string
 ): string {
-  return `${standardClass} motion-reduce:${reducedClass}`;
+  if (customReduced) {
+    return `${standardClass} motion-reduce:${customReduced}`;
+  }
+  return `${standardClass} motion-reduce:transition-none motion-reduce:transform-none motion-reduce:animate-none`;
 }

@@ -2012,7 +2012,12 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => {
-                  document.getElementById("analyzer")?.scrollIntoView({ behavior: "smooth" });
+                  const prefersReduced =
+                    typeof window !== "undefined" &&
+                    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+                  document.getElementById("analyzer")?.scrollIntoView({
+                    behavior: prefersReduced ? "auto" : "smooth",
+                  });
                   document.getElementById("github-username-input")?.focus();
                 }}
                 className="mt-8 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2"
