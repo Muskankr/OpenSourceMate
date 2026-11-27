@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import ExportMenu from "../components/ExportMenu";
@@ -9,8 +10,19 @@ import ProfileCard from "../components/ProfileCard";
 import RecentSearches from "../components/RecentSearches";
 import RefreshAnalysisButton from "../components/RefreshAnalysisButton";
 import ServiceUnavailableBanner from "../components/ServiceUnavailableBanner";
-import SkillChart from "../components/SkillChart";
 import SkillProficiencyBadge from "../components/SkillProficiencyBadge";
+
+const SkillChart = dynamic(() => import("../components/SkillChart"), {
+  ssr: false,
+  loading: () => (
+    <div
+      data-testid="skill-chart-loading-placeholder"
+      role="status"
+      aria-label="Loading skill distribution chart"
+      className="mt-8 h-[340px] w-full animate-pulse rounded-2xl border border-white/10 bg-white/[0.03] p-6"
+    />
+  ),
+});
 import SkillEvidenceToggle from "../components/SkillEvidenceToggle";
 import SkillsToLearn from "../components/SkillsToLearn";
 import TechIcon from "../components/TechIcon";
