@@ -80,6 +80,13 @@ export interface IssueRecommendation {
   programs?: string[];
 }
 
+export interface AuthUserStatus {
+  authenticated: boolean;
+  username?: string | null;
+  avatar_url?: string | null;
+  using_visitor_token: boolean;
+}
+
 export interface MatchedIssuesResponse {
   username: string;
   skills?: string[];

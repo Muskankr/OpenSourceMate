@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.routes.ai import router as ai_router
+from app.api.routes.auth import router as auth_router
 from app.api.routes.friendliness import router as friendliness_router
 from app.api.routes.github import router as github_router
 from app.api.routes.issues import router as issues_router
@@ -40,6 +41,7 @@ async def lifespan(app: FastAPI):
     await close_client()
 
 
+from app.middleware.auth_context import UserTokenContextMiddleware
 from app.middleware.logging import StructuredLoggingMiddleware
 from app.middleware.rate_limit import IPRateLimitMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
@@ -105,6 +107,7 @@ for backward compatibility.
     },
 )
 
+app.add_middleware(UserTokenContextMiddleware)
 app.add_middleware(IPRateLimitMiddleware)
 app.add_middleware(StructuredLoggingMiddleware)
 
@@ -448,6 +451,7 @@ app.include_router(ai_router, prefix="/api/v1", include_in_schema=True)
 app.include_router(matching_router, prefix="/api/v1", include_in_schema=True)
 app.include_router(friendliness_router, prefix="/api/v1", include_in_schema=True)
 app.include_router(text_skills_router, prefix="/api/v1", include_in_schema=True)
+app.include_router(auth_router, prefix="/api/v1", include_in_schema=True)
 
 # Legacy /api/ Routers (Backward Compatibility)
 app.include_router(github_router, prefix="/api", include_in_schema=False)
@@ -456,3 +460,4 @@ app.include_router(ai_router, prefix="/api", include_in_schema=False)
 app.include_router(matching_router, prefix="/api", include_in_schema=False)
 app.include_router(friendliness_router, prefix="/api", include_in_schema=False)
 app.include_router(text_skills_router, prefix="/api", include_in_schema=False)
+app.include_router(auth_router, prefix="/api", include_in_schema=False)

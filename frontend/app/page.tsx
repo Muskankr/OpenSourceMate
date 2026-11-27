@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import ExportMenu from "../components/ExportMenu";
 import GitHubLink from "../components/GitHubLink";
+import UserAuthButton from "../components/UserAuthButton";
 import ProfileCard from "../components/ProfileCard";
 import RecentSearches from "../components/RecentSearches";
 import RefreshAnalysisButton from "../components/RefreshAnalysisButton";
@@ -760,6 +761,8 @@ export default function Home() {
 
               <GitHubLink className="rounded-lg px-2 py-1 transition hover:text-purple-400" />
 
+              <UserAuthButton theme={theme} />
+
               <ThemeSegmentedToggle
                 preference={themePreference}
                 resolvedTheme={theme}
@@ -769,6 +772,8 @@ export default function Home() {
 
             {/* Mobile Hamburger Button */}
             <div className="flex items-center gap-2 md:hidden">
+              <UserAuthButton theme={theme} />
+
               <ThemeSegmentedToggle
                 preference={themePreference}
                 resolvedTheme={theme}

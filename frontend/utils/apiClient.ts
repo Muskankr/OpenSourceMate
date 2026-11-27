@@ -12,6 +12,7 @@ import {
   type ApiErrorResponse,
   type CompleteAnalysisResult,
   type ProgramsResponse,
+  type AuthUserStatus,
 } from "../types/api";
 
 export interface RequestOptions extends RequestInit {
@@ -168,6 +169,7 @@ export async function typedRequest<T>(endpoint: string, options: RequestOptions 
 
     try {
       const response = await fetch(url, {
+        credentials: "include",
         ...fetchOptions,
         signal: internalController.signal,
       });
@@ -372,4 +374,21 @@ export async function searchUser(
   }
 
   return { profile, skills, issues };
+}
+
+/**
+ * Fetches current OAuth authentication status of the visitor (Issue #482).
+ */
+export async function fetchAuthStatus(options?: RequestOptions): Promise<AuthUserStatus> {
+  return typedRequest<AuthUserStatus>("/api/auth/me", options);
+}
+
+/**
+ * Signs out of the current visitor session, clearing the HttpOnly cookie (Issue #482).
+ */
+export async function logoutUser(options?: RequestOptions): Promise<{ authenticated: boolean }> {
+  return typedRequest<{ authenticated: boolean }>("/api/auth/logout", {
+    method: "POST",
+    ...options,
+  });
 }

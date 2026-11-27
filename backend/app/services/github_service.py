@@ -143,6 +143,12 @@ async def github_get(
         etag_val, cached_body = cached_etag_entry
         request_headers["If-None-Match"] = etag_val
 
+    # Check if signed-in visitor token is active in request context (Issue #482)
+    from app.services.auth_service import get_current_user_token
+    user_token = get_current_user_token()
+    if user_token:
+        request_headers["Authorization"] = f"Bearer {user_token}"
+
     for attempt in range(1, max_retries + 1):
         try:
             logger.debug(
@@ -691,8 +697,12 @@ async def fetch_merged_external_pull_requests(
         "order": "desc",
     }
 
+    from app.services.auth_service import get_current_user_token
+    user_token = get_current_user_token()
+    req_headers = {"Authorization": f"Bearer {user_token}"} if user_token else None
+
     try:
-        response = await client.get(url, params=params)
+        response = await client.get(url, params=params, headers=req_headers)
     except httpx.RequestError as exc:
         logger.error(
             "Failed network call fetching merged PRs for %s: %s", clean_user, exc
