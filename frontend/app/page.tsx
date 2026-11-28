@@ -178,6 +178,16 @@ export default function Home() {
   const [totalRecommendations, setTotalRecommendations] = useState<number>(0);
   const [loadingMore, setLoadingMore] = useState(false);
 
+  // Analysis progress step tracking and synchronous submission lock
+  const [analysisStep, setAnalysisStep] = useState<AnalysisStep>("idle");
+  const isAnalyzingRef = useRef(false);
+  const isAnalyzing =
+    loading ||
+    (loadingMatching && !profile) ||
+    analysisStep === "fetching-profile" ||
+    analysisStep === "detecting-skills" ||
+    analysisStep === "finding-issues";
+
   // First-visit onboarding tour state (Issue #439)
   const [tourOpen, setTourOpen] = useState(false);
   const [tourStep, setTourStep] = useState(0);
@@ -245,6 +255,7 @@ export default function Home() {
     setRecommendations(data.recommendations || []);
     setIsViewingCached(true);
     setCachedFetchedAt(data.fetchedAt);
+    setAnalysisStep("complete");
   };
 
   useEffect(() => {
@@ -292,7 +303,7 @@ export default function Home() {
   const [customSkills, setCustomSkills] = useState<string[] | null>(null);
 
   const detectedSkills = useMemo(() => {
-    return skills?.skills.map((s) => s.name) || [];
+    return skills?.skills?.map((s) => s.name) || [];
   }, [skills]);
 
   const activeSkills = useMemo(() => {
@@ -578,6 +589,9 @@ export default function Home() {
   };
 
   const analyzeProfile = async (override?: string) => {
+    // Prevent duplicate concurrent requests (e.g. double click)
+    if (isAnalyzingRef.current || loading || loadingMatching) return;
+
     const raw = override ?? username;
     const validation = validateGitHubUsername(raw);
 
@@ -586,18 +600,18 @@ export default function Home() {
         type: "validation-error",
         message: validation.error || "Please enter a valid GitHub username.",
       });
+      setAnalysisStep("idle");
       return;
     }
 
     const cleanUsername = validation.cleanUsername;
-
-    if (loading) return;
 
     // Handle offline state: restore cached result if matches, or inform user
     if (typeof navigator !== "undefined" && !navigator.onLine) {
       const saved = getLastAnalysisResult();
       if (saved && saved.username.toLowerCase() === cleanUsername.toLowerCase()) {
         loadCachedAnalysis(saved);
+        setAnalysisStep("complete");
         return;
       }
       setUsername(cleanUsername);
@@ -608,9 +622,12 @@ export default function Home() {
         message: `You are currently offline. Cannot analyze @${cleanUsername} without an internet connection.`,
         canRetry: true,
       });
+      setAnalysisStep("error");
       return;
     }
 
+    isAnalyzingRef.current = true;
+    setAnalysisStep("fetching-profile");
     setUsername(cleanUsername);
     const requestId = ++requestIdRef.current;
     const previousData =
@@ -636,6 +653,7 @@ export default function Home() {
 
     try {
       const profileData = await fetchUserProfile(cleanUsername, { signal: searchSignal });
+      setAnalysisStep("detecting-skills");
       const skillsData = await fetchUserSkills(cleanUsername, { signal: searchSignal });
 
       dispatchAnalyzer({
@@ -651,7 +669,8 @@ export default function Home() {
       setIsViewingCached(false);
       setCachedFetchedAt(null);
 
-      fetchMatchedIssues(
+      setAnalysisStep("finding-issues");
+      await fetchMatchedIssues(
         cleanUsername,
         searchSignal,
         undefined,
@@ -659,10 +678,12 @@ export default function Home() {
         profileData,
         skillsData
       );
+      setAnalysisStep("complete");
     } catch (err: unknown) {
       if (isAbortError(err)) {
         return; // Prior in-flight search was aborted by a new search
       }
+      setAnalysisStep("error");
       // Detect network failure or 5xx server-side response (Issue #128)
       if (isNetworkOrServerError(err)) {
         const details = resolveServiceErrorDetails(err, {
@@ -706,6 +727,8 @@ export default function Home() {
         message: sanitizeErrorMessage(resolveAnalyzerErrorMessage(err)),
         canRetry: true,
       });
+    } finally {
+      isAnalyzingRef.current = false;
     }
   };
 
@@ -1101,7 +1124,7 @@ export default function Home() {
                         }
                       }}
                       onKeyDown={(e) => {
-                        if (e.key === "Enter" && !loading) {
+                        if (e.key === "Enter" && !isAnalyzing) {
                           analyzeProfile();
                         }
                       }}
@@ -1132,11 +1155,12 @@ export default function Home() {
                   <button
                     type="button"
                     onClick={() => analyzeProfile()}
-                    disabled={loading}
-                    aria-busy={loading}
+                    disabled={isAnalyzing}
+                    aria-busy={isAnalyzing}
+                    data-testid="analyze-button"
                     className="rounded-2xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:px-7 sm:py-4 sm:text-base flex-shrink-0"
                   >
-                    {loading
+                    {isAnalyzing
                       ? t("analyzer.analyzing", "Analyzing...")
                       : t("analyzer.analyzeButton", "Analyze Profile")}
                   </button>
@@ -1150,7 +1174,7 @@ export default function Home() {
                     <button
                       key={example}
                       type="button"
-                      disabled={loading}
+                      disabled={isAnalyzing}
                       onClick={() => {
                         setUsername(example);
                         analyzeProfile(example);
@@ -1219,7 +1243,7 @@ export default function Home() {
                     onDismiss={() => dispatchAnalyzer({ type: "clear-service-error" })}
                     reportUrl={serviceError.reportUrl}
                     theme={theme}
-                    isRetrying={loading}
+                    isRetrying={isAnalyzing}
                   />
                 </div>
               )}
@@ -1234,11 +1258,12 @@ export default function Home() {
                   className="mt-4 flex flex-col items-center justify-center gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-center text-sm font-medium text-red-300 sm:flex-row"
                 >
                   <span>{error}</span>
-                  {canRetry && lastAnalyzed && !loading && (
+                  {canRetry && lastAnalyzed && !isAnalyzing && (
                     <button
                       type="button"
+                      disabled={isAnalyzing}
                       onClick={() => analyzeProfile(lastAnalyzed)}
-                      className="rounded-lg border border-red-400/40 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                      className="rounded-lg border border-red-400/40 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50"
                     >
                       {t("analyzer.retry", "Retry")}
                     </button>
@@ -1265,16 +1290,19 @@ export default function Home() {
             </div>
           </section>
 
-          {/* Loading Skeleton */}
-          {loading && (
+          {/* Loading Skeletons and Step Progress */}
+          {isAnalyzing && !profile && (
             <section
+              data-testid="analysis-loading-section"
               className="px-4 pb-24 sm:px-6"
               aria-busy="true"
               aria-label="Analyzing profile in progress"
             >
               <div className="mx-auto max-w-5xl">
-                <ProfileSkeleton />
-                <SkillsSkeleton />
+                <AnalysisProgressSteps currentStep={analysisStep} theme={theme} t={t} />
+                <ProfileSkeleton theme={theme} />
+                <SkillsSkeleton theme={theme} />
+                <IssuesSkeleton theme={theme} />
               </div>
             </section>
           )}
@@ -1867,17 +1895,26 @@ export default function Home() {
 
                   {/* Loading State */}
                   {loadingMatching && (
-                    <div className="mt-6 space-y-4">
-                      {[0, 1].map((i) => (
-                        <div key={i} className="rounded-2xl border border-white/5 bg-black/20 p-5">
+                    <div data-testid="matching-issues-skeleton" className="mt-6 space-y-4">
+                      {[0, 1, 2].map((i) => (
+                        <div
+                          key={i}
+                          className={`rounded-2xl border p-5 ${
+                            theme === "dark"
+                              ? "border-white/5 bg-black/20"
+                              : "border-gray-100 bg-gray-50"
+                          }`}
+                        >
                           <div className="flex items-center justify-between">
-                            <Bar className="h-4 w-40" />
-                            <Bar className="h-6 w-14" />
+                            <Bar theme={theme} className="h-4 w-44" />
+                            <Bar theme={theme} className="h-6 w-16 rounded-full" />
                           </div>
-                          <Bar className="mt-3 h-5 w-3/4" />
+                          <Bar theme={theme} className="mt-3 h-5 w-4/5" />
+                          <Bar theme={theme} className="mt-2 h-4 w-2/3" />
                           <div className="mt-4 flex gap-2">
-                            <Bar className="h-6 w-16" />
-                            <Bar className="h-6 w-20" />
+                            <Bar theme={theme} className="h-6 w-20 rounded-md" />
+                            <Bar theme={theme} className="h-6 w-24 rounded-md" />
+                            <Bar theme={theme} className="h-6 w-16 rounded-md" />
                           </div>
                         </div>
                       ))}
@@ -2305,26 +2342,191 @@ function StepCard({
   );
 }
 
-function Bar({ className }: { className: string }) {
-  return <div className={`animate-pulse rounded-lg bg-white/10 ${className}`} />;
+export type AnalysisStep =
+  "idle" | "fetching-profile" | "detecting-skills" | "finding-issues" | "complete" | "error";
+
+export function Bar({
+  className = "",
+  theme = "dark",
+}: {
+  className?: string;
+  theme?: "dark" | "light";
+}) {
+  return (
+    <div
+      className={`animate-pulse rounded-lg ${
+        theme === "dark" ? "bg-white/10" : "bg-gray-200"
+      } ${className}`}
+    />
+  );
 }
 
-function ProfileSkeleton() {
+export function AnalysisProgressSteps({
+  currentStep,
+  theme = "dark",
+  t,
+}: {
+  currentStep: AnalysisStep;
+  theme?: "dark" | "light";
+  t: (key: string, fallback?: string, vars?: Record<string, string | number>) => string;
+}) {
+  const steps = [
+    {
+      id: "fetching-profile",
+      label: t("analyzer.steps.fetchingProfile", "Fetching GitHub profile..."),
+      shortLabel: "Profile",
+    },
+    {
+      id: "detecting-skills",
+      label: t("analyzer.steps.detectingSkills", "Detecting technical skills..."),
+      shortLabel: "Skills",
+    },
+    {
+      id: "finding-issues",
+      label: t("analyzer.steps.findingIssues", "Finding matching issues..."),
+      shortLabel: "Issues",
+    },
+  ];
+
+  const getActiveMessage = () => {
+    if (currentStep === "fetching-profile") {
+      return t("analyzer.steps.fetchingProfile", "Fetching GitHub profile...");
+    }
+    if (currentStep === "detecting-skills") {
+      return t("analyzer.steps.detectingSkills", "Detecting technical skills...");
+    }
+    if (currentStep === "finding-issues") {
+      return t("analyzer.steps.findingIssues", "Finding matching issues...");
+    }
+    if (currentStep === "complete") {
+      return t("analyzer.steps.complete", "Analysis complete!");
+    }
+    return "";
+  };
+
   return (
-    <div className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.035] p-6 sm:p-8">
-      <div className="flex items-center gap-5">
-        <div className="h-20 w-20 animate-pulse rounded-2xl bg-white/10 sm:h-24 sm:w-24" />
+    <div
+      role="status"
+      aria-live="polite"
+      aria-atomic="true"
+      data-testid="analysis-progress-steps"
+      className={`mb-8 rounded-2xl border p-4 sm:p-5 transition-all duration-300 ${
+        theme === "dark"
+          ? "border-purple-500/30 bg-purple-950/20 text-white"
+          : "border-purple-200 bg-purple-50/70 text-gray-900"
+      }`}
+    >
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <div className="relative flex h-5 w-5 items-center justify-center flex-shrink-0">
+            <span className="absolute h-full w-full animate-ping rounded-full bg-purple-400 opacity-30" />
+            <svg
+              className="h-4 w-4 animate-spin text-purple-400"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              />
+            </svg>
+          </div>
+
+          <p
+            data-testid="analysis-step-message"
+            className="text-sm font-semibold tracking-wide text-purple-300"
+          >
+            {getActiveMessage()}
+          </p>
+        </div>
+
+        <ol className="flex items-center gap-2 sm:gap-3 text-xs" aria-label="Analysis steps">
+          {steps.map((step, idx) => {
+            const isCurrent = step.id === currentStep;
+            const isCompleted =
+              (currentStep === "detecting-skills" && idx < 1) ||
+              (currentStep === "finding-issues" && idx < 2) ||
+              currentStep === "complete";
+
+            return (
+              <li
+                key={step.id}
+                data-testid={`step-${step.id}`}
+                aria-current={isCurrent ? "step" : undefined}
+                className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 font-medium transition-colors ${
+                  isCurrent
+                    ? "bg-purple-500/20 text-purple-300 ring-1 ring-purple-400/50"
+                    : isCompleted
+                      ? "bg-emerald-500/10 text-emerald-400"
+                      : theme === "dark"
+                        ? "bg-white/5 text-gray-500"
+                        : "bg-gray-100 text-gray-400"
+                }`}
+              >
+                {isCompleted ? (
+                  <span className="text-emerald-400" aria-hidden="true">
+                    ✓
+                  </span>
+                ) : isCurrent ? (
+                  <span
+                    className="h-1.5 w-1.5 rounded-full bg-purple-400 animate-pulse"
+                    aria-hidden="true"
+                  />
+                ) : (
+                  <span aria-hidden="true">{idx + 1}</span>
+                )}
+                <span>{step.shortLabel}</span>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
+    </div>
+  );
+}
+
+export function ProfileSkeleton({ theme = "dark" }: { theme?: "dark" | "light" }) {
+  const isDark = theme === "dark";
+  return (
+    <div
+      data-testid="profile-skeleton"
+      className={`overflow-hidden rounded-3xl border p-5 sm:p-7 md:p-8 mb-8 ${
+        isDark ? "border-white/10 bg-white/[0.035]" : "border-gray-200 bg-white shadow-sm"
+      }`}
+    >
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:gap-5">
+        <div
+          className={`h-20 w-20 flex-shrink-0 animate-pulse rounded-2xl sm:h-24 sm:w-24 ${
+            isDark ? "bg-white/10" : "bg-gray-200"
+          }`}
+        />
         <div className="flex-1 space-y-3">
-          <Bar className="h-6 w-48" />
-          <Bar className="h-4 w-28" />
-          <Bar className="h-4 w-full max-w-xl" />
+          <Bar theme={theme} className="h-7 w-48" />
+          <Bar theme={theme} className="h-4 w-28" />
+          <Bar theme={theme} className="h-4 w-full max-w-xl" />
         </div>
       </div>
       <div className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="rounded-2xl border border-white/5 bg-black/20 p-5">
-            <Bar className="h-7 w-16" />
-            <Bar className="mt-2 h-3 w-20" />
+          <div
+            key={i}
+            className={`rounded-2xl border p-5 ${
+              isDark ? "border-white/5 bg-black/20" : "border-gray-100 bg-gray-50"
+            }`}
+          >
+            <Bar theme={theme} className="h-7 w-16" />
+            <Bar theme={theme} className="mt-2 h-3 w-20" />
           </div>
         ))}
       </div>
@@ -2332,22 +2534,105 @@ function ProfileSkeleton() {
   );
 }
 
-function SkillsSkeleton() {
+export function SkillsSkeleton({ theme = "dark" }: { theme?: "dark" | "light" }) {
+  const isDark = theme === "dark";
   return (
-    <div className="mt-6 rounded-3xl border border-white/10 bg-white/[0.035] p-6 sm:p-8">
-      <Bar className="h-4 w-32" />
-      <Bar className="mt-3 h-7 w-56" />
-      <div className="mt-8 grid gap-5 sm:grid-cols-2">
+    <div
+      data-testid="skills-skeleton"
+      className={`mt-6 rounded-3xl border p-5 sm:p-8 ${
+        isDark ? "border-white/10 bg-white/[0.035]" : "border-gray-200 bg-white shadow-sm"
+      }`}
+    >
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
+        <div>
+          <Bar theme={theme} className="h-4 w-32" />
+          <Bar theme={theme} className="mt-2 h-7 w-56" />
+          <Bar theme={theme} className="mt-2 h-4 w-72 max-w-full" />
+        </div>
+        <Bar theme={theme} className="h-4 w-36" />
+      </div>
+
+      <div className="mt-6 flex flex-wrap gap-2">
+        {[0, 1, 2, 3, 4].map((i) => (
+          <Bar key={i} theme={theme} className="h-8 w-20 rounded-xl" />
+        ))}
+      </div>
+
+      <div className="mt-8 grid gap-4 sm:grid-cols-2 sm:gap-5">
         {[0, 1, 2, 3].map((i) => (
-          <div key={i} className="rounded-2xl border border-white/5 bg-black/20 p-5">
+          <div
+            key={i}
+            className={`rounded-2xl border p-5 ${
+              isDark ? "border-white/5 bg-black/20" : "border-gray-100 bg-gray-50"
+            }`}
+          >
             <div className="flex items-center justify-between">
               <div className="space-y-2">
-                <Bar className="h-4 w-24" />
-                <Bar className="h-3 w-16" />
+                <Bar theme={theme} className="h-4 w-24" />
+                <Bar theme={theme} className="h-3 w-16" />
               </div>
-              <Bar className="h-6 w-12" />
+              <Bar theme={theme} className="h-6 w-12" />
             </div>
-            <Bar className="mt-5 h-1.5 w-full" />
+            <Bar theme={theme} className="mt-5 h-2 w-full rounded-full" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function IssuesSkeleton({ theme = "dark" }: { theme?: "dark" | "light" }) {
+  const isDark = theme === "dark";
+  return (
+    <div
+      data-testid="issues-skeleton"
+      className={`mt-6 rounded-3xl border p-5 sm:p-8 ${
+        isDark ? "border-purple-500/20 bg-white/[0.035]" : "border-purple-200 bg-white shadow-sm"
+      }`}
+    >
+      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
+        <div>
+          <Bar theme={theme} className="h-5 w-32 rounded-full" />
+          <Bar theme={theme} className="mt-3 h-8 w-80 max-w-full" />
+          <Bar theme={theme} className="mt-2 h-4 w-96 max-w-full" />
+        </div>
+        <Bar theme={theme} className="h-4 w-40" />
+      </div>
+
+      <div
+        className={`mt-6 rounded-2xl border p-4 ${
+          isDark ? "border-white/5 bg-black/20" : "border-gray-100 bg-gray-50"
+        }`}
+      >
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <div key={i} className="space-y-2">
+              <Bar theme={theme} className="h-3 w-20" />
+              <Bar theme={theme} className="h-9 w-full rounded-xl" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-6 space-y-4">
+        {[0, 1, 2].map((i) => (
+          <div
+            key={i}
+            className={`rounded-2xl border p-5 ${
+              isDark ? "border-white/5 bg-black/20" : "border-gray-100 bg-gray-50"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <Bar theme={theme} className="h-4 w-44" />
+              <Bar theme={theme} className="h-6 w-16 rounded-full" />
+            </div>
+            <Bar theme={theme} className="mt-3 h-5 w-4/5" />
+            <Bar theme={theme} className="mt-2 h-4 w-2/3" />
+            <div className="mt-4 flex gap-2">
+              <Bar theme={theme} className="h-6 w-20 rounded-md" />
+              <Bar theme={theme} className="h-6 w-24 rounded-md" />
+              <Bar theme={theme} className="h-6 w-16 rounded-md" />
+            </div>
           </div>
         ))}
       </div>
