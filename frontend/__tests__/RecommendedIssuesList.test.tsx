@@ -104,7 +104,7 @@ describe("RecommendedIssuesList Component", () => {
   it("filters issues by search query in title or repository", () => {
     render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} />);
 
-    const searchInput = screen.getByLabelText(/Filter issues by title or repository/i);
+    const searchInput = screen.getByLabelText(/Filter issues by title, repository, or labels/i);
     fireEvent.change(searchInput, { target: { value: "ripgrep" } });
 
     expect(screen.getByText("BurntSushi/ripgrep")).toBeInTheDocument();
@@ -114,7 +114,7 @@ describe("RecommendedIssuesList Component", () => {
   it("renders filter empty state when no issues match filter and allows reset", () => {
     render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} />);
 
-    const searchInput = screen.getByLabelText(/Filter issues by title or repository/i);
+    const searchInput = screen.getByLabelText(/Filter issues by title, repository, or labels/i);
     fireEvent.change(searchInput, { target: { value: "nonexistent-query-string-xyz" } });
 
     expect(screen.getByTestId("filter-empty-state")).toBeInTheDocument();
