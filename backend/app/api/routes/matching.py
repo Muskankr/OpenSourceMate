@@ -17,6 +17,7 @@ from app.services.program_service import (
     get_program_by_id_or_name,
     issue_matches_program,
 )
+from app.services.related_skills_service import get_related_skill_suggestions
 from app.services.skill_service import analyze_skills
 from app.utils.validation import is_valid_skill, validate_github_username
 
@@ -345,3 +346,71 @@ async def explain_recommendation(payload: dict):
     if not issue:
         raise HTTPException(status_code=400, detail="Missing issue data")
     return await generate_issue_match_explanation(issue, user_skills)
+
+
+@router.get(
+    "/users/{username}/skill-unlocks",
+    summary="Get related skill suggestions that unlock additional open issues (Issue #401)",
+    description=(
+        "Identifies nearby companion skills based on the user's detected skills "
+        "and counts how many additional open issues each related skill would unlock. "
+        "Returns the top three suggestions excluding already acquired skills."
+    ),
+)
+async def get_user_skill_unlocks(
+    username: str,
+    skills: list[str] | None = Query(default=None, description="Optional skills override"),
+    limit: int = Query(default=3, ge=1, le=10, description="Max suggestions to return (default: 3)"),
+):
+    validated_username = validate_github_username(username)
+
+    explicit_skills: list[str] | None = None
+    if skills is not None:
+        explicit_skills = []
+        for s in skills:
+            parts = [p.strip() for p in s.split(",") if p.strip()]
+            for p in parts:
+                if is_valid_skill(p) and p not in explicit_skills:
+                    explicit_skills.append(p)
+
+    if explicit_skills is not None:
+        user_skills = explicit_skills
+    else:
+        repositories = await get_user_repositories(validated_username)
+        if repositories is None:
+            raise HTTPException(
+                status_code=404,
+                detail="GitHub user not found",
+            )
+        skill_data = analyze_skills(repositories)
+        user_skills = [s["name"] for s in skill_data.get("skills", [])]
+
+    result = get_related_skill_suggestions(user_skills=user_skills, limit=limit)
+    return {
+        "username": validated_username,
+        "user_skills": user_skills,
+        **result,
+    }
+
+
+@router.get(
+    "/skill-unlocks",
+    summary="Get related skill suggestions for arbitrary skills (Issue #401)",
+)
+async def get_arbitrary_skill_unlocks(
+    skills: list[str] = Query(default=[], description="Skills list"),
+    limit: int = Query(default=3, ge=1, le=10),
+):
+    explicit_skills: list[str] = []
+    for s in skills:
+        parts = [p.strip() for p in s.split(",") if p.strip()]
+        for p in parts:
+            if is_valid_skill(p) and p not in explicit_skills:
+                explicit_skills.append(p)
+
+    result = get_related_skill_suggestions(user_skills=explicit_skills, limit=limit)
+    return {
+        "user_skills": explicit_skills,
+        **result,
+    }
+
