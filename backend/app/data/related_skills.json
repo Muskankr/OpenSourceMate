@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Related Skills Mapping",
+  "description": "Configurable mapping of related companion skills that unlock new open-source contribution opportunities (Issue #401). Adding a new skill relationship needs only a config change.",
+  "version": "1.0.0",
+  "mappings": {
+    "JavaScript": [
+      "TypeScript",
+      "React",
+      "Node.js",
+      "Next.js",
+      "Vue"
+    ],
+    "Python": [
+      "FastAPI",
+      "Django",
+      "Flask",
+      "PyTorch",
+      "pandas"
+    ],
+    "TypeScript": [
+      "Next.js",
+      "React",
+      "Node.js",
+      "NestJS",
+      "GraphQL"
+    ],
+    "React": [
+      "Next.js",
+      "TypeScript",
+      "Tailwind CSS",
+      "Redux",
+      "React Native"
+    ],
+    "Node.js": [
+      "Express",
+      "NestJS",
+      "TypeScript",
+      "Prisma",
+      "PostgreSQL"
+    ],
+    "Express": [
+      "NestJS",
+      "TypeScript",
+      "MongoDB",
+      "PostgreSQL",
+      "Docker"
+    ],
+    "Vue": [
+      "Nuxt.js",
+      "TypeScript",
+      "Pinia",
+      "Tailwind CSS",
+      "Vite"
+    ],
+    "Angular": [
+      "TypeScript",
+      "RxJS",
+      "NgRx",
+      "NestJS",
+      "Tailwind CSS"
+    ],
+    "Svelte": [
+      "SvelteKit",
+      "TypeScript",
+      "Tailwind CSS",
+      "Vite"
+    ],
+    "Go": [
+      "Docker",
+      "Kubernetes",
+      "gRPC",
+      "Gin",
+      "Prometheus"
+    ],
+    "Rust": [
+      "WebAssembly",
+      "Tokio",
+      "Actix Web",
+      "Axum",
+      "Tauri"
+    ],
+    "Java": [
+      "Spring Boot",
+      "Kotlin",
+      "Micronaut",
+      "Quarkus",
+      "Gradle"
+    ],
+    "Kotlin": [
+      "Android",
+      "Jetpack Compose",
+      "Ktor",
+      "Coroutines",
+      "Spring Boot"
+    ],
+    "C++": [
+      "CMake",
+      "Rust",
+      "Qt",
+      "Boost"
+    ],
+    "C#": [
+      ".NET",
+      "ASP.NET Core",
+      "Blazor",
+      "Unity",
+      "Azure"
+    ],
+    "PHP": [
+      "Laravel",
+      "Symfony",
+      "WordPress",
+      "Composer"
+    ],
+    "Ruby": [
+      "Ruby on Rails",
+      "RSpec",
+      "Sidekiq",
+      "PostgreSQL"
+    ],
+    "Swift": [
+      "SwiftUI",
+      "Combine",
+      "iOS",
+      "CoreData"
+    ]
+  }
+}

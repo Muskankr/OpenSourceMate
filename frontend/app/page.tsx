@@ -1444,15 +1444,18 @@ export default function Home() {
                     />
 
                     {activeSkills.length === 0 ? (
-                      <div
-                        data-testid="no-skills-empty-state"
-                        className={`mt-6 rounded-2xl border border-dashed p-8 text-center ${
-                          theme === "dark" ? "border-white/10" : "border-gray-300"
-                        }`}
-                      >
-                        <p className={theme === "dark" ? "text-gray-300" : "text-gray-600"}>
-                          All skills have been removed. Add skills above to see matching issues.
-                        </p>
+                      <div className="space-y-6 mt-6">
+                        <div
+                          data-testid="no-skills-empty-state"
+                          className={`rounded-2xl border border-dashed p-8 text-center ${
+                            theme === "dark" ? "border-white/10" : "border-gray-300"
+                          }`}
+                        >
+                          <p className={theme === "dark" ? "text-gray-300" : "text-gray-600"}>
+                            All skills have been removed. Add skills above to see matching issues.
+                          </p>
+                        </div>
+                        <SkillsToLearn skills={[]} theme={theme} />
                       </div>
                     ) : (
                       <>
@@ -1479,7 +1482,12 @@ export default function Home() {
                           })}
                         </div>
 
-                        <SkillsToLearn skills={activeSkills} theme={theme} className="mt-8" />
+                        <SkillsToLearn
+                          skills={activeSkills}
+                          theme={theme}
+                          className="mt-8"
+                          issuesPool={recommendations}
+                        />
                       </>
                     )}
                   </div>

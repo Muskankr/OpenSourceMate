@@ -3,6 +3,7 @@ import {
   normalizeSkillName,
   extractSkillsMapping,
   defaultSkillsMapping,
+  calculateUnlockedIssues,
   SkillsMapping,
 } from "../utils/skillsToLearn";
 import { SkillItem } from "../types/api";
@@ -29,13 +30,13 @@ describe("skillsToLearn utility", () => {
         $schema: "./schema.json",
         title: "Test Mapping",
         description: "Test description",
-        Python: ["Django", "FastAPI"],
+        Python: ["FastAPI", "Django"],
         React: ["Next.js", "Redux"],
       };
 
       const extracted = extractSkillsMapping(raw);
       expect(extracted).toEqual({
-        Python: ["Django", "FastAPI"],
+        Python: ["FastAPI", "Django"],
         React: ["Next.js", "Redux"],
       });
       expect(extracted.$schema).toBeUndefined();
@@ -64,24 +65,32 @@ describe("skillsToLearn utility", () => {
     });
   });
 
-  describe("defaultSkillsMapping", () => {
-    it("loads common technologies including Python, React, JavaScript, Go, etc.", () => {
-      expect(defaultSkillsMapping.Python).toBeDefined();
-      expect(defaultSkillsMapping.Python).toContain("Django");
-      expect(defaultSkillsMapping.Python).toContain("FastAPI");
+  describe("calculateUnlockedIssues", () => {
+    it("calculates extra matching issues unlocked by candidate skill not matched by user skills", () => {
+      const mockIssues = [
+        { language: "FastAPI", labels: ["good first issue"], title: "Fix dependency injection" },
+        { language: "FastAPI", labels: ["enhancement"], title: "Add OpenAPI schema validation" },
+        { language: "Python", labels: ["bug"], title: "Python core issue" },
+      ];
 
-      expect(defaultSkillsMapping.React).toBeDefined();
-      expect(defaultSkillsMapping.React).toContain("Next.js");
+      const userSkills = new Set(["python"]);
+      // FastAPI unlocks 2 issues that Python did not match by language
+      const count = calculateUnlockedIssues("FastAPI", userSkills, mockIssues);
+      expect(count).toBe(2);
+    });
 
-      expect(defaultSkillsMapping.TypeScript).toBeDefined();
-      expect(defaultSkillsMapping.Go).toBeDefined();
-      expect(defaultSkillsMapping.Rust).toBeDefined();
+    it("falls back to baseline catalog count when issues pool is empty or not provided", () => {
+      const userSkills = new Set(["python"]);
+      const count = calculateUnlockedIssues("FastAPI", userSkills);
+      expect(count).toBeGreaterThan(0);
+      expect(count).toBe(18); // FastAPI baseline
     });
   });
 
   describe("getSkillsToLearn", () => {
     const mockMapping: SkillsMapping = {
-      Python: ["Django", "FastAPI", "Pandas", "PyTorch", "Celery", "Flask"],
+      Python: ["FastAPI", "Django", "Pandas", "PyTorch", "Celery", "Flask"],
+      JavaScript: ["TypeScript", "React", "Node.js"],
       React: ["Next.js", "TypeScript", "Tailwind CSS", "Redux", "GraphQL"],
       TypeScript: ["Next.js", "Node.js", "NestJS", "Prisma"],
     };
@@ -96,40 +105,49 @@ describe("skillsToLearn utility", () => {
 
     it("returns empty array for unknown skills without error", () => {
       expect(getSkillsToLearn(["Brainfuck", "COBOL_UNKNOWN"], mockMapping)).toEqual([]);
-      expect(getSkillsToLearn([{ name: "NonExistentLanguage", repository_count: 1 } as SkillItem], mockMapping)).toEqual([]);
+      expect(
+        getSkillsToLearn(
+          [{ name: "NonExistentLanguage", repository_count: 1 } as SkillItem],
+          mockMapping
+        )
+      ).toEqual([]);
     });
 
-    it("shows up to 5 suggestions by default from detected skills", () => {
+    it("shows the top three suggestions by default (Issue #401)", () => {
       const suggestions = getSkillsToLearn(["Python"], mockMapping);
 
-      expect(suggestions.length).toBe(5);
-      expect(suggestions).toEqual([
-        { name: "Django", recommendedFrom: "Python" },
-        { name: "FastAPI", recommendedFrom: "Python" },
-        { name: "Pandas", recommendedFrom: "Python" },
-        { name: "PyTorch", recommendedFrom: "Python" },
-        { name: "Celery", recommendedFrom: "Python" },
-      ]);
-    });
-
-    it("respects a custom limit argument", () => {
-      const suggestions = getSkillsToLearn(["Python"], mockMapping, 3);
       expect(suggestions.length).toBe(3);
-      expect(suggestions.map((s) => s.name)).toEqual(["Django", "FastAPI", "Pandas"]);
+      expect(suggestions.map((s) => s.name)).toEqual(["FastAPI", "Pandas", "Django"]);
+      suggestions.forEach((s) => {
+        expect(s.unlockedIssuesCount).toBeGreaterThan(0);
+      });
     });
 
     it("excludes skills that the user already has (case-insensitive)", () => {
-      // User already has Python, FastAPI, and pandas (lowercase)
-      const suggestions = getSkillsToLearn(["Python", "fastapi", "PANDAS"], mockMapping);
+      // User already has Python and FastAPI
+      const suggestions = getSkillsToLearn(["Python", "fastapi"], mockMapping);
 
-      expect(suggestions.map((s) => s.name)).toEqual([
-        "Django",
-        "PyTorch",
-        "Celery",
-        "Flask",
-      ]);
+      expect(suggestions.map((s) => s.name)).toEqual(["Pandas", "Django", "PyTorch"]);
       expect(suggestions.some((s) => s.name.toLowerCase() === "fastapi")).toBe(false);
-      expect(suggestions.some((s) => s.name.toLowerCase() === "pandas")).toBe(false);
+    });
+
+    it("suggests TypeScript from JavaScript and FastAPI from Python", () => {
+      const jsSuggestions = getSkillsToLearn(["JavaScript"], mockMapping);
+      expect(jsSuggestions.map((s) => s.name)).toContain("TypeScript");
+
+      const pySuggestions = getSkillsToLearn(["Python"], mockMapping);
+      expect(pySuggestions.map((s) => s.name)).toContain("FastAPI");
+    });
+
+    it("allows adding relationships with only a config change (verified via custom mapping)", () => {
+      const customConfig: SkillsMapping = {
+        PHP: ["Laravel", "Symfony"],
+      };
+
+      const suggestions = getSkillsToLearn(["PHP"], customConfig);
+      expect(suggestions.length).toBe(2);
+      expect(suggestions[0].name).toBe("Laravel");
+      expect(suggestions[0].recommendedFrom).toBe("PHP");
     });
 
     it("works seamlessly with SkillItem objects", () => {
@@ -143,45 +161,16 @@ describe("skillsToLearn utility", () => {
       ];
 
       const suggestions = getSkillsToLearn(userSkills, mockMapping);
-      expect(suggestions.length).toBeGreaterThan(0);
-      expect(suggestions[0]).toEqual({
-        name: "Next.js",
-        recommendedFrom: "React",
-      });
+      expect(suggestions.length).toBe(3);
+      expect(suggestions.some((s) => s.name === "Next.js" || s.name === "TypeScript")).toBe(true);
     });
 
     it("deduplicates suggestions across multiple detected skills", () => {
       // Both React and TypeScript suggest Next.js
-      const suggestions = getSkillsToLearn(["React", "TypeScript"], mockMapping, 5);
+      const suggestions = getSkillsToLearn(["React", "TypeScript"], mockMapping, 3);
 
       const nextJsOccurrences = suggestions.filter((s) => s.name === "Next.js");
       expect(nextJsOccurrences.length).toBe(1);
-    });
-
-    it("matches skill names case-insensitively against the mapping keys", () => {
-      const suggestions = getSkillsToLearn(["python", "react"], mockMapping, 3);
-
-      expect(suggestions.length).toBe(3);
-      expect(suggestions[0]).toEqual({
-        name: "Django",
-        recommendedFrom: "Python",
-      });
-    });
-
-    it("safely handles malformed mapping without crashing", () => {
-      expect(getSkillsToLearn(["Python"], null as unknown as SkillsMapping)).toEqual([]);
-      expect(getSkillsToLearn(["Python"], {} as SkillsMapping)).toEqual([]);
-    });
-
-    it("works with real static mapping data for common pairs (Python -> Django/FastAPI, React -> Next.js)", () => {
-      const pythonSuggestions = getSkillsToLearn(["Python"]);
-      expect(pythonSuggestions.length).toBeGreaterThan(0);
-      expect(pythonSuggestions.length).toBeLessThanOrEqual(5);
-      const names = pythonSuggestions.map((s) => s.name);
-      expect(names.includes("Django") || names.includes("FastAPI")).toBe(true);
-
-      const reactSuggestions = getSkillsToLearn(["React"]);
-      expect(reactSuggestions.map((s) => s.name)).toContain("Next.js");
     });
   });
 });

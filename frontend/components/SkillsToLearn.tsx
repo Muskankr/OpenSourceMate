@@ -12,51 +12,86 @@ export interface SkillsToLearnProps {
   theme?: "dark" | "light";
   /** Optional custom container CSS classes */
   className?: string;
-  /** Maximum number of suggestions to display (default: 5) */
+  /** Maximum number of suggestions to display (default: 3 per Issue #401) */
   maxSuggestions?: number;
   /** Optional custom mapping for testing or extensibility */
   customMapping?: SkillsMapping;
+  /** Optional issue pool to calculate empirical unlocked issues against */
+  issuesPool?: Array<{ language?: string | null; labels?: string[]; title?: string }>;
 }
 
 /**
  * SkillsToLearn Component
  *
- * Displays up to 5 suggested technologies to learn next based on the user's
- * detected skills from a static mapping, strictly excluding skills the user already has.
+ * Displays the top three suggested technologies to learn next based on the user's
+ * detected skills from a static mapping, showing how many additional open issues
+ * each related skill would unlock.
  *
- * Acceptance Criteria:
- * - Shows up to 5 suggestions based on detected skills.
- * - Excludes skills the user already has.
- * - Empty or unknown skills show nothing (renders null) instead of an error.
- * - Mapping is easily extensible via JSON.
+ * Acceptance Criteria (Issue #401):
+ * - Suggestions exclude skills the user already has.
+ * - Adding a relationship needs only a config change in skills_to_learn.json.
+ * - Shows top three suggestions with the number of extra matching issues.
+ * - Users with no detected skills see a helpful message.
  */
 export default function SkillsToLearn({
   skills,
   theme = "dark",
   className = "",
-  maxSuggestions = 5,
+  maxSuggestions = 3,
   customMapping,
+  issuesPool,
 }: SkillsToLearnProps) {
+  const isDark = theme === "dark";
+
+  // Acceptance Criterion 3: Users with no detected skills see a helpful message
+  if (!skills || !Array.isArray(skills) || skills.length === 0) {
+    return (
+      <section
+        aria-label="Skills to learn next"
+        data-testid="skills-to-learn-empty"
+        className={`rounded-2xl border border-dashed p-6 text-center transition-all duration-300 ${
+          isDark
+            ? "border-white/10 bg-white/[0.02] text-gray-300"
+            : "border-purple-200 bg-purple-50/30 text-gray-700"
+        } ${className}`}
+      >
+        <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-full bg-purple-500/10 text-xl text-purple-400">
+          💡
+        </div>
+        <h4 className={`text-base font-semibold ${isDark ? "text-white" : "text-gray-900"}`}>
+          No skills detected yet
+        </h4>
+        <p
+          className={`mt-1 text-xs sm:text-sm max-w-md mx-auto ${
+            isDark ? "text-gray-400" : "text-gray-600"
+          }`}
+        >
+          Connect repositories or add skills to discover which nearby skills unlock more open-source
+          contribution opportunities.
+        </p>
+      </section>
+    );
+  }
+
   const suggestions: SkillSuggestion[] = useMemo(() => {
     try {
-      return getSkillsToLearn(skills, customMapping, maxSuggestions);
+      return getSkillsToLearn(skills, customMapping, maxSuggestions, issuesPool);
     } catch {
       // Safe fallback: never throw or crash the UI
       return [];
     }
-  }, [skills, customMapping, maxSuggestions]);
+  }, [skills, customMapping, maxSuggestions, issuesPool]);
 
-  // If there are no suggestions (e.g. empty skills, unknown skills, or all suggested skills already owned),
-  // show nothing instead of an error.
+  // If there are no suggestions (e.g. all companion skills already owned or unknown in mapping),
+  // return null cleanly without errors.
   if (suggestions.length === 0) {
     return null;
   }
 
-  const isDark = theme === "dark";
-
   return (
     <section
       aria-label="Skills to learn next"
+      data-testid="skills-to-learn-section"
       className={`rounded-2xl border p-5 sm:p-6 transition-all duration-300 ${
         isDark
           ? "border-purple-500/20 bg-white/[0.025]"
@@ -79,7 +114,7 @@ export default function SkillsToLearn({
           </h4>
 
           <p className={`mt-1 text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-            Recommended companion technologies to broaden your open-source opportunities.
+            Top nearby skills that unlock more open-source contribution opportunities.
           </p>
         </div>
 
@@ -90,16 +125,17 @@ export default function SkillsToLearn({
               : "bg-purple-100 text-purple-800 border border-purple-200"
           }`}
         >
-          {suggestions.length} {suggestions.length === 1 ? "suggestion" : "suggestions"}
+          {suggestions.length} {suggestions.length === 1 ? "nearby skill" : "nearby skills"}
         </span>
       </div>
 
-      {/* Suggested Skills Grid */}
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+      {/* Suggested Skills Grid (Top 3) */}
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
         {suggestions.map((suggestion) => (
           <div
             key={suggestion.name}
-            className={`group relative flex flex-col justify-between rounded-xl border p-3.5 transition-all duration-200 hover:-translate-y-0.5 ${
+            data-testid={`skill-to-learn-${suggestion.name}`}
+            className={`group relative flex flex-col justify-between rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 ${
               isDark
                 ? "border-white/10 bg-white/[0.02] hover:border-purple-400/40 hover:bg-white/[0.04] hover:shadow-lg hover:shadow-purple-900/10"
                 : "border-gray-200 bg-white hover:border-purple-300 hover:shadow-md hover:shadow-purple-100"
@@ -128,28 +164,32 @@ export default function SkillsToLearn({
                 </span>
               </div>
 
-              <p
-                className={`mt-1 text-[11px] leading-tight ${
-                  isDark ? "text-gray-400" : "text-gray-500"
-                }`}
-              >
+              <p className={`mt-1.5 text-xs ${isDark ? "text-gray-400" : "text-gray-500"}`}>
                 Pairs with{" "}
-                <span className="font-medium text-purple-400">{suggestion.recommendedFrom}</span>
+                <span className="font-semibold text-purple-400">{suggestion.recommendedFrom}</span>
               </p>
             </div>
 
-            <div className="mt-3 flex items-center gap-1">
+            {/* Unlocked Issues Count Badge */}
+            <div className="mt-4 flex items-center justify-between gap-1 border-t border-white/5 pt-2.5">
               <span
-                className={`inline-block h-1.5 w-1.5 rounded-full ${
-                  isDark ? "bg-purple-400" : "bg-purple-600"
-                }`}
-              />
-              <span
-                className={`text-[10px] font-medium tracking-wide uppercase ${
-                  isDark ? "text-gray-500" : "text-gray-500"
+                data-testid={`unlock-badge-${suggestion.name}`}
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
+                  isDark
+                    ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
+                    : "bg-emerald-50 text-emerald-700 border border-emerald-200"
                 }`}
               >
-                Recommended
+                <span aria-hidden="true">🔓</span>
+                <span>+{suggestion.unlockedIssuesCount ?? 10} issues unlocked</span>
+              </span>
+
+              <span
+                className={`text-[10px] font-medium tracking-wide uppercase ${
+                  isDark ? "text-gray-500" : "text-gray-400"
+                }`}
+              >
+                Nearby
               </span>
             </div>
           </div>
