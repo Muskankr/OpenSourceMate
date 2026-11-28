@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type React from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import ServiceWorkerRegistration from "../components/ServiceWorkerRegistration";
+import { I18nProvider } from "../utils/i18n";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -121,7 +122,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-full flex flex-col">
         <ServiceWorkerRegistration />
-        {children}
+        <I18nProvider>{children}</I18nProvider>
       </body>
     </html>
   );

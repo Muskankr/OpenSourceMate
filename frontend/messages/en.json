@@ -4,63 +4,125 @@
     "tagline": "AI-Powered Open-Source Matchmaking",
     "theme": {
       "toggleToLight": "Switch to light mode",
-      "toggleToDark": "Switch to dark mode"
+      "toggleToDark": "Switch to dark mode",
+      "system": "System"
     },
     "language": {
       "select": "Language",
       "en": "English",
-      "hi": "हिन्दी (Hindi)"
+      "hi": "हिन्दी"
+    },
+    "offline": {
+      "title": "You are currently offline.",
+      "viewingCached": "Viewing cached results for @{username} from {time} ({relativeTime}).",
+      "viewingCachedGeneric": "Viewing cached results from {time} ({relativeTime}).",
+      "offlineDescription": "Connect to the internet to analyze GitHub profiles and discover new recommendations.",
+      "retryConnection": "Retry Connection",
+      "checking": "Checking...",
+      "backOnline": "Back Online!",
+      "refreshLive": "Refresh Live Data",
+      "cachedResult": "Cached Result",
+      "cachedRecommendations": "Cached recommendations from {time}",
+      "openLastCached": "Open last cached result (@{username})",
+      "viewCachedUser": "View cached @{username}",
+      "cannotAnalyzeOffline": "You are currently offline. Cannot analyze @{username} without an internet connection."
     }
   },
   "nav": {
-    "analyzer": "Profile Analyzer",
-    "howItWorks": "How It Works",
+    "analyzer": "Analyzer",
+    "howItWorks": "How it works",
     "compare": "Compare",
     "contribute": "Contribute",
-    "faq": "FAQ"
+    "faq": "FAQ",
+    "skipLink": "Skip to main content",
+    "menuOpen": "Open navigation menu",
+    "menuClose": "Close navigation menu"
   },
   "hero": {
-    "badge": "AI-Powered Open-Source Matchmaking",
-    "titlePrefix": "Turn your GitHub history into",
-    "titleHighlight": "meaningful open-source contributions",
-    "subtitle": "OpenSourceMate analyzes your repositories, extracts technical skills, estimates proficiency, and matches you with beginner-friendly issues tailored to your exact developer profile.",
-    "ctaAnalyze": "Analyze Your Profile",
-    "ctaCompare": "Compare Developers"
+    "badge": "Open-source contribution discovery",
+    "titlePrefix": "Find the open-source issues",
+    "titleHighlight": "that fit your skills.",
+    "subtitle": "OpenSourceMate analyzes your GitHub profile and technical experience to help you discover meaningful open-source contribution opportunities.",
+    "ctaAnalyze": "Analyze My GitHub →",
+    "ctaCompare": "Compare Developers",
+    "tryExample": "Try an example:",
+    "noLoginRequired": "No GitHub login required • Public profile data only"
   },
   "howItWorks": {
-    "badge": "Step-by-step",
-    "title": "How OpenSourceMate Works",
-    "subtitle": "A three-stage intelligent pipeline that bridges your existing coding experience with real open-source contribution opportunities.",
+    "badge": "HOW IT WORKS",
+    "title": "From profile to contribution",
+    "subtitle": "A simple workflow designed to remove the guesswork from getting started with open source.",
     "step1": {
       "number": "01",
       "badge": "Ingestion",
-      "title": "Analyze GitHub Repositories",
-      "desc": "Fetches public repositories, detects languages, dependencies (package.json, requirements.txt, pyproject.toml), and repository topics."
+      "title": "Analyze your profile",
+      "desc": "Connect your public GitHub profile and understand your existing technical experience."
     },
     "step2": {
       "number": "02",
       "badge": "Inference",
-      "title": "Extract & Weight Skills",
-      "desc": "Filters noise languages (Dockerfiles, Makefiles, Jupyter), consolidates ecosystems, and calculates recency-based proficiency."
+      "title": "Understand your skills",
+      "desc": "OpenSourceMate analyzes your repositories to identify the technologies you already work with."
     },
     "step3": {
       "number": "03",
       "badge": "Recommendation",
-      "title": "Discover Matched Issues",
-      "desc": "Scores open issues using TF-IDF term weighting and semantic similarity, surfacing good-first-issues that align with your stack."
+      "title": "Discover contribution opportunities",
+      "desc": "Explore recommended issues and contribution areas matched to your skills (issue matching engine currently in active development)."
     }
   },
   "analyzer": {
     "title": "GitHub Profile Analyzer",
-    "inputPlaceholder": "Enter GitHub username (e.g., octocat)",
+    "inputPlaceholder": "Enter your GitHub username",
+    "inputAriaLabel": "GitHub username",
     "analyzeButton": "Analyze Profile",
-    "analyzing": "Analyzing Profile...",
+    "analyzing": "Analyzing...",
     "recentSearches": "Recent Searches",
-    "clearAll": "Clear All"
+    "clearAll": "Clear All",
+    "retry": "Retry"
+  },
+  "profile": {
+    "heading": "PROFILE ANALYSIS",
+    "title": "Your developer profile",
+    "subtitle": "Here's what OpenSourceMate discovered from your GitHub activity.",
+    "copyLink": "Copy link",
+    "linkCopied": "Link copied",
+    "refresh": "Refresh",
+    "technicalProfile": "TECHNICAL PROFILE",
+    "technicalSkills": "Your technical skills",
+    "detectedSkillsDesc": "Detected from your public GitHub repositories.",
+    "skillsToLearn": "Skills To Learn Next"
+  },
+  "recommendations": {
+    "badge": "MATCHED ISSUES",
+    "title": "Recommended contribution opportunities",
+    "subtitle": "Opportunities matching your skills and experience, ranked by compatibility score.",
+    "showingCount": "Showing {filtered} of {total} issues",
+    "hideHidden": "Hide hidden",
+    "showHidden": "Show hidden ({count})",
+    "filterLanguage": "Language",
+    "allLanguages": "All Languages",
+    "filterLabel": "Label",
+    "allLabels": "All Labels",
+    "goodFirstIssue": "Good First Issue",
+    "helpWanted": "Help Wanted",
+    "filterProgram": "Program",
+    "allPrograms": "All Programs",
+    "minScore": "Min Score: {score}%",
+    "searchPlaceholder": "Search issues by title or repository...",
+    "clearFilters": "Clear filters",
+    "noIssuesMatch": "No issues match your current filters.",
+    "resetFiltersPrompt": "Try resetting filters to view all recommended contribution opportunities.",
+    "learningMode": "Learning Mode",
+    "targetSkills": "Target Skills",
+    "learningModeDesc": "Prioritizing issues in skills you want to learn."
   },
   "footer": {
-    "license": "MIT License",
-    "privacy": "Privacy Policy",
-    "contributing": "Contributing Guide"
+    "license": "Open source under MIT License",
+    "privacy": "Privacy & Data Handling",
+    "contributing": "Contributing Guide",
+    "builtWith": "Built for the open-source community.",
+    "viewRepo": "View Repository ↗",
+    "takeTour": "Take the tour"
   }
 }

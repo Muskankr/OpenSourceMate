@@ -57,7 +57,9 @@ import { analyzerReducer, initialAnalyzerState, type AnalyzerData } from "../uti
 import BuildVersionBadge from "../components/BuildVersionBadge";
 import ContributorsWall from "../components/ContributorsWall";
 import OfflineBanner from "../components/OfflineBanner";
+import LanguageSwitcher from "../components/LanguageSwitcher";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
+import { useI18n } from "../utils/i18n";
 import {
   saveLastAnalysisResult,
   getLastAnalysisResult,
@@ -67,6 +69,7 @@ import {
 } from "../utils/offlineStorage";
 export default function Home() {
   const { theme, themePreference, setThemePreference, toggleTheme } = useTheme();
+  const { t, locale } = useI18n();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -409,10 +412,7 @@ export default function Home() {
     if (!targetUsername) return;
 
     setLoadingMore(true);
-    const skillsToUse =
-      customSkills !== null
-        ? customSkills
-        : skills?.skills.map((s) => s.name);
+    const skillsToUse = customSkills !== null ? customSkills : skills?.skills.map((s) => s.name);
 
     try {
       const matchData = await apiFetchMatchedIssues(targetUsername, {
@@ -430,7 +430,9 @@ export default function Home() {
           saveAnalysisToCache(targetUsername, combined, profile || undefined, skills || undefined);
           return combined;
         });
-        setTotalRecommendations(matchData.total ?? recommendations.length + matchData.recommendations.length);
+        setTotalRecommendations(
+          matchData.total ?? recommendations.length + matchData.recommendations.length
+        );
         setNextCursor(matchData.next_cursor ?? null);
       } else {
         setNextCursor(null);
@@ -767,7 +769,7 @@ export default function Home() {
     <>
       {/* Skip to Main Content Link for Keyboard Accessibility (WCAG 2.1 AA) */}
       <a href="#main-content" className="skip-link">
-        Skip to main content
+        {t("nav.skipLink", "Skip to main content")}
       </a>
 
       <div
@@ -834,7 +836,7 @@ export default function Home() {
                     : "hover:text-purple-400"
                 }`}
               >
-                How it works
+                {t("nav.howItWorks", "How it works")}
               </a>
 
               <a
@@ -846,17 +848,19 @@ export default function Home() {
                     : "hover:text-purple-400"
                 }`}
               >
-                Analyzer
+                {t("nav.analyzer", "Analyzer")}
               </a>
 
               <Link
                 href="/compare"
                 className="rounded-lg px-2 py-1 transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
               >
-                Compare
+                {t("nav.compare", "Compare")}
               </Link>
 
               <GitHubLink className="rounded-lg px-2 py-1 transition hover:text-purple-400" />
+
+              <LanguageSwitcher theme={theme} />
 
               <UserAuthButton theme={theme} />
 
@@ -869,6 +873,8 @@ export default function Home() {
 
             {/* Mobile Hamburger Button */}
             <div className="flex items-center gap-2 md:hidden">
+              <LanguageSwitcher theme={theme} />
+
               <UserAuthButton theme={theme} />
 
               <ThemeSegmentedToggle
@@ -880,7 +886,11 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen((prev) => !prev)}
-                aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+                aria-label={
+                  mobileMenuOpen
+                    ? t("nav.menuClose", "Close navigation menu")
+                    : t("nav.menuOpen", "Open navigation menu")
+                }
                 aria-expanded={mobileMenuOpen}
                 aria-controls="mobile-navigation"
                 className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 p-2 text-gray-400 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
@@ -939,7 +949,7 @@ export default function Home() {
                       : "hover:bg-white/10"
                   }`}
                 >
-                  How it works
+                  {t("nav.howItWorks", "How it works")}
                 </a>
 
                 <a
@@ -952,14 +962,26 @@ export default function Home() {
                       : "hover:bg-white/10"
                   }`}
                 >
-                  Analyzer
+                  {t("nav.analyzer", "Analyzer")}
                 </a>
+
+                <Link
+                  href="/compare"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-xl px-3 py-2 transition hover:bg-white/10"
+                >
+                  {t("nav.compare", "Compare")}
+                </Link>
 
                 <div
                   className="rounded-xl px-3 py-2 transition hover:bg-white/10"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <GitHubLink className="transition hover:text-purple-400" />
+                </div>
+
+                <div className="pt-2 border-t border-white/5">
+                  <LanguageSwitcher theme={theme} className="w-full justify-start py-1" />
                 </div>
               </div>
             </div>
@@ -975,21 +997,24 @@ export default function Home() {
           >
             <div className="mx-auto max-w-5xl text-center">
               <div
-                className={`mb-6 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs sm:text-sm font-medium ${
+                className={`mb-6 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs sm:text-sm font-medium break-words ${
                   theme === "dark"
                     ? "border-white/10 bg-white/[0.04] text-gray-200"
                     : "border-gray-300 bg-white text-gray-800 shadow-sm"
                 }`}
               >
-                <span className="h-2 w-2 rounded-full bg-emerald-400" aria-hidden="true" />
-                Open-source contribution discovery
+                <span
+                  className="h-2 w-2 rounded-full bg-emerald-400 flex-shrink-0"
+                  aria-hidden="true"
+                />
+                {t("hero.badge", "Open-source contribution discovery")}
               </div>
 
               <h1
                 id="hero-heading"
-                className="mx-auto max-w-4xl text-3xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
+                className="mx-auto max-w-4xl text-3xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl break-words"
               >
-                Find the open-source issues
+                {t("hero.titlePrefix", "Find the open-source issues")}{" "}
                 <span
                   className={`block bg-clip-text text-transparent ${
                     theme === "dark"
@@ -997,17 +1022,19 @@ export default function Home() {
                       : "bg-gradient-to-r from-purple-700 via-indigo-800 to-blue-700"
                   }`}
                 >
-                  that fit your skills.
+                  {t("hero.titleHighlight", "that fit your skills.")}
                 </span>
               </h1>
 
               <p
-                className={`mx-auto mt-6 max-w-2xl text-sm leading-6 sm:text-base sm:leading-7 md:text-lg ${
+                className={`mx-auto mt-6 max-w-2xl text-sm leading-6 sm:text-base sm:leading-7 md:text-lg break-words ${
                   theme === "dark" ? "text-gray-300" : "text-gray-700"
                 }`}
               >
-                OpenSourceMate analyzes your GitHub profile and technical experience to help you
-                discover meaningful open-source contribution opportunities.
+                {t(
+                  "hero.subtitle",
+                  "OpenSourceMate analyzes your GitHub profile and technical experience to help you discover meaningful open-source contribution opportunities."
+                )}
               </p>
             </div>
           </section>
@@ -1020,7 +1047,7 @@ export default function Home() {
           >
             <div className="mx-auto max-w-3xl">
               <h2 id="analyzer-heading" className="sr-only">
-                GitHub Profile Analyzer
+                {t("analyzer.title", "GitHub Profile Analyzer")}
               </h2>
 
               <div
@@ -1043,14 +1070,14 @@ export default function Home() {
                     </span>
 
                     <label htmlFor="github-username-input" className="sr-only">
-                      GitHub username
+                      {t("analyzer.inputAriaLabel", "GitHub username")}
                     </label>
 
                     <input
                       ref={usernameInputRef}
                       id="github-username-input"
                       type="text"
-                      placeholder="Enter your GitHub username"
+                      placeholder={t("analyzer.inputPlaceholder", "Enter your GitHub username")}
                       value={username}
                       onChange={(e) => {
                         setUsername(e.target.value);
@@ -1066,7 +1093,7 @@ export default function Home() {
                           analyzeProfile();
                         }
                       }}
-                      aria-label="GitHub username"
+                      aria-label={t("analyzer.inputAriaLabel", "GitHub username")}
                       aria-required="true"
                       aria-invalid={Boolean(error)}
                       aria-describedby={error ? "analyzer-error" : "username-hint"}
@@ -1095,15 +1122,17 @@ export default function Home() {
                     onClick={() => analyzeProfile()}
                     disabled={loading}
                     aria-busy={loading}
-                    className="rounded-2xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:px-7 sm:py-4 sm:text-base"
+                    className="rounded-2xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:px-7 sm:py-4 sm:text-base flex-shrink-0"
                   >
-                    {loading ? "Analyzing..." : "Analyze Profile"}
+                    {loading
+                      ? t("analyzer.analyzing", "Analyzing...")
+                      : t("analyzer.analyzeButton", "Analyze Profile")}
                   </button>
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs">
                   <span className={theme === "dark" ? "text-gray-400" : "text-gray-600"}>
-                    Try an example:
+                    {t("hero.tryExample", "Try an example:")}
                   </span>
                   {["torvalds", "gaearon", "sindresorhus"].map((example) => (
                     <button
@@ -1150,7 +1179,13 @@ export default function Home() {
                           d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
                         />
                       </svg>
-                      <span>Open last cached result (@{cachedData.username})</span>
+                      <span>
+                        {t(
+                          "common.offline.openLastCached",
+                          { username: cachedData.username },
+                          `Open last cached result (@${cachedData.username})`
+                        )}
+                      </span>
                     </button>
                   </div>
                 )}
@@ -1193,7 +1228,7 @@ export default function Home() {
                       onClick={() => analyzeProfile(lastAnalyzed)}
                       className="rounded-lg border border-red-400/40 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
                     >
-                      Retry
+                      {t("analyzer.retry", "Retry")}
                     </button>
                   )}
                   {cachedData && !isOnline && (
@@ -1202,7 +1237,7 @@ export default function Home() {
                       onClick={() => loadCachedAnalysis(cachedData)}
                       className="rounded-lg border border-red-400/40 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
                     >
-                      View cached @{cachedData.username}
+                      {t("common.offline.viewCachedUser", { username: cachedData.username })}
                     </button>
                   )}
                 </div>
@@ -1213,7 +1248,7 @@ export default function Home() {
                   theme === "dark" ? "text-gray-400" : "text-gray-600"
                 }`}
               >
-                No GitHub login required • Public profile data only
+                {t("hero.noLoginRequired", "No GitHub login required • Public profile data only")}
               </p>
             </div>
           </section>
@@ -1245,11 +1280,11 @@ export default function Home() {
                 <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
                   <div>
                     <p className="text-xs font-semibold tracking-wider text-purple-400 uppercase sm:text-sm">
-                      PROFILE ANALYSIS
+                      {t("profile.heading", "PROFILE ANALYSIS")}
                     </p>
 
                     <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
-                      Your developer profile
+                      {t("profile.title", "Your developer profile")}
                     </h2>
 
                     <p
@@ -1257,7 +1292,10 @@ export default function Home() {
                         theme === "dark" ? "text-gray-300" : "text-gray-600"
                       }`}
                     >
-                      Here&apos;s what OpenSourceMate discovered from your GitHub activity.
+                      {t(
+                        "profile.subtitle",
+                        "Here's what OpenSourceMate discovered from your GitHub activity."
+                      )}
                     </p>
 
                     {isViewingCached && cachedFetchedAt && (
@@ -1280,8 +1318,8 @@ export default function Home() {
                           />
                         </svg>
                         <span>
-                          Cached Result • Fetched {formatFetchedAt(cachedFetchedAt)} (
-                          {formatRelativeTime(cachedFetchedAt)})
+                          {t("common.offline.cachedResult", "Cached Result")} • Fetched{" "}
+                          {formatFetchedAt(cachedFetchedAt)} ({formatRelativeTime(cachedFetchedAt)})
                         </span>
                       </div>
                     )}
@@ -1300,7 +1338,9 @@ export default function Home() {
                         onClick={copyShareLink}
                         className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
                       >
-                        {linkCopied ? "Link copied" : "Copy link"}
+                        {linkCopied
+                          ? t("profile.linkCopied", "Link copied")
+                          : t("profile.copyLink", "Copy link")}
                       </button>
                       <button
                         type="button"
@@ -1352,17 +1392,22 @@ export default function Home() {
                     <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
                       <div>
                         <p className="text-xs font-semibold tracking-wider text-purple-400 uppercase sm:text-sm">
-                          TECHNICAL PROFILE
+                          {t("profile.technicalProfile", "TECHNICAL PROFILE")}
                         </p>
 
-                        <h3 className="mt-2 text-2xl font-bold">Your technical skills</h3>
+                        <h3 className="mt-2 text-2xl font-bold">
+                          {t("profile.technicalSkills", "Your technical skills")}
+                        </h3>
 
                         <p
                           className={`mt-2 text-sm ${
                             theme === "dark" ? "text-gray-300" : "text-gray-600"
                           }`}
                         >
-                          Detected from your public GitHub repositories.
+                          {t(
+                            "profile.detectedSkillsDesc",
+                            "Detected from your public GitHub repositories."
+                          )}
                         </p>
                       </div>
 
@@ -1440,11 +1485,12 @@ export default function Home() {
                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                     <div>
                       <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-purple-400/20 bg-purple-400/10 px-3 py-1 text-xs font-medium text-purple-300">
-                        <span aria-hidden="true">🎯</span> MATCHED ISSUES
+                        <span aria-hidden="true">🎯</span>{" "}
+                        {t("recommendations.badge", "MATCHED ISSUES")}
                       </div>
 
                       <h3 className="text-2xl font-bold tracking-tight">
-                        Recommended contribution opportunities
+                        {t("recommendations.title", "Recommended contribution opportunities")}
                       </h3>
 
                       <p
@@ -1452,8 +1498,10 @@ export default function Home() {
                           theme === "dark" ? "text-gray-300" : "text-gray-600"
                         }`}
                       >
-                        Opportunities matching your skills and experience, ranked by compatibility
-                        score.
+                        {t(
+                          "recommendations.subtitle",
+                          "Opportunities matching your skills and experience, ranked by compatibility score."
+                        )}
                       </p>
 
                       {isViewingCached && cachedFetchedAt && (
@@ -1476,7 +1524,11 @@ export default function Home() {
                             />
                           </svg>
                           <span>
-                            Cached recommendations from {formatFetchedAt(cachedFetchedAt)}
+                            {t(
+                              "common.offline.cachedRecommendations",
+                              { time: formatFetchedAt(cachedFetchedAt) },
+                              `Cached recommendations from ${formatFetchedAt(cachedFetchedAt)}`
+                            )}
                           </span>
                         </div>
                       )}
@@ -1489,8 +1541,14 @@ export default function Home() {
                             theme === "dark" ? "text-gray-400" : "text-gray-600"
                           }`}
                         >
-                          Showing {filteredRecommendations.length} of {recommendations.length}{" "}
-                          issues
+                          {t(
+                            "recommendations.showingCount",
+                            {
+                              filtered: filteredRecommendations.length,
+                              total: recommendations.length,
+                            },
+                            `Showing ${filteredRecommendations.length} of ${recommendations.length} issues`
+                          )}
                         </span>
                         {hiddenCount > 0 && (
                           <button
@@ -1498,7 +1556,13 @@ export default function Home() {
                             onClick={() => setShowHidden((value) => !value)}
                             className="rounded text-xs font-medium text-purple-400 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
                           >
-                            {showHidden ? "Hide hidden" : `Show hidden (${hiddenCount})`}
+                            {showHidden
+                              ? t("recommendations.hideHidden", "Hide hidden")
+                              : t(
+                                  "recommendations.showHidden",
+                                  { count: hiddenCount },
+                                  `Show hidden (${hiddenCount})`
+                                )}
                           </button>
                         )}
                       </div>
@@ -1564,7 +1628,7 @@ export default function Home() {
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-                                🌱 Learning Mode
+                                🌱 {t("recommendations.learningMode", "Learning Mode")}
                               </span>
                               {isLearningMode && (
                                 <span
@@ -1674,7 +1738,10 @@ export default function Home() {
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Filter by title or repo..."
+                            placeholder={t(
+                              "recommendations.searchPlaceholder",
+                              "Search issues by title or repository..."
+                            )}
                             className={`mt-1.5 w-full rounded-xl border px-3 py-2 text-xs outline-none transition ${
                               theme === "dark"
                                 ? "border-white/10 bg-white/5 text-white placeholder:text-gray-500 focus:border-purple-400"
@@ -1689,7 +1756,7 @@ export default function Home() {
                             htmlFor="issue-lang-filter"
                             className="block text-xs font-semibold text-gray-400"
                           >
-                            Language
+                            {t("recommendations.filterLanguage", "Language")}
                           </label>
                           <select
                             id="issue-lang-filter"
@@ -1701,7 +1768,9 @@ export default function Home() {
                                 : "border-gray-300 bg-white text-gray-900 focus:border-purple-600"
                             }`}
                           >
-                            <option value="all">All Languages</option>
+                            <option value="all">
+                              {t("recommendations.allLanguages", "All Languages")}
+                            </option>
                             {availableLanguages.map((lang) => (
                               <option key={lang} value={lang}>
                                 {lang}
@@ -1724,7 +1793,7 @@ export default function Home() {
                             htmlFor="issue-label-filter"
                             className="block text-xs font-semibold text-gray-400"
                           >
-                            Label Type
+                            {t("recommendations.filterLabel", "Label")}
                           </label>
                           <select
                             id="issue-label-filter"
@@ -1736,9 +1805,15 @@ export default function Home() {
                                 : "border-gray-300 bg-white text-gray-900 focus:border-purple-600"
                             }`}
                           >
-                            <option value="all">All Labels</option>
-                            <option value="good-first-issue">Good First Issue</option>
-                            <option value="help-wanted">Help Wanted</option>
+                            <option value="all">
+                              {t("recommendations.allLabels", "All Labels")}
+                            </option>
+                            <option value="good-first-issue">
+                              {t("recommendations.goodFirstIssue", "Good First Issue")}
+                            </option>
+                            <option value="help-wanted">
+                              {t("recommendations.helpWanted", "Help Wanted")}
+                            </option>
                           </select>
                         </div>
 
@@ -1771,7 +1846,7 @@ export default function Home() {
                             onClick={resetFilters}
                             className="text-purple-400 hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-purple-400 rounded"
                           >
-                            Reset filters
+                            {t("recommendations.clearFilters", "Clear filters")}
                           </button>
                         </div>
                       )}
@@ -1811,21 +1886,27 @@ export default function Home() {
                             theme === "dark" ? "text-gray-300" : "text-gray-700"
                           }`}
                         >
-                          No issues match the selected filter criteria.
+                          {t(
+                            "recommendations.noIssuesMatch",
+                            "No issues match the selected filter criteria."
+                          )}
                         </p>
                         <p
                           className={`mt-1 text-xs ${
                             theme === "dark" ? "text-gray-500" : "text-gray-400"
                           }`}
                         >
-                          Try resetting filters to view all recommended contribution opportunities.
+                          {t(
+                            "recommendations.resetFiltersPrompt",
+                            "Try resetting filters to view all recommended contribution opportunities."
+                          )}
                         </p>
                         <button
                           type="button"
                           onClick={resetFilters}
                           className="mt-4 inline-flex items-center rounded-xl bg-purple-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-purple-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
                         >
-                          Clear Filters
+                          {t("recommendations.clearFilters", "Clear filters")}
                         </button>
                       </div>
                     )}
@@ -1928,14 +2009,14 @@ export default function Home() {
             <div className="mx-auto max-w-5xl">
               <div className="text-center">
                 <p className="text-xs font-semibold tracking-wider text-purple-400 uppercase sm:text-sm">
-                  HOW IT WORKS
+                  {t("howItWorks.badge", "HOW IT WORKS")}
                 </p>
 
                 <h2
                   id="how-it-works-heading"
                   className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl"
                 >
-                  From profile to contribution
+                  {t("howItWorks.title", "From profile to contribution")}
                 </h2>
 
                 <p
@@ -1943,8 +2024,10 @@ export default function Home() {
                     theme === "dark" ? "text-gray-300" : "text-gray-600"
                   }`}
                 >
-                  A simple workflow designed to remove the guesswork from getting started with open
-                  source.
+                  {t(
+                    "howItWorks.subtitle",
+                    "A simple workflow designed to remove the guesswork from getting started with open source."
+                  )}
                 </p>
               </div>
 
@@ -1952,24 +2035,33 @@ export default function Home() {
                 <StepCard
                   number="01"
                   icon="⌕"
-                  title="Analyze your profile"
-                  description="Connect your public GitHub profile and understand your existing technical experience."
+                  title={t("howItWorks.step1.title", "Analyze your profile")}
+                  description={t(
+                    "howItWorks.step1.desc",
+                    "Connect your public GitHub profile and understand your existing technical experience."
+                  )}
                   theme={theme}
                 />
 
                 <StepCard
                   number="02"
                   icon="✦"
-                  title="Understand your skills"
-                  description="OpenSourceMate analyzes your repositories to identify the technologies you already work with."
+                  title={t("howItWorks.step2.title", "Understand your skills")}
+                  description={t(
+                    "howItWorks.step2.desc",
+                    "OpenSourceMate analyzes your repositories to identify the technologies you already work with."
+                  )}
                   theme={theme}
                 />
 
                 <StepCard
                   number="03"
                   icon="→"
-                  title="Discover contribution opportunities"
-                  description="Explore recommended issues and contribution areas matched to your skills (issue matching engine currently in active development)."
+                  title={t("howItWorks.step3.title", "Discover contribution opportunities")}
+                  description={t(
+                    "howItWorks.step3.desc",
+                    "Explore recommended issues and contribution areas matched to your skills (issue matching engine currently in active development)."
+                  )}
                   badge="Roadmap"
                   theme={theme}
                 />
@@ -2022,7 +2114,7 @@ export default function Home() {
                 }}
                 className="mt-8 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2"
               >
-                Analyze My GitHub →
+                {t("hero.ctaAnalyze", "Analyze My GitHub →")}
               </button>
             </div>
           </section>
@@ -2046,7 +2138,7 @@ export default function Home() {
                 href="/privacy"
                 className="transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded"
               >
-                Privacy & Data Handling
+                {t("footer.privacy", "Privacy & Data Handling")}
               </Link>
               <span>•</span>
               <button
@@ -2055,14 +2147,16 @@ export default function Home() {
                 data-testid="take-the-tour-link"
                 className="transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded underline underline-offset-2"
               >
-                Take the tour
+                {t("footer.takeTour", "Take the tour")}
               </button>
               <span>•</span>
               <BuildVersionBadge theme={theme} />
               <span>•</span>
-              <p>Built for the open-source community.</p>
+              <p>{t("footer.builtWith", "Built for the open-source community.")}</p>
             </div>
-            <GitHubLink className="transition hover:text-purple-400">View Repository ↗</GitHubLink>
+            <GitHubLink className="transition hover:text-purple-400">
+              {t("footer.viewRepo", "View Repository ↗")}
+            </GitHubLink>
           </div>
         </footer>
 
@@ -2104,11 +2198,7 @@ function SkillCard({ skill, theme }: { skill: Skill; theme?: "dark" | "light" })
               percentage={skill.percentage}
               theme={theme}
             />
-            <SkillEvidenceToggle
-              skillName={skill.name}
-              evidence={skill.evidence}
-              theme={theme}
-            />
+            <SkillEvidenceToggle skillName={skill.name} evidence={skill.evidence} theme={theme} />
           </div>
 
           <p className={`mt-1 text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>

@@ -7,6 +7,12 @@ jest.mock("../components/ContributorsWall", () => {
   };
 });
 
+jest.mock("../components/UserAuthButton", () => {
+  return function MockUserAuthButton() {
+    return null;
+  };
+});
+
 // Sample mock data matching backend responses
 const mockProfile = {
   username: "octocat",
