@@ -1,3 +1,5 @@
+<!-- PR title must follow Conventional Commits: type(scope): summary, e.g. "feat(ui): add mobile navigation menu". Types: feat, fix, docs, test, refactor, style, chore, ci, build, perf, revert. See CONTRIBUTING.md. -->
+
 ## Description
 
 Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context.
@@ -16,6 +18,7 @@ Please delete options that are not relevant.
 
 ## Checklist:
 
+- [ ] My PR title follows the Conventional Commits format (`type(scope): summary`)
 - [ ] My code follows the style guidelines of this project
 - [ ] I have performed a self-review of my own code
 - [ ] I have commented my code, particularly in hard-to-understand areas
