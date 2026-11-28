@@ -39,11 +39,12 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
                 "request_id": request_id,
                 "structured_data": {
                     "event": "request_started",
+                    "method": method,
                     "http_method": method,
                     "path": url_path,
                     "client_ip": client_host,
                     "query_params": sanitize_sensitive_data(dict(request.query_params)),
-                }
+                },
             },
         )
 
@@ -68,11 +69,14 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
                     "request_id": request_id,
                     "structured_data": {
                         "event": "request_completed",
+                        "method": method,
                         "http_method": method,
                         "path": url_path,
+                        "status": response.status_code,
                         "status_code": response.status_code,
+                        "duration": f"{duration_ms}ms",
                         "duration_ms": duration_ms,
-                    }
+                    },
                 },
             )
             return response
@@ -85,11 +89,13 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
                     "request_id": request_id,
                     "structured_data": {
                         "event": "request_failed",
+                        "method": method,
                         "http_method": method,
                         "path": url_path,
+                        "duration": f"{duration_ms}ms",
                         "duration_ms": duration_ms,
                         "error_type": type(exc).__name__,
-                    }
+                    },
                 },
             )
             raise

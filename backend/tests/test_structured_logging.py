@@ -199,3 +199,122 @@ def test_metrics_endpoint_enabled_and_tracks_counts(client, monkeypatch):
     assert data["github"]["rate_limit_errors"] == 1
     assert data["github"]["last_rate_limit_remaining"] == 4980
 
+
+def test_health_endpoint_returns_status_version_and_uptime(client):
+    """Verify health endpoint returns status, version, and uptime (without calling GitHub)."""
+    with MagicMock() as mock_github:
+        from app.services import github_service
+        original_get_client = github_service.get_client
+        github_service.get_client = mock_github
+        try:
+            res = client.get("/health")
+            assert res.status_code == 200
+            data = res.json()
+            assert data["status"] == "healthy"
+            assert "version" in data
+            assert data["version"] == "0.1.0"
+            assert "uptime" in data
+            assert isinstance(data["uptime"], (int, float))
+            assert data["uptime"] >= 0
+            mock_github.assert_not_called()
+        finally:
+            github_service.get_client = original_get_client
+
+
+def test_every_log_line_in_request_carries_same_request_id(client, caplog):
+    """Verify acceptance criterion: Every log line for a request carries the same request ID."""
+    formatter = StructuredJsonFormatter()
+    test_req_id = "req-tracing-12345-abcdef"
+
+    with caplog.at_level(logging.INFO):
+        # Trigger request with client header
+        res = client.get("/health", headers={"X-Request-ID": test_req_id})
+        assert res.status_code == 200
+        assert res.headers.get("x-request-id") == test_req_id
+
+    # Filter records from this request
+    matching_records = [
+        rec for rec in caplog.records if getattr(rec, "request_id", None) == test_req_id
+    ]
+    assert len(matching_records) >= 2  # At least request_started and request_completed
+
+    for rec in matching_records:
+        formatted = formatter.format(rec)
+        parsed = json.loads(formatted)
+        assert parsed["request_id"] == test_req_id
+
+
+def test_secrets_never_logged_in_authorization_headers_or_query_params(client, caplog):
+    """Verify acceptance criterion: Tests prove that secrets are not logged."""
+    secret_token = "ghp_SuperSecretPatToken12345678"
+    bearer_token = "Bearer ghp_BearerSecretToken87654321"
+    query_secret = "ghp_QuerySecretParam999888777"
+    pat_secret = "github_pat_11AABBCCDDEEFFGGHH12345678901234567890"
+
+    with caplog.at_level(logging.INFO):
+        res = client.get(
+            f"/health?token={query_secret}&access_token={secret_token}",
+            headers={
+                "Authorization": bearer_token,
+                "Cookie": "session=secret_session_cookie_12345",
+                "X-Api-Key": pat_secret,
+            },
+        )
+        assert res.status_code == 200
+
+    # Ensure none of the raw secrets ever appear in the log output or formatted text
+    all_logged_text = " ".join(rec.getMessage() for rec in caplog.records)
+    assert secret_token not in all_logged_text
+    assert bearer_token not in all_logged_text
+    assert query_secret not in all_logged_text
+    assert pat_secret not in all_logged_text
+    assert "secret_session_cookie_12345" not in all_logged_text
+
+
+def test_request_logging_contains_method_path_status_duration_and_request_id(client, caplog):
+    """Verify request logging logs method, path, status, duration, and returns request ID in header."""
+    with caplog.at_level(logging.INFO):
+        res = client.get("/health")
+        assert res.status_code == 200
+        req_id = res.headers.get("x-request-id")
+        assert req_id is not None
+        assert len(req_id) >= 16
+
+    # Verify request_completed entry
+    completion_records = [
+        rec for rec in caplog.records
+        if hasattr(rec, "structured_data") and rec.structured_data.get("event") == "request_completed"
+    ]
+    assert len(completion_records) >= 1
+    entry = completion_records[0].structured_data
+
+    assert entry["method"] == "GET"
+    assert entry["path"] == "/health"
+    assert entry["status"] == 200
+    assert "duration_ms" in entry
+    assert entry["duration_ms"] >= 0
+
+
+def test_configurable_log_level_via_settings(monkeypatch):
+    """Verify log level is configurable through LOG_LEVEL setting/environment variable."""
+    from app.config import Settings
+    from app.utils.logging import setup_structured_logging
+
+    # Test setting via environment variable / settings constructor
+    custom_settings = Settings(log_level="DEBUG")
+    assert custom_settings.log_level == "DEBUG"
+
+    setup_structured_logging(level=custom_settings.log_level)
+    assert logging.getLogger().level == logging.DEBUG
+
+    # Test warning level
+    warn_settings = Settings(log_level="WARNING")
+    assert warn_settings.log_level == "WARNING"
+
+    setup_structured_logging(level=warn_settings.log_level)
+    assert logging.getLogger().level == logging.WARNING
+
+    # Reset back to INFO
+    setup_structured_logging(level="INFO")
+
+

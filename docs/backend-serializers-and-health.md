@@ -6,7 +6,7 @@ This document details the backend architectural improvements implemented for Ope
 1. **DRF-Style Pydantic Response Serializers**: Strongly typed schemas for all API route outputs (`/api/github/*`, `/api/matching/*`, `/api/issues/*`, `/api/health/*`).
 2. **Strict Server-Side GitHub Username Validation**: RFC-conformant validation rules for GitHub usernames (1-39 alphanumeric/hyphen characters, no leading/trailing hyphens, no consecutive hyphens).
 3. **Consistent Error Envelope**: All API error responses (400, 404, 422, 429, 500) follow a unified schema `{"error": {"code": "...", "message": "...", "details": ...}}` while maintaining backward compatibility with FastAPI's `detail` string.
-4. **Health Check Endpoints**: `GET /api/health/` and `GET /api/health` returning `{"status": "healthy", "service": "OpenSourceMate API", "version": "0.1.0"}`.
+4. **Health Check Endpoints**: `GET /health`, `GET /api/health`, and `GET /api/v1/health` returning `{"status": "healthy", "service": "OpenSourceMate API", "version": "0.1.0", "uptime": <seconds>}` without calling GitHub.
 
 ---
 

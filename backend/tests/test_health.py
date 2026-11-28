@@ -21,11 +21,13 @@ def test_health_endpoint_returns_healty_status():
 
     assert response.status_code == 200
 
-    assert response.json() == {
-        "status": "healthy",
-        "service": "OpenSourceMate API",
-        "version": "0.1.0",
-    }
+    data = response.json()
+    assert data["status"] == "healthy"
+    assert data["service"] == "OpenSourceMate API"
+    assert data["version"] == "0.1.0"
+    assert "uptime" in data
+    assert isinstance(data["uptime"], (int, float))
+    assert data["uptime"] >= 0
 
 
 def test_health_diagnostics_success():
@@ -146,8 +148,29 @@ def test_health_endpoint_trailing_slash():
 
     response = asyncio.run(make_request())
     assert response.status_code == 200
-    assert response.json() == {
-        "status": "healthy",
-        "service": "OpenSourceMate API",
-        "version": "0.1.0",
-    }
+    data = response.json()
+    assert data["status"] == "healthy"
+    assert data["service"] == "OpenSourceMate API"
+    assert data["version"] == "0.1.0"
+    assert "uptime" in data
+    assert isinstance(data["uptime"], (int, float))
+    assert data["uptime"] >= 0
+
+
+def test_health_endpoint_responds_without_calling_github():
+    """Verify acceptance criterion: The health endpoint responds without calling GitHub."""
+    with patch("app.services.github_service.get_client") as mock_get_client:
+        async def make_request():
+            transport = httpx.ASGITransport(app=app)
+            async with httpx.AsyncClient(transport=transport, base_url="https://test") as client:
+                return await client.get("/health")
+
+        response = asyncio.run(make_request())
+        assert response.status_code == 200
+        data = response.json()
+        assert data["status"] == "healthy"
+        assert data["version"] == "0.1.0"
+        assert "uptime" in data
+        assert isinstance(data["uptime"], (int, float))
+        assert data["uptime"] >= 0
+        mock_get_client.assert_not_called()

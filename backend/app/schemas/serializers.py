@@ -42,7 +42,7 @@ class ErrorResponseSerializer(BaseModel):
 # Health Check Serializers
 # ---------------------------------------------------------
 class HealthResponseSerializer(BaseModel):
-    """Health check response serializer for GET /api/health and /api/health/."""
+    """Health check response serializer for GET /health, /api/health and /api/health/."""
 
     status: str = Field(
         default="healthy",
@@ -58,6 +58,11 @@ class HealthResponseSerializer(BaseModel):
         default="0.1.0",
         description="API semantic version",
         json_schema_extra={"example": "0.1.0"},
+    )
+    uptime: float = Field(
+        default=0.0,
+        description="Process uptime in seconds since startup",
+        json_schema_extra={"example": 15.42},
     )
 
 

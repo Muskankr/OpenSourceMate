@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+import time
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
@@ -317,6 +318,14 @@ async def api_version_directory():
     }
 
 
+APP_START_TIME: float = time.time()
+
+
+def get_uptime_seconds() -> float:
+    """Calculate backend uptime in seconds since application startup."""
+    return round(time.time() - APP_START_TIME, 2)
+
+
 @app.get(
     "/health",
     response_model=HealthResponseSerializer,
@@ -348,11 +357,12 @@ async def api_version_directory():
     include_in_schema=False,
 )
 async def health_check():
-    """Health check endpoint returning service status, name and version."""
+    """Health check endpoint returning service status, name, version, and uptime."""
     return {
         "status": "healthy",
         "service": "OpenSourceMate API",
         "version": "0.1.0",
+        "uptime": get_uptime_seconds(),
     }
 
 

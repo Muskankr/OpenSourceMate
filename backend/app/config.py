@@ -108,6 +108,18 @@ class Settings(BaseSettings):
     # -------------------------------------------------------------------------
     # Validators
     # -------------------------------------------------------------------------
+    @field_validator("log_level", mode="before")
+    @classmethod
+    def parse_log_level(cls, value: Any) -> str:
+        """Parse, validate, and normalize configured log level from LOG_LEVEL env var."""
+        if isinstance(value, str):
+            clean = value.strip().upper()
+            if clean == "WARN":
+                return "WARNING"
+            if clean in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
+                return clean
+        return "INFO"
+
     @field_validator(
         "allowed_hosts",
         "cors_origins",

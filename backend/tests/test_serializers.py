@@ -27,11 +27,13 @@ def test_health_response_serializer():
         "status": "healthy",
         "service": "OpenSourceMate API",
         "version": "0.1.0",
+        "uptime": 42.5,
     }
     serializer = HealthResponseSerializer(**data)
     assert serializer.status == "healthy"
     assert serializer.service == "OpenSourceMate API"
     assert serializer.version == "0.1.0"
+    assert serializer.uptime == 42.5
     assert serializer.model_dump() == data
 
 

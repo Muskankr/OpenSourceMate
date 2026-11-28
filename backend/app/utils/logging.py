@@ -15,21 +15,34 @@ SENSITIVE_KEYS = {
     "token",
     "github_token",
     "access_token",
+    "refresh_token",
     "secret",
     "secret_key",
+    "client_secret",
     "password",
     "api_key",
     "ai_api_key",
     "bearer",
+    "cookie",
+    "session",
+    "x-api-key",
+    "private_key",
 }
 
-# Regex to detect and mask Bearer/token patterns in text
-TOKEN_REGEX = re.compile(r"(gh[pousr]_[A-Za-z0-9_]{16,}|Bearer\s+[A-Za-z0-9_\-\.]+)", re.IGNORECASE)
+# Regex to detect and mask Bearer/Basic/token/PAT patterns in text
+TOKEN_REGEX = re.compile(
+    r"(?i)(Bearer\s+[A-Za-z0-9_\-\.]+|Basic\s+[A-Za-z0-9+/=]{8,}|github_pat_[A-Za-z0-9_]{20,}|gh[pousr]_[A-Za-z0-9_]{16,}|sk-[A-Za-z0-9_\-]{20,})"
+)
+
+# Regex to detect and mask sensitive query parameters in URLs or log messages
+QUERY_SECRET_REGEX = re.compile(
+    r"(?i)([?&](?:token|access_token|github_token|api_key|secret|password|client_secret)=)[^&\s'\"<>]+",
+)
 
 
 def sanitize_sensitive_data(data: Any) -> Any:
     """
-    Recursively sanitize dictionaries, lists, and strings to prevent leaking tokens or secrets in logs.
+    Recursively sanitize dictionaries, lists, tuples, and strings to prevent leaking tokens or secrets in logs.
     """
     if isinstance(data, dict):
         sanitized = {}
@@ -40,12 +53,38 @@ def sanitize_sensitive_data(data: Any) -> Any:
             else:
                 sanitized[k] = sanitize_sensitive_data(v)
         return sanitized
-    elif isinstance(data, list):
-        return [sanitize_sensitive_data(item) for item in data]
+    elif isinstance(data, (list, tuple, set)):
+        res = [sanitize_sensitive_data(item) for item in data]
+        return tuple(res) if isinstance(data, tuple) else res
     elif isinstance(data, str):
-        # Mask tokens in string values
-        return TOKEN_REGEX.sub("[REDACTED_TOKEN]", data)
+        # Mask query parameters and tokens in strings
+        scrubbed = QUERY_SECRET_REGEX.sub(r"\1[REDACTED]", data)
+        return TOKEN_REGEX.sub("[REDACTED_TOKEN]", scrubbed)
     return data
+
+
+class SensitiveDataFilter(logging.Filter):
+    """
+    Logging filter that guarantees every log line for a request carries the exact same
+    request ID from the contextvar, and intercepts/scrubs sensitive tokens and secrets.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        # Propagate request ID across all log records emitted during a request
+        if not getattr(record, "request_id", None):
+            record.request_id = request_id_ctx.get() or ""
+
+        # Sanitize record message and parameters
+        if isinstance(record.msg, str):
+            record.msg = sanitize_sensitive_data(record.msg)
+        if record.args:
+            if isinstance(record.args, dict):
+                record.args = sanitize_sensitive_data(record.args)
+            elif isinstance(record.args, tuple):
+                record.args = tuple(sanitize_sensitive_data(a) for a in record.args)
+        if hasattr(record, "structured_data") and isinstance(record.structured_data, dict):
+            record.structured_data = sanitize_sensitive_data(record.structured_data)
+        return True
 
 
 class StructuredJsonFormatter(logging.Formatter):
@@ -84,18 +123,32 @@ class StructuredJsonFormatter(logging.Formatter):
         return json.dumps(log_entry)
 
 
-def setup_structured_logging(level: str = "INFO", json_format: bool = True) -> None:
+def setup_structured_logging(level: str | int = "INFO", json_format: bool = True) -> None:
     """
-    Configures root and app loggers with structured JSON formatting.
+    Configures root and app loggers with structured JSON formatting, request ID correlation,
+    and sensitive data scrubbing. Configurable via environment variable LOG_LEVEL.
     """
     root_logger = logging.getLogger()
-    log_level = getattr(logging, level.upper(), logging.INFO)
+    if isinstance(level, str):
+        normalized = level.upper().strip()
+        if normalized == "WARN":
+            normalized = "WARNING"
+        log_level = getattr(logging, normalized, logging.INFO)
+    else:
+        log_level = level
+
     root_logger.setLevel(log_level)
 
     # Clear existing handlers
     root_logger.handlers.clear()
 
+    filter_instance = SensitiveDataFilter()
+    root_logger.addFilter(filter_instance)
+
     handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(log_level)
+    handler.addFilter(filter_instance)
+
     if json_format:
         handler.setFormatter(StructuredJsonFormatter())
     else:
@@ -103,6 +156,10 @@ def setup_structured_logging(level: str = "INFO", json_format: bool = True) -> N
         handler.setFormatter(logging.Formatter(fmt))
 
     root_logger.addHandler(handler)
+
+    # Ensure application logger adopts the configured level
+    app_logger = logging.getLogger("app")
+    app_logger.setLevel(log_level)
 
 
 def get_logger(name: str) -> logging.Logger:
