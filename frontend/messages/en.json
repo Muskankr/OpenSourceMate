@@ -79,7 +79,13 @@
     "analyzing": "Analyzing...",
     "recentSearches": "Recent Searches",
     "clearAll": "Clear All",
-    "retry": "Retry"
+    "retry": "Retry",
+    "steps": {
+      "fetchingProfile": "Fetching GitHub profile...",
+      "detectingSkills": "Detecting technical skills...",
+      "findingIssues": "Finding matching issues...",
+      "complete": "Analysis complete!"
+    }
   },
   "profile": {
     "heading": "PROFILE ANALYSIS",
