@@ -1,0 +1,55 @@
+{
+  "$schema": "../../data/programs.schema.json",
+  "version": "1.0.0",
+  "description": "Mapping of open-source mentorship and contributor programs to their official issue labels and repository topics.",
+  "programs": [
+    {
+      "id": "hacktoberfest",
+      "name": "Hacktoberfest",
+      "description": "DigitalOcean's annual global celebration of open-source software.",
+      "labels": ["hacktoberfest", "hacktoberfest-accepted"],
+      "topics": ["hacktoberfest"],
+      "website": "https://hacktoberfest.com"
+    },
+    {
+      "id": "nsoc",
+      "name": "NSoC / NWOC",
+      "description": "NJACK Season of Code / Winter of Code for student open-source contributors.",
+      "labels": ["nsoc", "nsoc2026", "nwoc", "nwoc2026", "njack"],
+      "topics": ["nsoc", "nsoc2026", "nwoc", "nwoc2026", "njack"],
+      "website": "https://njackwinterofcode.github.io"
+    },
+    {
+      "id": "gsoc",
+      "name": "Google Summer of Code (GSoC)",
+      "description": "Global program focused on bringing new contributors into open source organizations.",
+      "labels": ["gsoc", "gsoc2026", "google-summer-of-code"],
+      "topics": ["gsoc", "google-summer-of-code"],
+      "website": "https://summerofcode.withgoogle.com"
+    },
+    {
+      "id": "outreachy",
+      "name": "Outreachy",
+      "description": "Diversity initiative providing internships in open source and open science.",
+      "labels": ["outreachy"],
+      "topics": ["outreachy"],
+      "website": "https://www.outreachy.org"
+    },
+    {
+      "id": "lfx",
+      "name": "LFX Mentorship",
+      "description": "Linux Foundation mentorship programs for emerging open source leaders.",
+      "labels": ["lfx", "lfx-mentorship", "communitybridge"],
+      "topics": ["lfx", "lfx-mentorship", "communitybridge"],
+      "website": "https://lfx.linuxfoundation.org/tools/mentorship"
+    },
+    {
+      "id": "gssoc",
+      "name": "GirlScript Summer of Code (GSSoC)",
+      "description": "Open-source program promoting diversity and beginners in tech.",
+      "labels": ["gssoc", "gssoc2026", "girlscript"],
+      "topics": ["gssoc", "gssoc2026", "girlscript"],
+      "website": "https://gssoc.girlscript.tech"
+    }
+  ]
+}

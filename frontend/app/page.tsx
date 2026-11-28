@@ -1,18 +1,39 @@
 "use client";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import ExportMenu from "../components/ExportMenu";
 import GitHubLink from "../components/GitHubLink";
+import UserAuthButton from "../components/UserAuthButton";
 import ProfileCard from "../components/ProfileCard";
 import RecentSearches from "../components/RecentSearches";
 import RefreshAnalysisButton from "../components/RefreshAnalysisButton";
 import ServiceUnavailableBanner from "../components/ServiceUnavailableBanner";
-import SkillChart from "../components/SkillChart";
 import SkillProficiencyBadge from "../components/SkillProficiencyBadge";
+
+const SkillChart = dynamic(() => import("../components/SkillChart"), {
+  ssr: false,
+  loading: () => (
+    <div
+      data-testid="skill-chart-loading-placeholder"
+      role="status"
+      aria-label="Loading skill distribution chart"
+      className="mt-8 h-[340px] w-full animate-pulse rounded-2xl border border-white/10 bg-white/[0.03] p-6"
+    />
+  ),
+});
+import SkillEvidenceToggle from "../components/SkillEvidenceToggle";
 import SkillsToLearn from "../components/SkillsToLearn";
 import TechIcon from "../components/TechIcon";
+import SkillsEditor from "../components/SkillsEditor";
 import IssueCard from "../components/IssueCard";
+import { ThemeSegmentedToggle } from "../components/ThemeToggle";
+import { useTheme } from "../hooks/useTheme";
+import JobOpportunitiesList from "../components/JobOpportunitiesList";
+import ProgramSelector from "../components/ProgramSelector";
+import OnboardingTour, { ONBOARDING_TOUR_STORAGE_KEY } from "../components/OnboardingTour";
+import { issueMatchesProgram } from "../utils/programs";
 import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
 import { getMockRecommendedIssues } from "../data/mockIssues";
 import { rankIssuesForLearningMode, COMMON_TARGET_SKILLS } from "../utils/learningMode";
@@ -35,7 +56,6 @@ import {
   isNetworkOrServerError,
   resolveServiceErrorDetails,
   sanitizeErrorMessage,
-  type ServiceErrorDetails,
 } from "../utils/errorHandling";
 import { exportAnalysisData, type ExportFormat, type ExportPayload } from "../utils/exportAnalysis";
 import {
@@ -45,27 +65,23 @@ import {
   clearRecentSearches,
 } from "../utils/recentSearches";
 import { validateGitHubUsername, resolveAnalyzerErrorMessage } from "../utils/validation";
+import { analyzerReducer, initialAnalyzerState, type AnalyzerData } from "../utils/analyzerState";
 import BuildVersionBadge from "../components/BuildVersionBadge";
 import ContributorsWall from "../components/ContributorsWall";
+import OfflineBanner from "../components/OfflineBanner";
+import LanguageSwitcher from "../components/LanguageSwitcher";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
+import { useI18n } from "../utils/i18n";
+import {
+  saveLastAnalysisResult,
+  getLastAnalysisResult,
+  formatFetchedAt,
+  formatRelativeTime,
+  type CachedAnalysisData,
+} from "../utils/offlineStorage";
 export default function Home() {
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const savedTheme = localStorage.getItem("theme");
-
-      if (savedTheme === "light" || savedTheme === "dark") {
-        setTheme(savedTheme);
-      }
-    }, 0);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.dataset.theme = theme;
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+  const { theme, themePreference, setThemePreference, toggleTheme } = useTheme();
+  const { t, locale } = useI18n();
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -136,15 +152,64 @@ export default function Home() {
   const openedFromLink = useRef(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [username, setUsername] = useState("");
-  const [loading, setLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [skills, setSkills] = useState<SkillsData | null>(null);
+  const [analyzerState, dispatchAnalyzer] = useReducer(analyzerReducer, initialAnalyzerState);
+  const requestIdRef = useRef(0);
+  const analysisData = analyzerState.status === "idle" ? undefined : analyzerState.data;
+  const profile: Profile | null = analysisData?.profile ?? null;
+  const skills: SkillsData | null = analysisData?.skills ?? null;
+  const loading = analyzerState.status === "loading";
+  const error =
+    analyzerState.status === "error" || analyzerState.status === "rate-limited"
+      ? analyzerState.message
+      : "";
+  const serviceError = analyzerState.status === "error" ? analyzerState.serviceError : undefined;
+  const lastAnalyzed = analyzerState.status === "idle" ? "" : analyzerState.username;
+  const canRetry =
+    analyzerState.status === "error" || analyzerState.status === "rate-limited"
+      ? analyzerState.canRetry
+      : false;
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
   const [loadingMatching, setLoadingMatching] = useState(false);
   const [matchingError, setMatchingError] = useState("");
   const [isDemoData, setIsDemoData] = useState(false);
+  const [nextCursor, setNextCursor] = useState<number | null>(null);
+  const [totalRecommendations, setTotalRecommendations] = useState<number>(0);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // First-visit onboarding tour state (Issue #439)
+  const [tourOpen, setTourOpen] = useState(false);
+  const [tourStep, setTourStep] = useState(0);
+
+  useEffect(() => {
+    try {
+      const forceTour =
+        typeof window !== "undefined" &&
+        new URLSearchParams(window.location.search).get("tour") === "1";
+      const done = window.localStorage.getItem(ONBOARDING_TOUR_STORAGE_KEY);
+      if (forceTour || !done) {
+        setTourOpen(true);
+        setTourStep(0);
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+  }, []);
+
+  const dismissTour = () => {
+    setTourOpen(false);
+    try {
+      window.localStorage.setItem(ONBOARDING_TOUR_STORAGE_KEY, "true");
+    } catch {
+      // Ignore localStorage errors
+    }
+  };
+
+  const startTour = () => {
+    setTourStep(0);
+    setTourOpen(true);
+  };
 
   // Learning Mode state
   const [isLearningMode, setIsLearningMode] = useState(false);
@@ -153,6 +218,7 @@ export default function Home() {
   // Filters for recommended issues (Issue #47)
   const [languageFilter, setLanguageFilter] = useState("all");
   const [labelFilter, setLabelFilter] = useState("all");
+  const [selectedProgram, setSelectedProgram] = useState("");
   const [minScoreFilter, setMinScoreFilter] = useState<number>(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [showHidden, setShowHidden] = useState(false);
@@ -161,11 +227,37 @@ export default function Home() {
     hiddenIds.includes(hiddenIssueId(issue))
   ).length;
 
-  const [error, setError] = useState("");
-  const [serviceError, setServiceError] = useState<ServiceErrorDetails | null>(null);
-  const [lastAnalyzed, setLastAnalyzed] = useState("");
-  const [canRetry, setCanRetry] = useState(false);
   const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+  const { isOnline } = useOnlineStatus();
+  const [cachedData, setCachedData] = useState<CachedAnalysisData | null>(null);
+  const [isViewingCached, setIsViewingCached] = useState(false);
+  const [cachedFetchedAt, setCachedFetchedAt] = useState<string | null>(null);
+
+  const loadCachedAnalysis = (data: CachedAnalysisData) => {
+    setUsername(data.username);
+    dispatchAnalyzer({
+      type: "load-cache",
+      requestId: ++requestIdRef.current,
+      username: data.username,
+      data: { profile: data.profile, skills: data.skills },
+    });
+    setRecommendations(data.recommendations || []);
+    setIsViewingCached(true);
+    setCachedFetchedAt(data.fetchedAt);
+  };
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const lastResult = getLastAnalysisResult();
+    if (lastResult) {
+      setCachedData(lastResult);
+      // Auto-restore last analysis if opening while offline
+      if (!isOnline && (!profile || analyzerState.status === "idle")) {
+        loadCachedAnalysis(lastResult);
+      }
+    }
+  }, [isOnline]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -196,28 +288,179 @@ export default function Home() {
     };
   }, []);
 
-  const fetchMatchedIssues = async (targetUsername: string, signal?: AbortSignal) => {
+  // Custom skills state
+  const [customSkills, setCustomSkills] = useState<string[] | null>(null);
+
+  const detectedSkills = useMemo(() => {
+    return skills?.skills.map((s) => s.name) || [];
+  }, [skills]);
+
+  const activeSkills = useMemo(() => {
+    return customSkills !== null ? customSkills : detectedSkills;
+  }, [customSkills, detectedSkills]);
+
+  const isSkillsEdited = customSkills !== null;
+
+  const handleSkillsChange = (newSkills: string[]) => {
+    setCustomSkills(newSkills);
+    const target = profile?.username || username;
+    if (target) {
+      fetchMatchedIssues(target, undefined, newSkills);
+    }
+  };
+
+  const handleResetSkills = () => {
+    setCustomSkills(null);
+    const target = profile?.username || username;
+    if (target) {
+      fetchMatchedIssues(target, undefined, detectedSkills);
+    }
+  };
+
+  const saveAnalysisToCache = (
+    targetUser: string,
+    recs: Recommendation[],
+    overrideProfile?: Profile,
+    overrideSkills?: SkillsData
+  ) => {
+    const prof = overrideProfile || profile;
+    const sk = overrideSkills || skills;
+    if (prof && sk) {
+      const timestamp = new Date().toISOString();
+      const payload: CachedAnalysisData = {
+        username: targetUser,
+        profile: prof,
+        skills: sk,
+        recommendations: recs,
+        fetchedAt: timestamp,
+      };
+      saveLastAnalysisResult(payload);
+      setCachedData(payload);
+      setCachedFetchedAt(timestamp);
+      setIsViewingCached(false);
+    }
+  };
+
+  const fetchMatchedIssues = async (
+    targetUsername: string,
+    signal?: AbortSignal,
+    overrideSkills?: string[],
+    overrideProgram?: string,
+    freshProfile?: Profile,
+    freshSkills?: SkillsData
+  ) => {
     setLoadingMatching(true);
     setMatchingError("");
     setIsDemoData(false);
 
+    const skillsToUse =
+      overrideSkills !== undefined
+        ? overrideSkills
+        : customSkills !== null
+          ? customSkills
+          : skills?.skills.map((s) => s.name);
+
+    const programToUse = overrideProgram !== undefined ? overrideProgram : selectedProgram;
+
     try {
-      const matchData = await apiFetchMatchedIssues(targetUsername, { signal });
+      const matchData = await apiFetchMatchedIssues(targetUsername, {
+        signal,
+        skills: skillsToUse,
+        program: programToUse || undefined,
+        limit: 20,
+        cursor: 0,
+      });
       if (matchData.recommendations && matchData.recommendations.length > 0) {
         setRecommendations(matchData.recommendations);
+        setTotalRecommendations(matchData.total ?? matchData.recommendations.length);
+        setNextCursor(matchData.next_cursor ?? null);
         setIsDemoData(false);
+        saveAnalysisToCache(targetUsername, matchData.recommendations, freshProfile, freshSkills);
+      } else if (skillsToUse && skillsToUse.length === 0) {
+        // User explicitly removed all skills
+        setRecommendations([]);
+        setTotalRecommendations(0);
+        setNextCursor(null);
+        setIsDemoData(false);
+        saveAnalysisToCache(targetUsername, [], freshProfile, freshSkills);
       } else {
-        const fallback = getMockRecommendedIssues(skills?.skills);
+        const fallback = getMockRecommendedIssues(skillsToUse, {
+          filterBySkills: customSkills !== null || overrideSkills !== undefined,
+          program: programToUse || undefined,
+        });
         setRecommendations(fallback);
+        setTotalRecommendations(fallback.length);
+        setNextCursor(null);
         setIsDemoData(true);
+        saveAnalysisToCache(targetUsername, fallback, freshProfile, freshSkills);
       }
     } catch (err: unknown) {
       if (isAbortError(err)) return;
-      const fallback = getMockRecommendedIssues(skills?.skills);
-      setRecommendations(fallback);
-      setIsDemoData(true);
+      if (skillsToUse && skillsToUse.length === 0) {
+        setRecommendations([]);
+        setTotalRecommendations(0);
+        setNextCursor(null);
+        setIsDemoData(false);
+        saveAnalysisToCache(targetUsername, [], freshProfile, freshSkills);
+      } else {
+        const fallback = getMockRecommendedIssues(skillsToUse, {
+          filterBySkills: customSkills !== null || overrideSkills !== undefined,
+          program: programToUse || undefined,
+        });
+        setRecommendations(fallback);
+        setTotalRecommendations(fallback.length);
+        setNextCursor(null);
+        setIsDemoData(true);
+        saveAnalysisToCache(targetUsername, fallback, freshProfile, freshSkills);
+      }
     } finally {
       setLoadingMatching(false);
+    }
+  };
+
+  const handleLoadMore = async () => {
+    if (loadingMore || nextCursor === null) return;
+    const targetUsername = profile?.username || username;
+    if (!targetUsername) return;
+
+    setLoadingMore(true);
+    const skillsToUse = customSkills !== null ? customSkills : skills?.skills.map((s) => s.name);
+
+    try {
+      const matchData = await apiFetchMatchedIssues(targetUsername, {
+        skills: skillsToUse,
+        program: selectedProgram || undefined,
+        limit: 20,
+        cursor: nextCursor,
+      });
+
+      if (matchData.recommendations && matchData.recommendations.length > 0) {
+        setRecommendations((prev) => {
+          const existingIds = new Set(prev.map((i) => i.id));
+          const newItems = matchData.recommendations.filter((i) => !existingIds.has(i.id));
+          const combined = [...prev, ...newItems];
+          saveAnalysisToCache(targetUsername, combined, profile || undefined, skills || undefined);
+          return combined;
+        });
+        setTotalRecommendations(
+          matchData.total ?? recommendations.length + matchData.recommendations.length
+        );
+        setNextCursor(matchData.next_cursor ?? null);
+      } else {
+        setNextCursor(null);
+      }
+    } catch (err: unknown) {
+      console.error("Failed to load more recommendations:", err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const handleProgramChange = (newProgram: string) => {
+    setSelectedProgram(newProgram);
+    const target = profile?.username || username;
+    if (target) {
+      fetchMatchedIssues(target, undefined, undefined, newProgram);
     }
   };
 
@@ -233,6 +476,14 @@ export default function Home() {
       followers: profile.followers,
       following: profile.following,
       skills: skills?.skills || [],
+      recommendedIssues: recommendations.map((rec) => ({
+        repository: rec.repository,
+        title: rec.title,
+        url: rec.url,
+        language: rec.language,
+        difficulty: rec.difficulty,
+        match_score: rec.match_score ?? rec.score,
+      })),
       totalRepositoriesAnalyzed: skills?.total_repositories_analyzed || 0,
       exportedAt: new Date().toISOString().split("T")[0],
     };
@@ -282,6 +533,10 @@ export default function Home() {
         if (!hasHW) return false;
       }
 
+      if (selectedProgram) {
+        if (!issueMatchesProgram(rec, selectedProgram)) return false;
+      }
+
       const score = rec.match_score ?? rec.score ?? 0;
       if (score < minScoreFilter) {
         return false;
@@ -302,6 +557,7 @@ export default function Home() {
     showHidden,
     languageFilter,
     labelFilter,
+    selectedProgram,
     minScoreFilter,
     searchQuery,
   ]);
@@ -309,6 +565,7 @@ export default function Home() {
   const hasActiveFilters =
     languageFilter !== "all" ||
     labelFilter !== "all" ||
+    selectedProgram !== "" ||
     minScoreFilter > 0 ||
     searchQuery.trim().length > 0;
 
@@ -317,6 +574,7 @@ export default function Home() {
     setLabelFilter("all");
     setMinScoreFilter(0);
     setSearchQuery("");
+    handleProgramChange("");
   };
 
   const analyzeProfile = async (override?: string) => {
@@ -324,8 +582,10 @@ export default function Home() {
     const validation = validateGitHubUsername(raw);
 
     if (!validation.isValid) {
-      setServiceError(null);
-      setError(validation.error || "Please enter a valid GitHub username.");
+      dispatchAnalyzer({
+        type: "validation-error",
+        message: validation.error || "Please enter a valid GitHub username.",
+      });
       return;
     }
 
@@ -333,18 +593,43 @@ export default function Home() {
 
     if (loading) return;
 
+    // Handle offline state: restore cached result if matches, or inform user
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      const saved = getLastAnalysisResult();
+      if (saved && saved.username.toLowerCase() === cleanUsername.toLowerCase()) {
+        loadCachedAnalysis(saved);
+        return;
+      }
+      setUsername(cleanUsername);
+      const requestId = ++requestIdRef.current;
+      dispatchAnalyzer({
+        type: "error",
+        requestId,
+        message: `You are currently offline. Cannot analyze @${cleanUsername} without an internet connection.`,
+        canRetry: true,
+      });
+      return;
+    }
+
     setUsername(cleanUsername);
-    setLastAnalyzed(cleanUsername);
-    setCanRetry(false);
-    setLoading(true);
-    setError("");
-    setServiceError(null);
+    const requestId = ++requestIdRef.current;
+    const previousData =
+      profile?.username.toLowerCase() === cleanUsername.toLowerCase() && skills
+        ? ({ profile, skills } satisfies AnalyzerData)
+        : undefined;
+    dispatchAnalyzer({
+      type: "submit",
+      requestId,
+      username: cleanUsername,
+      data: previousData,
+    });
 
     // Only clear previous analysis if analyzing a different username
-    if (cleanUsername.toLowerCase() !== profile?.username?.toLowerCase()) {
-      setProfile(null);
-      setSkills(null);
+    if (!previousData) {
       setRecommendations([]);
+      setCustomSkills(null);
+    } else {
+      setCustomSkills(null);
     }
 
     const searchSignal = createSearchSignal();
@@ -353,44 +638,74 @@ export default function Home() {
       const profileData = await fetchUserProfile(cleanUsername, { signal: searchSignal });
       const skillsData = await fetchUserSkills(cleanUsername, { signal: searchSignal });
 
-      setProfile(profileData);
-      setSkills(skillsData);
+      dispatchAnalyzer({
+        type: "success",
+        requestId,
+        data: { profile: profileData, skills: skillsData },
+      });
 
       // Save to recent searches on successful analysis
       const updatedSearches = saveRecentSearch(cleanUsername);
       setRecentSearches(updatedSearches);
 
-      fetchMatchedIssues(cleanUsername, searchSignal);
+      setIsViewingCached(false);
+      setCachedFetchedAt(null);
+
+      fetchMatchedIssues(
+        cleanUsername,
+        searchSignal,
+        undefined,
+        undefined,
+        profileData,
+        skillsData
+      );
     } catch (err: unknown) {
       if (isAbortError(err)) {
         return; // Prior in-flight search was aborted by a new search
       }
-      setCanRetry(true);
-
       // Detect network failure or 5xx server-side response (Issue #128)
       if (isNetworkOrServerError(err)) {
         const details = resolveServiceErrorDetails(err, {
           username: cleanUsername,
           endpoint: `/api/github/users/${cleanUsername}`,
         });
-        setServiceError(details);
-        setError(details.message);
+        dispatchAnalyzer({
+          type: "error",
+          requestId,
+          message: details.message,
+          canRetry: true,
+          serviceError: details,
+        });
         return;
       }
 
       if (err instanceof ApiClientError) {
         if (err.status === 404) {
-          setError(resolveAnalyzerErrorMessage(404, { username: cleanUsername }));
+          dispatchAnalyzer({
+            type: "error",
+            requestId,
+            message: resolveAnalyzerErrorMessage(404, { username: cleanUsername }),
+            canRetry: true,
+          });
           return;
         }
         if (err.status === 429) {
-          setError(resolveAnalyzerErrorMessage(429, { resetAt: err.resetAt }));
+          dispatchAnalyzer({
+            type: "rate-limited",
+            requestId,
+            message: resolveAnalyzerErrorMessage(429, { resetAt: err.resetAt }),
+            resetAt: err.resetAt,
+            canRetry: true,
+          });
           return;
         }
       }
-      setError(sanitizeErrorMessage(resolveAnalyzerErrorMessage(err)));
-    } finally {
-      setLoading(false);
+      dispatchAnalyzer({
+        type: "error",
+        requestId,
+        message: sanitizeErrorMessage(resolveAnalyzerErrorMessage(err)),
+        canRetry: true,
+      });
     }
   };
 
@@ -427,13 +742,35 @@ export default function Home() {
         fetchUserProfile(profile.username, { signal: searchSignal, refresh: true }),
         fetchUserSkills(profile.username, { signal: searchSignal, refresh: true }),
       ]);
-      setProfile(profileData);
-      setSkills(skillsData);
-      fetchMatchedIssues(profile.username, searchSignal);
+      if (analyzerState.status !== "idle") {
+        dispatchAnalyzer({
+          type: "success",
+          requestId: analyzerState.requestId,
+          data: { profile: profileData, skills: skillsData },
+        });
+      }
+      setIsViewingCached(false);
+      setCachedFetchedAt(null);
+      fetchMatchedIssues(
+        profile.username,
+        searchSignal,
+        undefined,
+        undefined,
+        profileData,
+        skillsData
+      );
     } catch (err: unknown) {
       if (isAbortError(err)) return;
       if (err instanceof ApiClientError && err.status === 429) {
-        setError(resolveAnalyzerErrorMessage(429, { resetAt: err.resetAt }));
+        if (analyzerState.status !== "idle") {
+          dispatchAnalyzer({
+            type: "rate-limited",
+            requestId: analyzerState.requestId,
+            message: resolveAnalyzerErrorMessage(429, { resetAt: err.resetAt }),
+            resetAt: err.resetAt,
+            canRetry: true,
+          });
+        }
       }
     } finally {
       setIsRefreshing(false);
@@ -444,7 +781,7 @@ export default function Home() {
     <>
       {/* Skip to Main Content Link for Keyboard Accessibility (WCAG 2.1 AA) */}
       <a href="#main-content" className="skip-link">
-        Skip to main content
+        {t("nav.skipLink", "Skip to main content")}
       </a>
 
       <div
@@ -457,6 +794,22 @@ export default function Home() {
           <div className="absolute left-1/2 top-[-250px] h-[500px] w-[700px] -translate-x-1/2 rounded-full bg-purple-500/10 blur-[120px]" />
           <div className="absolute right-[-200px] top-[400px] h-[400px] w-[400px] rounded-full bg-blue-500/5 blur-[100px]" />
         </div>
+
+        {/* Offline Banner (PWA Offline Support) */}
+        <OfflineBanner
+          isOnline={isOnline}
+          isViewingCached={isViewingCached}
+          cachedUsername={cachedData?.username || profile?.username}
+          cachedFetchedAt={cachedFetchedAt || undefined}
+          onRefresh={handleRefresh}
+          onRetryConnection={() => {
+            if (typeof navigator !== "undefined" && navigator.onLine) {
+              if (profile?.username) {
+                handleRefresh();
+              }
+            }
+          }}
+        />
 
         {/* Header and Navigation */}
         <header
@@ -495,7 +848,7 @@ export default function Home() {
                     : "hover:text-purple-400"
                 }`}
               >
-                How it works
+                {t("nav.howItWorks", "How it works")}
               </a>
 
               <a
@@ -507,48 +860,49 @@ export default function Home() {
                     : "hover:text-purple-400"
                 }`}
               >
-                Analyzer
+                {t("nav.analyzer", "Analyzer")}
               </a>
 
               <Link
                 href="/compare"
                 className="rounded-lg px-2 py-1 transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
               >
-                Compare
+                {t("nav.compare", "Compare")}
               </Link>
 
               <GitHubLink className="rounded-lg px-2 py-1 transition hover:text-purple-400" />
 
-              <button
-                type="button"
-                onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
-                aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-                aria-pressed={theme === "light"}
-                className={`rounded-xl border px-3.5 py-2 text-sm font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
-                  theme === "dark"
-                    ? "border-white/10 bg-white/5 text-gray-200 hover:bg-white/10"
-                    : "border-gray-300 bg-gray-100 text-gray-800 hover:bg-gray-200"
-                }`}
-              >
-                {theme === "dark" ? "☀️ Light mode" : "🌙 Dark mode"}
-              </button>
+              <LanguageSwitcher theme={theme} />
+
+              <UserAuthButton theme={theme} />
+
+              <ThemeSegmentedToggle
+                preference={themePreference}
+                resolvedTheme={theme}
+                onChangePreference={setThemePreference}
+              />
             </div>
 
             {/* Mobile Hamburger Button */}
             <div className="flex items-center gap-2 md:hidden">
-              <button
-                type="button"
-                onClick={() => setTheme((current) => (current === "dark" ? "light" : "dark"))}
-                aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-                className="rounded-xl border border-white/10 bg-white/5 p-2 text-sm"
-              >
-                {theme === "dark" ? "☀️" : "🌙"}
-              </button>
+              <LanguageSwitcher theme={theme} />
+
+              <UserAuthButton theme={theme} />
+
+              <ThemeSegmentedToggle
+                preference={themePreference}
+                resolvedTheme={theme}
+                onChangePreference={setThemePreference}
+              />
 
               <button
                 type="button"
                 onClick={() => setMobileMenuOpen((prev) => !prev)}
-                aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+                aria-label={
+                  mobileMenuOpen
+                    ? t("nav.menuClose", "Close navigation menu")
+                    : t("nav.menuOpen", "Open navigation menu")
+                }
                 aria-expanded={mobileMenuOpen}
                 aria-controls="mobile-navigation"
                 className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 p-2 text-gray-400 transition hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
@@ -607,7 +961,7 @@ export default function Home() {
                       : "hover:bg-white/10"
                   }`}
                 >
-                  How it works
+                  {t("nav.howItWorks", "How it works")}
                 </a>
 
                 <a
@@ -620,14 +974,26 @@ export default function Home() {
                       : "hover:bg-white/10"
                   }`}
                 >
-                  Analyzer
+                  {t("nav.analyzer", "Analyzer")}
                 </a>
+
+                <Link
+                  href="/compare"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="rounded-xl px-3 py-2 transition hover:bg-white/10"
+                >
+                  {t("nav.compare", "Compare")}
+                </Link>
 
                 <div
                   className="rounded-xl px-3 py-2 transition hover:bg-white/10"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <GitHubLink className="transition hover:text-purple-400" />
+                </div>
+
+                <div className="pt-2 border-t border-white/5">
+                  <LanguageSwitcher theme={theme} className="w-full justify-start py-1" />
                 </div>
               </div>
             </div>
@@ -643,21 +1009,24 @@ export default function Home() {
           >
             <div className="mx-auto max-w-5xl text-center">
               <div
-                className={`mb-6 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs sm:text-sm font-medium ${
+                className={`mb-6 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs sm:text-sm font-medium break-words ${
                   theme === "dark"
                     ? "border-white/10 bg-white/[0.04] text-gray-200"
                     : "border-gray-300 bg-white text-gray-800 shadow-sm"
                 }`}
               >
-                <span className="h-2 w-2 rounded-full bg-emerald-400" aria-hidden="true" />
-                Open-source contribution discovery
+                <span
+                  className="h-2 w-2 rounded-full bg-emerald-400 flex-shrink-0"
+                  aria-hidden="true"
+                />
+                {t("hero.badge", "Open-source contribution discovery")}
               </div>
 
               <h1
                 id="hero-heading"
-                className="mx-auto max-w-4xl text-3xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl"
+                className="mx-auto max-w-4xl text-3xl font-extrabold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl break-words"
               >
-                Find the open-source issues
+                {t("hero.titlePrefix", "Find the open-source issues")}{" "}
                 <span
                   className={`block bg-clip-text text-transparent ${
                     theme === "dark"
@@ -665,17 +1034,19 @@ export default function Home() {
                       : "bg-gradient-to-r from-purple-700 via-indigo-800 to-blue-700"
                   }`}
                 >
-                  that fit your skills.
+                  {t("hero.titleHighlight", "that fit your skills.")}
                 </span>
               </h1>
 
               <p
-                className={`mx-auto mt-6 max-w-2xl text-sm leading-6 sm:text-base sm:leading-7 md:text-lg ${
+                className={`mx-auto mt-6 max-w-2xl text-sm leading-6 sm:text-base sm:leading-7 md:text-lg break-words ${
                   theme === "dark" ? "text-gray-300" : "text-gray-700"
                 }`}
               >
-                OpenSourceMate analyzes your GitHub profile and technical experience to help you
-                discover meaningful open-source contribution opportunities.
+                {t(
+                  "hero.subtitle",
+                  "OpenSourceMate analyzes your GitHub profile and technical experience to help you discover meaningful open-source contribution opportunities."
+                )}
               </p>
             </div>
           </section>
@@ -688,7 +1059,7 @@ export default function Home() {
           >
             <div className="mx-auto max-w-3xl">
               <h2 id="analyzer-heading" className="sr-only">
-                GitHub Profile Analyzer
+                {t("analyzer.title", "GitHub Profile Analyzer")}
               </h2>
 
               <div
@@ -711,26 +1082,30 @@ export default function Home() {
                     </span>
 
                     <label htmlFor="github-username-input" className="sr-only">
-                      GitHub username
+                      {t("analyzer.inputAriaLabel", "GitHub username")}
                     </label>
 
                     <input
                       ref={usernameInputRef}
                       id="github-username-input"
                       type="text"
-                      placeholder="Enter your GitHub username"
+                      placeholder={t("analyzer.inputPlaceholder", "Enter your GitHub username")}
                       value={username}
                       onChange={(e) => {
                         setUsername(e.target.value);
-                        if (error) setError("");
-                        if (serviceError) setServiceError(null);
+                        if (
+                          analyzerState.status === "error" ||
+                          analyzerState.status === "rate-limited"
+                        ) {
+                          dispatchAnalyzer({ type: "clear-error" });
+                        }
                       }}
                       onKeyDown={(e) => {
                         if (e.key === "Enter" && !loading) {
                           analyzeProfile();
                         }
                       }}
-                      aria-label="GitHub username"
+                      aria-label={t("analyzer.inputAriaLabel", "GitHub username")}
                       aria-required="true"
                       aria-invalid={Boolean(error)}
                       aria-describedby={error ? "analyzer-error" : "username-hint"}
@@ -759,15 +1134,17 @@ export default function Home() {
                     onClick={() => analyzeProfile()}
                     disabled={loading}
                     aria-busy={loading}
-                    className="rounded-2xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:px-7 sm:py-4 sm:text-base"
+                    className="rounded-2xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:px-7 sm:py-4 sm:text-base flex-shrink-0"
                   >
-                    {loading ? "Analyzing..." : "Analyze Profile"}
+                    {loading
+                      ? t("analyzer.analyzing", "Analyzing...")
+                      : t("analyzer.analyzeButton", "Analyze Profile")}
                   </button>
                 </div>
 
                 <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs">
                   <span className={theme === "dark" ? "text-gray-400" : "text-gray-600"}>
-                    Try an example:
+                    {t("hero.tryExample", "Try an example:")}
                   </span>
                   {["torvalds", "gaearon", "sindresorhus"].map((example) => (
                     <button
@@ -793,6 +1170,38 @@ export default function Home() {
                   theme={theme}
                 />
 
+                {cachedData && (!profile || !isViewingCached) && (
+                  <div className="mt-3 flex items-center justify-center border-t border-white/5 pt-3">
+                    <button
+                      type="button"
+                      onClick={() => loadCachedAnalysis(cachedData)}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-purple-500/30 bg-purple-500/10 px-3.5 py-1 text-xs font-semibold text-purple-600 dark:text-purple-300 transition hover:bg-purple-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                    >
+                      <svg
+                        className="h-3.5 w-3.5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <span>
+                        {t(
+                          "common.offline.openLastCached",
+                          { username: cachedData.username },
+                          `Open last cached result (@${cachedData.username})`
+                        )}
+                      </span>
+                    </button>
+                  </div>
+                )}
+
                 <span id="username-hint" className="sr-only">
                   Provide a public GitHub username to analyze technical skills, language
                   proficiencies, and repository breakdowns.
@@ -807,7 +1216,7 @@ export default function Home() {
                     message={serviceError.message}
                     statusCode={serviceError.statusCode}
                     onRetry={() => analyzeProfile(lastAnalyzed || username)}
-                    onDismiss={() => setServiceError(null)}
+                    onDismiss={() => dispatchAnalyzer({ type: "clear-service-error" })}
                     reportUrl={serviceError.reportUrl}
                     theme={theme}
                     isRetrying={loading}
@@ -831,7 +1240,16 @@ export default function Home() {
                       onClick={() => analyzeProfile(lastAnalyzed)}
                       className="rounded-lg border border-red-400/40 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
                     >
-                      Retry
+                      {t("analyzer.retry", "Retry")}
+                    </button>
+                  )}
+                  {cachedData && !isOnline && (
+                    <button
+                      type="button"
+                      onClick={() => loadCachedAnalysis(cachedData)}
+                      className="rounded-lg border border-red-400/40 bg-red-500/10 px-3 py-1 text-xs font-semibold text-red-200 transition hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                    >
+                      {t("common.offline.viewCachedUser", { username: cachedData.username })}
                     </button>
                   )}
                 </div>
@@ -842,7 +1260,7 @@ export default function Home() {
                   theme === "dark" ? "text-gray-400" : "text-gray-600"
                 }`}
               >
-                No GitHub login required • Public profile data only
+                {t("hero.noLoginRequired", "No GitHub login required • Public profile data only")}
               </p>
             </div>
           </section>
@@ -874,11 +1292,11 @@ export default function Home() {
                 <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
                   <div>
                     <p className="text-xs font-semibold tracking-wider text-purple-400 uppercase sm:text-sm">
-                      PROFILE ANALYSIS
+                      {t("profile.heading", "PROFILE ANALYSIS")}
                     </p>
 
                     <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
-                      Your developer profile
+                      {t("profile.title", "Your developer profile")}
                     </h2>
 
                     <p
@@ -886,8 +1304,37 @@ export default function Home() {
                         theme === "dark" ? "text-gray-300" : "text-gray-600"
                       }`}
                     >
-                      Here&apos;s what OpenSourceMate discovered from your GitHub activity.
+                      {t(
+                        "profile.subtitle",
+                        "Here's what OpenSourceMate discovered from your GitHub activity."
+                      )}
                     </p>
+
+                    {isViewingCached && cachedFetchedAt && (
+                      <div
+                        data-testid="cached-result-badge"
+                        className="mt-3 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300"
+                      >
+                        <svg
+                          className="h-3.5 w-3.5 flex-shrink-0"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        <span>
+                          {t("common.offline.cachedResult", "Cached Result")} • Fetched{" "}
+                          {formatFetchedAt(cachedFetchedAt)} ({formatRelativeTime(cachedFetchedAt)})
+                        </span>
+                      </div>
+                    )}
                   </div>
 
                   {profile && (
@@ -903,7 +1350,33 @@ export default function Home() {
                         onClick={copyShareLink}
                         className="rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-semibold transition hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
                       >
-                        {linkCopied ? "Link copied" : "Copy link"}
+                        {linkCopied
+                          ? t("profile.linkCopied", "Link copied")
+                          : t("profile.copyLink", "Copy link")}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleExport("markdown")}
+                        data-testid="export-markdown-button"
+                        className={`rounded-xl border px-3 py-2 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
+                          theme === "dark"
+                            ? "border-white/15 bg-white/5 text-gray-200 hover:bg-white/10"
+                            : "border-gray-300 bg-white text-gray-800 hover:bg-gray-100"
+                        }`}
+                      >
+                        Export as Markdown
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleExport("csv")}
+                        data-testid="export-csv-button"
+                        className={`rounded-xl border px-3 py-2 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
+                          theme === "dark"
+                            ? "border-white/15 bg-white/5 text-gray-200 hover:bg-white/10"
+                            : "border-gray-300 bg-white text-gray-800 hover:bg-gray-100"
+                        }`}
+                      >
+                        Export as CSV
                       </button>
                       <ExportMenu onExport={handleExport} />
                     </div>
@@ -931,17 +1404,22 @@ export default function Home() {
                     <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-end">
                       <div>
                         <p className="text-xs font-semibold tracking-wider text-purple-400 uppercase sm:text-sm">
-                          TECHNICAL PROFILE
+                          {t("profile.technicalProfile", "TECHNICAL PROFILE")}
                         </p>
 
-                        <h3 className="mt-2 text-2xl font-bold">Your technical skills</h3>
+                        <h3 className="mt-2 text-2xl font-bold">
+                          {t("profile.technicalSkills", "Your technical skills")}
+                        </h3>
 
                         <p
                           className={`mt-2 text-sm ${
                             theme === "dark" ? "text-gray-300" : "text-gray-600"
                           }`}
                         >
-                          Detected from your public GitHub repositories.
+                          {t(
+                            "profile.detectedSkillsDesc",
+                            "Detected from your public GitHub repositories."
+                          )}
                         </p>
                       </div>
 
@@ -954,33 +1432,54 @@ export default function Home() {
                       </div>
                     </div>
 
-                    {skills.skills.length === 0 ? (
+                    {/* Custom Skills Manager with Removable Chips, Add Skill, and Reset */}
+                    <SkillsEditor
+                      initialSkills={detectedSkills}
+                      currentSkills={activeSkills}
+                      onSkillsChange={handleSkillsChange}
+                      onReset={handleResetSkills}
+                      isEdited={isSkillsEdited}
+                      theme={theme}
+                      className="mt-6"
+                    />
+
+                    {activeSkills.length === 0 ? (
                       <div
-                        className={`mt-8 rounded-2xl border border-dashed p-8 text-center ${
+                        data-testid="no-skills-empty-state"
+                        className={`mt-6 rounded-2xl border border-dashed p-8 text-center ${
                           theme === "dark" ? "border-white/10" : "border-gray-300"
                         }`}
                       >
                         <p className={theme === "dark" ? "text-gray-300" : "text-gray-600"}>
-                          No public repositories with a language were found for this profile, so
-                          there are no skills to show yet.
+                          All skills have been removed. Add skills above to see matching issues.
                         </p>
                       </div>
                     ) : (
                       <>
                         <SkillChart
-                          skills={skills.skills}
+                          skills={skills.skills.filter((s) =>
+                            activeSkills.some((as) => as.toLowerCase() === s.name.toLowerCase())
+                          )}
                           totalRepositories={skills.total_repositories_analyzed}
                           theme={theme}
                           className="mt-8"
                         />
 
                         <div className="mt-8 grid gap-4 sm:grid-cols-2 sm:gap-5">
-                          {skills.skills.map((skill) => (
-                            <SkillCard key={skill.name} skill={skill} theme={theme} />
-                          ))}
+                          {activeSkills.map((skillName) => {
+                            const detectedSkill = skills.skills.find(
+                              (s) => s.name.toLowerCase() === skillName.toLowerCase()
+                            );
+                            const cardSkill: Skill = detectedSkill || {
+                              name: skillName,
+                              repository_count: 1,
+                              percentage: 100,
+                            };
+                            return <SkillCard key={skillName} skill={cardSkill} theme={theme} />;
+                          })}
                         </div>
 
-                        <SkillsToLearn skills={skills.skills} theme={theme} className="mt-8" />
+                        <SkillsToLearn skills={activeSkills} theme={theme} className="mt-8" />
                       </>
                     )}
                   </div>
@@ -998,11 +1497,12 @@ export default function Home() {
                   <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
                     <div>
                       <div className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-purple-400/20 bg-purple-400/10 px-3 py-1 text-xs font-medium text-purple-300">
-                        <span aria-hidden="true">🎯</span> MATCHED ISSUES
+                        <span aria-hidden="true">🎯</span>{" "}
+                        {t("recommendations.badge", "MATCHED ISSUES")}
                       </div>
 
                       <h3 className="text-2xl font-bold tracking-tight">
-                        Recommended contribution opportunities
+                        {t("recommendations.title", "Recommended contribution opportunities")}
                       </h3>
 
                       <p
@@ -1010,9 +1510,40 @@ export default function Home() {
                           theme === "dark" ? "text-gray-300" : "text-gray-600"
                         }`}
                       >
-                        Opportunities matching your skills and experience, ranked by compatibility
-                        score.
+                        {t(
+                          "recommendations.subtitle",
+                          "Opportunities matching your skills and experience, ranked by compatibility score."
+                        )}
                       </p>
+
+                      {isViewingCached && cachedFetchedAt && (
+                        <div
+                          data-testid="recommendations-cached-badge"
+                          className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-300"
+                        >
+                          <svg
+                            className="h-3 w-3 flex-shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                            />
+                          </svg>
+                          <span>
+                            {t(
+                              "common.offline.cachedRecommendations",
+                              { time: formatFetchedAt(cachedFetchedAt) },
+                              `Cached recommendations from ${formatFetchedAt(cachedFetchedAt)}`
+                            )}
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {recommendations.length > 0 && (
@@ -1022,8 +1553,14 @@ export default function Home() {
                             theme === "dark" ? "text-gray-400" : "text-gray-600"
                           }`}
                         >
-                          Showing {filteredRecommendations.length} of {recommendations.length}{" "}
-                          issues
+                          {t(
+                            "recommendations.showingCount",
+                            {
+                              filtered: filteredRecommendations.length,
+                              total: recommendations.length,
+                            },
+                            `Showing ${filteredRecommendations.length} of ${recommendations.length} issues`
+                          )}
                         </span>
                         {hiddenCount > 0 && (
                           <button
@@ -1031,7 +1568,13 @@ export default function Home() {
                             onClick={() => setShowHidden((value) => !value)}
                             className="rounded text-xs font-medium text-purple-400 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
                           >
-                            {showHidden ? "Hide hidden" : `Show hidden (${hiddenCount})`}
+                            {showHidden
+                              ? t("recommendations.hideHidden", "Hide hidden")
+                              : t(
+                                  "recommendations.showHidden",
+                                  { count: hiddenCount },
+                                  `Show hidden (${hiddenCount})`
+                                )}
                           </button>
                         )}
                       </div>
@@ -1097,7 +1640,7 @@ export default function Home() {
                           <div>
                             <div className="flex items-center gap-2">
                               <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">
-                                🌱 Learning Mode
+                                🌱 {t("recommendations.learningMode", "Learning Mode")}
                               </span>
                               {isLearningMode && (
                                 <span
@@ -1193,7 +1736,7 @@ export default function Home() {
                           : "border-gray-200 bg-gray-50/50"
                       }`}
                     >
-                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
                         {/* Search input filter */}
                         <div>
                           <label
@@ -1207,7 +1750,10 @@ export default function Home() {
                             type="text"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            placeholder="Filter by title or repo..."
+                            placeholder={t(
+                              "recommendations.searchPlaceholder",
+                              "Search issues by title or repository..."
+                            )}
                             className={`mt-1.5 w-full rounded-xl border px-3 py-2 text-xs outline-none transition ${
                               theme === "dark"
                                 ? "border-white/10 bg-white/5 text-white placeholder:text-gray-500 focus:border-purple-400"
@@ -1222,7 +1768,7 @@ export default function Home() {
                             htmlFor="issue-lang-filter"
                             className="block text-xs font-semibold text-gray-400"
                           >
-                            Language
+                            {t("recommendations.filterLanguage", "Language")}
                           </label>
                           <select
                             id="issue-lang-filter"
@@ -1234,7 +1780,9 @@ export default function Home() {
                                 : "border-gray-300 bg-white text-gray-900 focus:border-purple-600"
                             }`}
                           >
-                            <option value="all">All Languages</option>
+                            <option value="all">
+                              {t("recommendations.allLanguages", "All Languages")}
+                            </option>
                             {availableLanguages.map((lang) => (
                               <option key={lang} value={lang}>
                                 {lang}
@@ -1243,13 +1791,21 @@ export default function Home() {
                           </select>
                         </div>
 
+                        {/* Contributor Program selector */}
+                        <ProgramSelector
+                          value={selectedProgram}
+                          onChange={handleProgramChange}
+                          theme={theme}
+                          showBadge={false}
+                        />
+
                         {/* Label type filter dropdown */}
                         <div>
                           <label
                             htmlFor="issue-label-filter"
                             className="block text-xs font-semibold text-gray-400"
                           >
-                            Label Type
+                            {t("recommendations.filterLabel", "Label")}
                           </label>
                           <select
                             id="issue-label-filter"
@@ -1261,9 +1817,15 @@ export default function Home() {
                                 : "border-gray-300 bg-white text-gray-900 focus:border-purple-600"
                             }`}
                           >
-                            <option value="all">All Labels</option>
-                            <option value="good-first-issue">Good First Issue</option>
-                            <option value="help-wanted">Help Wanted</option>
+                            <option value="all">
+                              {t("recommendations.allLabels", "All Labels")}
+                            </option>
+                            <option value="good-first-issue">
+                              {t("recommendations.goodFirstIssue", "Good First Issue")}
+                            </option>
+                            <option value="help-wanted">
+                              {t("recommendations.helpWanted", "Help Wanted")}
+                            </option>
                           </select>
                         </div>
 
@@ -1296,7 +1858,7 @@ export default function Home() {
                             onClick={resetFilters}
                             className="text-purple-400 hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-purple-400 rounded"
                           >
-                            Reset filters
+                            {t("recommendations.clearFilters", "Clear filters")}
                           </button>
                         </div>
                       )}
@@ -1336,21 +1898,27 @@ export default function Home() {
                             theme === "dark" ? "text-gray-300" : "text-gray-700"
                           }`}
                         >
-                          No issues match the selected filter criteria.
+                          {t(
+                            "recommendations.noIssuesMatch",
+                            "No issues match the selected filter criteria."
+                          )}
                         </p>
                         <p
                           className={`mt-1 text-xs ${
                             theme === "dark" ? "text-gray-500" : "text-gray-400"
                           }`}
                         >
-                          Try resetting filters to view all recommended contribution opportunities.
+                          {t(
+                            "recommendations.resetFiltersPrompt",
+                            "Try resetting filters to view all recommended contribution opportunities."
+                          )}
                         </p>
                         <button
                           type="button"
                           onClick={resetFilters}
                           className="mt-4 inline-flex items-center rounded-xl bg-purple-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-purple-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
                         >
-                          Clear Filters
+                          {t("recommendations.clearFilters", "Clear filters")}
                         </button>
                       </div>
                     )}
@@ -1393,9 +1961,49 @@ export default function Home() {
                           onRestore={() => restoreIssue(issue)}
                         />
                       ))}
+
+                      {/* Load More Button (Issue #481) */}
+                      {nextCursor !== null && (
+                        <div className="mt-8 flex flex-col items-center justify-center gap-2 pt-4">
+                          <button
+                            type="button"
+                            onClick={handleLoadMore}
+                            disabled={loadingMore}
+                            className={`inline-flex items-center gap-2 rounded-2xl px-6 py-3 text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
+                              loadingMore
+                                ? "opacity-60 cursor-not-allowed"
+                                : "hover:scale-[1.02] active:scale-[0.98]"
+                            } ${
+                              theme === "dark"
+                                ? "bg-purple-600 text-white hover:bg-purple-500 shadow-lg shadow-purple-900/30"
+                                : "bg-purple-600 text-white hover:bg-purple-700 shadow-md shadow-purple-600/20"
+                            }`}
+                          >
+                            {loadingMore ? (
+                              <>
+                                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                                <span>Loading more recommendations...</span>
+                              </>
+                            ) : (
+                              <>
+                                <span>Load more issues</span>
+                                <span className="text-xs opacity-75">
+                                  ({recommendations.length} of {totalRecommendations})
+                                </span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
+
+                {/* Student Job & Internship Matches */}
+                <JobOpportunitiesList studentSkills={skills?.skills || []} theme={theme} />
+
+                {/* Student Job & Internship Matches */}
+                <JobOpportunitiesList studentSkills={skills?.skills || []} theme={theme} />
               </div>
             </section>
           )}
@@ -1413,14 +2021,14 @@ export default function Home() {
             <div className="mx-auto max-w-5xl">
               <div className="text-center">
                 <p className="text-xs font-semibold tracking-wider text-purple-400 uppercase sm:text-sm">
-                  HOW IT WORKS
+                  {t("howItWorks.badge", "HOW IT WORKS")}
                 </p>
 
                 <h2
                   id="how-it-works-heading"
                   className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl"
                 >
-                  From profile to contribution
+                  {t("howItWorks.title", "From profile to contribution")}
                 </h2>
 
                 <p
@@ -1428,8 +2036,10 @@ export default function Home() {
                     theme === "dark" ? "text-gray-300" : "text-gray-600"
                   }`}
                 >
-                  A simple workflow designed to remove the guesswork from getting started with open
-                  source.
+                  {t(
+                    "howItWorks.subtitle",
+                    "A simple workflow designed to remove the guesswork from getting started with open source."
+                  )}
                 </p>
               </div>
 
@@ -1437,24 +2047,33 @@ export default function Home() {
                 <StepCard
                   number="01"
                   icon="⌕"
-                  title="Analyze your profile"
-                  description="Connect your public GitHub profile and understand your existing technical experience."
+                  title={t("howItWorks.step1.title", "Analyze your profile")}
+                  description={t(
+                    "howItWorks.step1.desc",
+                    "Connect your public GitHub profile and understand your existing technical experience."
+                  )}
                   theme={theme}
                 />
 
                 <StepCard
                   number="02"
                   icon="✦"
-                  title="Understand your skills"
-                  description="OpenSourceMate analyzes your repositories to identify the technologies you already work with."
+                  title={t("howItWorks.step2.title", "Understand your skills")}
+                  description={t(
+                    "howItWorks.step2.desc",
+                    "OpenSourceMate analyzes your repositories to identify the technologies you already work with."
+                  )}
                   theme={theme}
                 />
 
                 <StepCard
                   number="03"
                   icon="→"
-                  title="Discover contribution opportunities"
-                  description="Explore recommended issues and contribution areas matched to your skills (issue matching engine currently in active development)."
+                  title={t("howItWorks.step3.title", "Discover contribution opportunities")}
+                  description={t(
+                    "howItWorks.step3.desc",
+                    "Explore recommended issues and contribution areas matched to your skills (issue matching engine currently in active development)."
+                  )}
                   badge="Roadmap"
                   theme={theme}
                 />
@@ -1497,12 +2116,17 @@ export default function Home() {
               <button
                 type="button"
                 onClick={() => {
-                  document.getElementById("analyzer")?.scrollIntoView({ behavior: "smooth" });
+                  const prefersReduced =
+                    typeof window !== "undefined" &&
+                    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+                  document.getElementById("analyzer")?.scrollIntoView({
+                    behavior: prefersReduced ? "auto" : "smooth",
+                  });
                   document.getElementById("github-username-input")?.focus();
                 }}
                 className="mt-8 rounded-xl bg-white px-6 py-3.5 text-sm font-semibold text-black transition hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2"
               >
-                Analyze My GitHub →
+                {t("hero.ctaAnalyze", "Analyze My GitHub →")}
               </button>
             </div>
           </section>
@@ -1526,16 +2150,37 @@ export default function Home() {
                 href="/privacy"
                 className="transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded"
               >
-                Privacy & Data Handling
+                {t("footer.privacy", "Privacy & Data Handling")}
               </Link>
+              <span>•</span>
+              <button
+                type="button"
+                onClick={startTour}
+                data-testid="take-the-tour-link"
+                className="transition hover:text-purple-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded underline underline-offset-2"
+              >
+                {t("footer.takeTour", "Take the tour")}
+              </button>
               <span>•</span>
               <BuildVersionBadge theme={theme} />
               <span>•</span>
-              <p>Built for the open-source community.</p>
+              <p>{t("footer.builtWith", "Built for the open-source community.")}</p>
             </div>
-            <GitHubLink className="transition hover:text-purple-400">View Repository ↗</GitHubLink>
+            <GitHubLink className="transition hover:text-purple-400">
+              {t("footer.viewRepo", "View Repository ↗")}
+            </GitHubLink>
           </div>
         </footer>
+
+        {/* First-Visit Onboarding Tour (Issue #439) */}
+        <OnboardingTour
+          isOpen={tourOpen}
+          currentStep={tourStep}
+          onStepChange={setTourStep}
+          onSkip={dismissTour}
+          onComplete={dismissTour}
+          theme={theme}
+        />
       </div>
     </>
   );
@@ -1565,6 +2210,7 @@ function SkillCard({ skill, theme }: { skill: Skill; theme?: "dark" | "light" })
               percentage={skill.percentage}
               theme={theme}
             />
+            <SkillEvidenceToggle skillName={skill.name} evidence={skill.evidence} theme={theme} />
           </div>
 
           <p className={`mt-1 text-xs ${theme === "dark" ? "text-gray-400" : "text-gray-600"}`}>

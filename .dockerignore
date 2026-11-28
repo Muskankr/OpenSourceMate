@@ -1,0 +1,12 @@
+# Root .dockerignore
+**/.git
+**/.github
+**/node_modules
+**/.next
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.coverage
+**/htmlcov
+**/.env
+**/.env.local

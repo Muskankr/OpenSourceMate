@@ -5,6 +5,8 @@ import Link from "next/link";
 import IssueCard from "../../components/IssueCard";
 import type { IssueRecommendation } from "../../types/api";
 import { hiddenIssueId, useHiddenIssues } from "../../hooks/useHiddenIssues";
+import { useTheme } from "../../hooks/useTheme";
+import { ThemeSegmentedToggle } from "../../components/ThemeToggle";
 
 const REPO_OWNER = "Muskankr";
 const REPO_NAME = "OpenSourceMate";
@@ -139,6 +141,9 @@ export default function ContributePage() {
     };
   }, []);
 
+  const { theme, themePreference, setThemePreference } = useTheme();
+  const isDark = theme === "dark";
+
   const filteredIssues = issues.filter((issue) => {
     if (!showHidden && hiddenIds.includes(hiddenIssueId(issue))) return false;
     if (filterTag === "all") return true;
@@ -146,10 +151,18 @@ export default function ContributePage() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div
+      className={`min-h-screen ${
+        isDark ? "bg-slate-950 text-slate-100" : "bg-gray-50 text-gray-900"
+      } py-12 px-4 sm:px-6 lg:px-8 transition-colors`}
+    >
       <div className="max-w-5xl mx-auto space-y-8">
         {/* Navigation & Header */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
+        <div
+          className={`flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b ${
+            isDark ? "border-slate-800" : "border-gray-200"
+          }`}
+        >
           <div>
             <div className="flex items-center gap-2 mb-2">
               <Link
@@ -162,20 +175,28 @@ export default function ContributePage() {
             <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
               Contribute to OpenSourceMate
             </h1>
-            <p className="text-sm text-slate-400 mt-1">
+            <p className={`text-sm ${isDark ? "text-slate-400" : "text-gray-600"} mt-1`}>
               Beginner-friendly open issues waiting for your first pull request.
             </p>
           </div>
 
-          <a
-            href={`https://github.com/${REPO_OWNER}/${REPO_NAME}/blob/main/CONTRIBUTING.md`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 text-sm font-medium transition-all"
-          >
-            <span>Read Contributing Guide</span>
-            <span aria-hidden="true">&rarr;</span>
-          </a>
+          <div className="flex items-center gap-3">
+            <ThemeSegmentedToggle
+              preference={themePreference}
+              resolvedTheme={theme}
+              onChangePreference={setThemePreference}
+            />
+
+            <a
+              href={`https://github.com/${REPO_OWNER}/${REPO_NAME}/blob/main/CONTRIBUTING.md`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 text-sm font-medium transition-all"
+            >
+              <span>Read Contributing Guide</span>
+              <span aria-hidden="true">&rarr;</span>
+            </a>
+          </div>
         </div>
 
         {/* Filter Badges */}
@@ -221,7 +242,9 @@ export default function ContributePage() {
           </div>
         ) : filteredIssues.length === 0 ? (
           <div className="text-center py-16 bg-slate-900/40 rounded-2xl border border-slate-800">
-            <h3 className="text-base font-semibold text-slate-300">No issues matching "{filterTag}"</h3>
+            <h3 className="text-base font-semibold text-slate-300">
+              No issues matching "{filterTag}"
+            </h3>
             <p className="text-xs text-slate-500 mt-1">Try selecting a different filter above.</p>
           </div>
         ) : (
@@ -230,7 +253,7 @@ export default function ContributePage() {
               <IssueCard
                 key={issue.url + idx}
                 issue={issue}
-                theme="dark"
+                theme={theme}
                 isHidden={isHidden(issue)}
                 onHide={() => hideIssue(issue)}
                 onRestore={() => restoreIssue(issue)}

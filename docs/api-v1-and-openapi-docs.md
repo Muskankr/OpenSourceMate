@@ -49,8 +49,6 @@ Clients can query `GET /api/v1` to inspect:
 
 ## Verification & Testing
 
-The implementation is verified via comprehensive unit tests in `backend/tests/test_openapi_and_v1.py` covering:
-- OpenAPI schema validation and tag presence.
-- Swagger UI (`/docs`) and ReDoc (`/redoc`) rendering.
-- API directory discovery endpoints (`/api` and `/api/v1`).
-- `/api/v1/` route invocation alongside legacy `/api/` backwards compatibility.
+The implementation is verified via comprehensive unit and contract tests:
+- **Unit and Route Tests**: `backend/tests/test_openapi_and_v1.py` covering OpenAPI schema validation, Swagger UI (`/docs`), ReDoc (`/redoc`), and `/api/v1/` backwards compatibility.
+- **Property-Based Contract Tests**: `backend/tests/test_schemathesis_contract.py` using [Schemathesis](schemathesis-api-contract-testing.md) to generate inputs across every endpoint, guaranteeing no 5xx errors and strict OpenAPI schema conformance.

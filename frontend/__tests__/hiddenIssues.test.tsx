@@ -1,10 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import type { IssueRecommendation } from "../types/api";
-import {
-  hiddenIssueId,
-  parseHiddenIssueIds,
-  useHiddenIssues,
-} from "../hooks/useHiddenIssues";
+import { hiddenIssueId, parseHiddenIssueIds, useHiddenIssues } from "../hooks/useHiddenIssues";
 
 const issue = {
   id: 42,

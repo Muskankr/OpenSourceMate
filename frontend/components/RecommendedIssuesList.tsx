@@ -1,11 +1,19 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import type { IssueRecommendation } from "../types/api";
 import IssueCard from "./IssueCard";
 import { inferIssueDifficulty, type IssueDifficulty } from "../data/mockIssues";
 import { hiddenIssueId, useHiddenIssues } from "../hooks/useHiddenIssues";
 import { rankIssuesForLearningMode, COMMON_TARGET_SKILLS } from "../utils/learningMode";
+import { issueMatchesProgram } from "../utils/programs";
+import ProgramSelector from "./ProgramSelector";
+import ExportMenu from "./ExportMenu";
+import {
+  exportRecommendationsData,
+  type ExportFormat as RecExportFormat,
+  type ActiveFilters,
+} from "../utils/exportRecommendations";
 
 export interface RecommendedIssuesListProps {
   issues: IssueRecommendation[];
@@ -14,6 +22,8 @@ export interface RecommendedIssuesListProps {
   username?: string;
   initialLearningMode?: boolean;
   initialTargetSkills?: string[];
+  selectedProgram?: string;
+  onProgramChange?: (programId: string) => void;
 }
 
 export default function RecommendedIssuesList({
@@ -23,6 +33,8 @@ export default function RecommendedIssuesList({
   username = "",
   initialLearningMode = false,
   initialTargetSkills = [],
+  selectedProgram,
+  onProgramChange,
 }: RecommendedIssuesListProps) {
   const isDark = theme === "dark";
 
@@ -30,13 +42,40 @@ export default function RecommendedIssuesList({
   const [isLearningMode, setIsLearningMode] = useState<boolean>(initialLearningMode);
   const [targetSkills, setTargetSkills] = useState<string[]>(initialTargetSkills);
 
-  // Filter states
-  const [searchQuery, setSearchQuery] = useState("");
+  // Filter states (restore keyword search from URL ?q= on mount)
+  const [searchQuery, setSearchQuery] = useState(() => {
+    if (typeof window === "undefined") return "";
+    return new URLSearchParams(window.location.search).get("q") || "";
+  });
+
+  // Debounced URL query string sync (?q=...) without triggering network requests
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const timer = setTimeout(() => {
+      const url = new URL(window.location.href);
+      const trimmed = searchQuery.trim();
+      if (trimmed) {
+        url.searchParams.set("q", trimmed);
+      } else {
+        url.searchParams.delete("q");
+      }
+      const nextUrl = `${url.pathname}${url.search}${url.hash}`;
+      window.history.replaceState(null, "", nextUrl);
+    }, 150);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
   const [languageFilter, setLanguageFilter] = useState("all");
   const [labelFilter, setLabelFilter] = useState("all");
   const [difficultyFilter, setDifficultyFilter] = useState<string>("all");
   const [minScoreFilter, setMinScoreFilter] = useState(0);
   const [showHidden, setShowHidden] = useState(false);
+  const [internalProgram, setInternalProgram] = useState<string>(selectedProgram || "");
+  const activeProgram = selectedProgram !== undefined ? selectedProgram : internalProgram;
+
+  const handleProgramSelect = (prog: string) => {
+    setInternalProgram(prog);
+    onProgramChange?.(prog);
+  };
   const { hiddenIds, isHidden, hideIssue, restoreIssue } = useHiddenIssues();
   const hiddenCount = issues.filter((issue) => hiddenIds.includes(hiddenIssueId(issue))).length;
 
@@ -92,18 +131,26 @@ export default function RecommendedIssuesList({
         }
       }
 
+      // Program filter
+      if (activeProgram) {
+        if (!issueMatchesProgram(issue, activeProgram)) {
+          return false;
+        }
+      }
+
       // Score filter
       const score = Math.round(issue.match_score ?? issue.score ?? 0);
       if (score < minScoreFilter) {
         return false;
       }
 
-      // Search text query
+      // Search text query (matches title, repository, or labels)
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase().trim();
         const matchesTitle = issue.title?.toLowerCase().includes(q);
         const matchesRepo = issue.repository?.toLowerCase().includes(q);
-        if (!matchesTitle && !matchesRepo) return false;
+        const matchesLabel = issue.labels?.some((l) => l.toLowerCase().includes(q));
+        if (!matchesTitle && !matchesRepo && !matchesLabel) return false;
       }
 
       return true;
@@ -115,11 +162,13 @@ export default function RecommendedIssuesList({
     languageFilter,
     labelFilter,
     difficultyFilter,
+    activeProgram,
     minScoreFilter,
     searchQuery,
   ]);
 
   const hasActiveFilters =
+    activeProgram !== "" ||
     languageFilter !== "all" ||
     labelFilter !== "all" ||
     difficultyFilter !== "all" ||
@@ -127,6 +176,7 @@ export default function RecommendedIssuesList({
     searchQuery.trim().length > 0;
 
   const resetFilters = () => {
+    handleProgramSelect("");
     setLanguageFilter("all");
     setLabelFilter("all");
     setDifficultyFilter("all");
@@ -173,11 +223,38 @@ export default function RecommendedIssuesList({
           </p>
         </div>
 
-        {hasIssues && (
-          <div className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
-            Showing {filteredIssues.length} of {issues.length} issues
-          </div>
-        )}
+        <div className="flex flex-col items-start gap-2 sm:items-end">
+          <ExportMenu
+            onExport={(fmt) => {
+              const activeFilters: ActiveFilters = {
+                language: languageFilter,
+                label: labelFilter,
+                difficulty: difficultyFilter,
+                minScore: minScoreFilter,
+                program: activeProgram,
+                searchQuery: searchQuery,
+                learningMode: isLearningMode,
+                targetSkills: targetSkills,
+              };
+              exportRecommendationsData(
+                {
+                  username,
+                  filters: activeFilters,
+                  issues: filteredIssues,
+                },
+                fmt as RecExportFormat
+              );
+            }}
+            disabled={filteredIssues.length === 0}
+            label="Export Issues"
+            ariaLabel="Export recommendations as CSV, Markdown or JSON"
+          />
+          {hasIssues && (
+            <div className={`text-xs sm:text-sm ${isDark ? "text-gray-400" : "text-gray-500"}`}>
+              Showing {filteredIssues.length} of {issues.length} issues
+            </div>
+          )}
+        </div>
       </div>
 
       {hiddenCount > 0 && (
@@ -335,7 +412,7 @@ export default function RecommendedIssuesList({
             isDark ? "border-white/5 bg-white/[0.02]" : "border-gray-200 bg-gray-50/50"
           }`}
         >
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {/* Search filter */}
             <div className="lg:col-span-1">
               <label
@@ -344,19 +421,36 @@ export default function RecommendedIssuesList({
               >
                 Search
               </label>
-              <input
-                id="issue-search-filter"
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Title or repo..."
-                aria-label="Filter issues by title or repository"
-                className={`mt-1.5 w-full rounded-xl border px-3 py-2 text-xs outline-none transition ${
-                  isDark
-                    ? "border-white/10 bg-white/5 text-white placeholder:text-gray-500 focus:border-purple-400"
-                    : "border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-purple-600"
-                }`}
-              />
+              <div className="relative mt-1.5">
+                <input
+                  id="issue-search-filter"
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Title, repo, or label..."
+                  aria-label="Filter issues by title, repository, or labels"
+                  className={`w-full rounded-xl border px-3 py-2 pr-8 text-xs outline-none transition ${
+                    isDark
+                      ? "border-white/10 bg-white/5 text-white placeholder:text-gray-500 focus:border-purple-400"
+                      : "border-gray-300 bg-white text-gray-900 placeholder:text-gray-400 focus:border-purple-600"
+                  }`}
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    data-testid="clear-issue-search-button"
+                    aria-label="Clear issue keyword search"
+                    className={`absolute right-2 top-1/2 -translate-y-1/2 rounded p-0.5 text-xs transition ${
+                      isDark
+                        ? "text-gray-400 hover:text-white"
+                        : "text-gray-500 hover:text-gray-900"
+                    }`}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Language filter */}
@@ -386,6 +480,14 @@ export default function RecommendedIssuesList({
                 ))}
               </select>
             </div>
+
+            {/* Program selector */}
+            <ProgramSelector
+              value={activeProgram}
+              onChange={handleProgramSelect}
+              theme={theme}
+              showBadge={false}
+            />
 
             {/* Difficulty filter */}
             <div>

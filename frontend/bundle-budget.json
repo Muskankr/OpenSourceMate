@@ -1,0 +1,30 @@
+{
+  "description": "JavaScript bundle size thresholds (in KB) for production pages and shared chunks. Builds exceeding these budgets fail CI.",
+  "budgets": [
+    {
+      "path": "/",
+      "name": "Home / Analyzer page",
+      "maxSizeKB": 350
+    },
+    {
+      "path": "/compare",
+      "name": "Compare page",
+      "maxSizeKB": 250
+    },
+    {
+      "path": "/privacy",
+      "name": "Privacy page",
+      "maxSizeKB": 150
+    },
+    {
+      "path": "/contribute",
+      "name": "Contribute page",
+      "maxSizeKB": 150
+    },
+    {
+      "path": "shared",
+      "name": "Shared Framework Chunks",
+      "maxSizeKB": 400
+    }
+  ]
+}

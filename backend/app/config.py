@@ -51,12 +51,22 @@ class Settings(BaseSettings):
     # Optional. Raises GitHub rate limit from 60 to 5,000 requests/hour.
     github_token: str | None = None
 
+    # GitHub OAuth configuration for optional read-only user sign-in (Issue #482)
+    github_client_id: str | None = None
+    github_client_secret: str | None = None
+    oauth_redirect_uri: str | None = None
+    oauth_session_max_age_seconds: int = 86400  # 24 hours short-lived cookie session
+    frontend_url: str = "http://localhost:3000"
+
     # How long (in seconds) GitHub responses are cached in memory. 0 to disable.
     github_cache_ttl: int = 300
 
     # GitHub repository pagination configuration (Issue #129)
     # Maximum number of repository pages to fetch per user analysis.
     github_max_repo_pages: int = 3
+
+    # Concurrency limit for parallel repository details & manifest fetching (Issue #337)
+    github_concurrency_limit: int = 5
 
     # Items per page requested from GitHub API (maximum allowed by GitHub is 100).
     github_repos_per_page: int = 100
@@ -89,10 +99,11 @@ class Settings(BaseSettings):
     ai_model: str = "gpt-4o-mini"
 
     # -------------------------------------------------------------------------
-    # Logging Configuration
+    # Logging & Metrics Configuration (Issue #452)
     # -------------------------------------------------------------------------
     log_level: str = "INFO"
     log_json_format: bool = True
+    metrics_enabled: bool = False
 
     # -------------------------------------------------------------------------
     # Validators

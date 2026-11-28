@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import type React from "react";
 import { Geist, Geist_Mono } from "next/font/google";
+import ServiceWorkerRegistration from "../components/ServiceWorkerRegistration";
+import { I18nProvider } from "../utils/i18n";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -8,7 +10,14 @@ const geistSans = Geist({
   subsets: ["latin"],
   display: "swap",
   preload: true,
-  fallback: ["system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
+  fallback: [
+    "system-ui",
+    "-apple-system",
+    "BlinkMacSystemFont",
+    "Segoe UI",
+    "Roboto",
+    "sans-serif",
+  ],
 });
 
 const geistMono = Geist_Mono({
@@ -19,8 +28,7 @@ const geistMono = Geist_Mono({
   fallback: ["ui-monospace", "SFMono-Regular", "Menlo", "Monaco", "Consolas", "monospace"],
 });
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://open-source-mate-tawny.vercel.app";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://open-source-mate-tawny.vercel.app";
 const siteTitle = "OpenSourceMate – Find open-source issues that fit your skills";
 const siteDescription =
   "Discover open-source issues matched to your skills, explore contribution opportunities, and find your next project with OpenSourceMate.";
@@ -44,9 +52,7 @@ export const metadata: Metadata = {
       { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     shortcut: "/image.png",
-    apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
   openGraph: {
     title: siteTitle,
@@ -93,20 +99,31 @@ const jsonLd = {
   },
 };
 
+// Inline blocking script to set theme before first paint, eliminating any flash of wrong theme (FOUC)
+const themeInitScript = `(function(){try{var t=localStorage.getItem('theme')||'system';var m=window.matchMedia('(prefers-color-scheme: dark)');var d=t==='dark'||(t==='system'&&m.matches);var r=d?'dark':'light';document.documentElement.dataset.theme=r;document.documentElement.dataset.themePreference=t;document.documentElement.style.colorScheme=r;}catch(e){}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+    >
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <ServiceWorkerRegistration />
+        <I18nProvider>{children}</I18nProvider>
+      </body>
     </html>
   );
 }

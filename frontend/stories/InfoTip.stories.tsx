@@ -36,7 +36,8 @@ type Story = StoryObj<typeof InfoTip>;
 export const SkillTerm: Story = {
   args: {
     term: "Skill",
-    content: "Derived from language byte distributions, commit frequencies, and project dependencies.",
+    content:
+      "Derived from language byte distributions, commit frequencies, and project dependencies.",
     position: "top",
     size: "sm",
   },
@@ -54,7 +55,8 @@ export const PublicDataOnlyTerm: Story = {
 export const AnalyzedRepositoriesTerm: Story = {
   args: {
     term: "Analyzed Repositories",
-    content: "Repositories actively owned or contributed to by this user, excluding forks by default.",
+    content:
+      "Repositories actively owned or contributed to by this user, excluding forks by default.",
     position: "top",
     size: "sm",
   },

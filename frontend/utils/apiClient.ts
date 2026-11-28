@@ -11,6 +11,8 @@ import {
   type HealthResponse,
   type ApiErrorResponse,
   type CompleteAnalysisResult,
+  type ProgramsResponse,
+  type AuthUserStatus,
 } from "../types/api";
 
 export interface RequestOptions extends RequestInit {
@@ -59,11 +61,7 @@ export class ApiClientError extends Error {
  */
 export class ApiTimeoutError extends ApiClientError {
   constructor(timeoutMs: number, url?: string) {
-    super(
-      `Request timed out after ${timeoutMs}ms${url ? ` (${url})` : ""}`,
-      408,
-      "TIMEOUT_ERROR"
-    );
+    super(`Request timed out after ${timeoutMs}ms${url ? ` (${url})` : ""}`, 408, "TIMEOUT_ERROR");
     this.name = "ApiTimeoutError";
     Object.setPrototypeOf(this, ApiTimeoutError.prototype);
   }
@@ -131,10 +129,7 @@ export function createSearchSignal(): AbortSignal {
  * Executes a typed HTTP request with timeout, abort signal chaining,
  * and retry logic for transient errors.
  */
-export async function typedRequest<T>(
-  endpoint: string,
-  options: RequestOptions = {}
-): Promise<T> {
+export async function typedRequest<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const {
     timeoutMs = 10000,
     retries = 1,
@@ -144,9 +139,10 @@ export async function typedRequest<T>(
   } = options;
 
   const baseUrl = getApiBaseUrl();
-  const url = endpoint.startsWith("http://") || endpoint.startsWith("https://")
-    ? endpoint
-    : `${baseUrl}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
+  const url =
+    endpoint.startsWith("http://") || endpoint.startsWith("https://")
+      ? endpoint
+      : `${baseUrl}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
 
   let attemptsLeft = retries;
 
@@ -173,6 +169,7 @@ export async function typedRequest<T>(
 
     try {
       const response = await fetch(url, {
+        credentials: "include",
         ...fetchOptions,
         signal: internalController.signal,
       });
@@ -189,17 +186,15 @@ export async function typedRequest<T>(
         }
 
         const resetAt =
-          errorData?.reset_at ||
-          response.headers?.get?.("X-RateLimit-Reset") ||
-          undefined;
+          errorData?.reset_at || response.headers?.get?.("X-RateLimit-Reset") || undefined;
 
         const errorCode =
           errorData?.error?.code ||
           (response.status === 404
             ? "NOT_FOUND"
             : response.status === 429
-            ? "RATE_LIMIT_EXCEEDED"
-            : "HTTP_ERROR");
+              ? "RATE_LIMIT_EXCEEDED"
+              : "HTTP_ERROR");
 
         const errorMessage =
           errorData?.error?.message ||
@@ -291,24 +286,56 @@ export async function fetchUserSkills(
   if (options?.includeForks) params.append("include_forks", "true");
   if (options?.refresh) params.append("refresh", "true");
   const query = params.toString() ? `?${params.toString()}` : "";
-  return typedRequest<UserSkillsResponse>(
-    `/api/github/users/${clean}/skills${query}`,
+  return typedRequest<UserSkillsResponse>(`/api/github/users/${clean}/skills${query}`, options);
+}
+
+export interface FetchMatchedIssuesOptions extends RequestOptions {
+  skills?: string[];
+  program?: string;
+  limit?: number;
+  cursor?: number;
+}
+
+/**
+ * Fetches open-source issue recommendations matching a user's skills.
+ * Optionally accepts an explicit skills array to customize matched technologies,
+ * a program identifier to filter for program-specific issues (e.g. NSoC, Hacktoberfest),
+ * and pagination parameters (limit, cursor) (Issue #481).
+ */
+export async function fetchMatchedIssues(
+  username: string,
+  options?: FetchMatchedIssuesOptions
+): Promise<MatchedIssuesResponse> {
+  const clean = encodeURIComponent(username.trim());
+  const query = new URLSearchParams();
+  if (options?.skills !== undefined) {
+    if (options.skills.length === 0) {
+      query.append("skills", "");
+    } else {
+      options.skills.forEach((s) => query.append("skills", s));
+    }
+  }
+  if (options?.program) {
+    query.append("program", options.program);
+  }
+  if (options?.limit !== undefined) {
+    query.append("limit", options.limit.toString());
+  }
+  if (options?.cursor !== undefined) {
+    query.append("cursor", options.cursor.toString());
+  }
+  const queryString = query.toString() ? `?${query.toString()}` : "";
+  return typedRequest<MatchedIssuesResponse>(
+    `/api/matching/users/${clean}/issues${queryString}`,
     options
   );
 }
 
 /**
- * Fetches open-source issue recommendations matching a user's skills.
+ * Fetches supported contributor programs configuration.
  */
-export async function fetchMatchedIssues(
-  username: string,
-  options?: RequestOptions
-): Promise<MatchedIssuesResponse> {
-  const clean = encodeURIComponent(username.trim());
-  return typedRequest<MatchedIssuesResponse>(
-    `/api/matching/users/${clean}/issues`,
-    options
-  );
+export async function fetchPrograms(options?: RequestOptions): Promise<ProgramsResponse> {
+  return typedRequest<ProgramsResponse>("/api/matching/programs", options);
 }
 
 /**
@@ -356,4 +383,21 @@ export async function searchUser(
   }
 
   return { profile, skills, issues };
+}
+
+/**
+ * Fetches current OAuth authentication status of the visitor (Issue #482).
+ */
+export async function fetchAuthStatus(options?: RequestOptions): Promise<AuthUserStatus> {
+  return typedRequest<AuthUserStatus>("/api/auth/me", options);
+}
+
+/**
+ * Signs out of the current visitor session, clearing the HttpOnly cookie (Issue #482).
+ */
+export async function logoutUser(options?: RequestOptions): Promise<{ authenticated: boolean }> {
+  return typedRequest<{ authenticated: boolean }>("/api/auth/logout", {
+    method: "POST",
+    ...options,
+  });
 }

@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: opensourcemate-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=True
+      - SECRET_KEY=dev-insecure-secret-key-change-in-production
+      - ALLOWED_HOSTS=["*"]
+      - CORS_ORIGINS=["http://localhost:3000","http://127.0.0.1:3000"]
+      - GITHUB_TOKEN=${GITHUB_TOKEN:-}
+    volumes:
+      - ./backend/app:/app/app:ro
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: opensourcemate-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+      - NEXT_PUBLIC_USE_MOCKS=false
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - ./frontend/app:/app/app:ro
+      - ./frontend/components:/app/components:ro
+      - ./frontend/utils:/app/utils:ro
+      - ./frontend/types:/app/types:ro
+    restart: unless-stopped

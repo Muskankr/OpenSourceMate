@@ -1,8 +1,5 @@
 import type { SkillItem, UserSkillsResponse } from "../types/api";
-import type {
-  ProfileComparisonSummary,
-  SharedSkillItem,
-} from "../types/compare";
+import type { ProfileComparisonSummary, SharedSkillItem } from "../types/compare";
 
 /**
  * Normalizes a skill name for robust case-insensitive comparison.
@@ -84,26 +81,18 @@ export function computeProfileComparison(
   }
 
   // Sort shared skills by combined repository count descending
-  sharedSkills.sort(
-    (a, b) => b.totalCombinedRepositories - a.totalCombinedRepositories
-  );
+  sharedSkills.sort((a, b) => b.totalCombinedRepositories - a.totalCombinedRepositories);
 
   // Sort unique skills by repository count descending
-  uniqueSkillsUser1.sort(
-    (a, b) => (b.repository_count || 0) - (a.repository_count || 0)
-  );
-  uniqueSkillsUser2.sort(
-    (a, b) => (b.repository_count || 0) - (a.repository_count || 0)
-  );
+  uniqueSkillsUser1.sort((a, b) => (b.repository_count || 0) - (a.repository_count || 0));
+  uniqueSkillsUser2.sort((a, b) => (b.repository_count || 0) - (a.repository_count || 0));
 
   const totalUniqueCombined =
     sharedSkills.length + uniqueSkillsUser1.length + uniqueSkillsUser2.length;
 
   // Jaccard similarity index: shared / union
   const similarityScore =
-    totalUniqueCombined > 0
-      ? Math.round((sharedSkills.length / totalUniqueCombined) * 100)
-      : 0;
+    totalUniqueCombined > 0 ? Math.round((sharedSkills.length / totalUniqueCombined) * 100) : 0;
 
   return {
     user1: {

@@ -104,7 +104,7 @@ describe("RecommendedIssuesList Component", () => {
   it("filters issues by search query in title or repository", () => {
     render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} />);
 
-    const searchInput = screen.getByLabelText(/Filter issues by title or repository/i);
+    const searchInput = screen.getByLabelText(/Filter issues by title, repository, or labels/i);
     fireEvent.change(searchInput, { target: { value: "ripgrep" } });
 
     expect(screen.getByText("BurntSushi/ripgrep")).toBeInTheDocument();
@@ -114,7 +114,7 @@ describe("RecommendedIssuesList Component", () => {
   it("renders filter empty state when no issues match filter and allows reset", () => {
     render(<RecommendedIssuesList issues={MOCK_RECOMMENDED_ISSUES} />);
 
-    const searchInput = screen.getByLabelText(/Filter issues by title or repository/i);
+    const searchInput = screen.getByLabelText(/Filter issues by title, repository, or labels/i);
     fireEvent.change(searchInput, { target: { value: "nonexistent-query-string-xyz" } });
 
     expect(screen.getByTestId("filter-empty-state")).toBeInTheDocument();
@@ -188,5 +188,33 @@ describe("RecommendedIssuesList Component", () => {
     // Ranking is restored to initial order
     const restoredCards = screen.getAllByRole("article");
     expect(restoredCards[0]).toHaveTextContent("vercel/next.js");
+  });
+
+  it("filters recommendations by selected contributor program", () => {
+    const handleProgramChange = jest.fn();
+    render(
+      <RecommendedIssuesList
+        issues={MOCK_RECOMMENDED_ISSUES}
+        onProgramChange={handleProgramChange}
+      />
+    );
+
+    const programSelect = screen.getByTestId("program-filter-select");
+    expect(programSelect).toBeInTheDocument();
+
+    // Select Hacktoberfest
+    fireEvent.change(programSelect, { target: { value: "hacktoberfest" } });
+    expect(handleProgramChange).toHaveBeenCalledWith("hacktoberfest");
+
+    // All displayed cards should carry Hacktoberfest
+    const filteredCards = screen.getAllByRole("article");
+    expect(filteredCards.length).toBeGreaterThan(0);
+    filteredCards.forEach((card) => {
+      expect(card).toHaveTextContent(/hacktoberfest/i);
+    });
+
+    // Resetting to All Programs restores all issues
+    fireEvent.change(programSelect, { target: { value: "" } });
+    expect(screen.getAllByRole("article")).toHaveLength(MOCK_RECOMMENDED_ISSUES.length);
   });
 });

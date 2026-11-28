@@ -100,9 +100,14 @@ When users tap "Add to Home Screen" on mobile devices (Safari iOS or Chrome Andr
 - [x] Implement comprehensive unit tests in `frontend/__tests__/pwaManifest.test.ts`.
 
 
-## 7. Service Worker Exemption Note
+## 7. Service Worker & Offline Caching Architecture
 
-Per Issue #181 acceptance criteria, no offline caching service worker or background sync thread is required or introduced. Modern browsers satisfy PWA installability requirements (including Chrome's "Install App" prompt) when a valid Web App Manifest with icons, start URL, and display mode is detected alongside responsive viewport tags.
+OpenSourceMate includes a dedicated Progressive Web App Service Worker (`public/sw.js`) and offline cache resilience:
+- **Application Shell Precaching**: Precaches core static shell assets (`/`, `/manifest.webmanifest`, `/favicon.ico`, `/icon-192.png`, `/icon-512.png`, `/apple-touch-icon.png`) on `install` event with `skipWaiting()`.
+- **Cache Invalidation Upon Deployment**: On the `activate` event, the service worker iterates over `caches.keys()` and deletes any cache not matching the current version whitelist (`CURRENT_CACHES`). It immediately claims all active clients using `clients.claim()`.
+- **Navigation & API Interception**: Uses a network-first strategy for navigation and `/api/github/users/` and `/api/matching/` endpoints, caching fresh successful results in `osm-data-v*` and falling back to cached responses when offline.
+- **Offline Result Auto-Restoration**: When opened offline, OpenSourceMate automatically retrieves and displays the last successfully analyzed profile and recommendations from local offline storage.
+- **Offline Banner & Fetched Timestamps**: Features an accessible `OfflineBanner` component (`role="status"`, `aria-live="polite"`) and marks cached results with badges showing the exact timestamp and relative time when data was fetched.
 
 
 ## 8. Browser and Platform Compatibility

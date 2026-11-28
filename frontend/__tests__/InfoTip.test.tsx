@@ -29,9 +29,7 @@ describe("Accessible InfoTip Component", () => {
     const button = screen.getByRole("button");
 
     // Initially closed
-    expect(
-      screen.queryByText(/Only repositories and events visible/i)
-    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/Only repositories and events visible/i)).not.toBeInTheDocument();
 
     // Trigger focus
     fireEvent.focus(button);
@@ -40,9 +38,7 @@ describe("Accessible InfoTip Component", () => {
     const tooltip = screen.getByRole("tooltip");
     expect(tooltip).toBeInTheDocument();
     expect(button).toHaveAttribute("aria-describedby", tooltip.id);
-    expect(
-      screen.getByText(/Only repositories and events visible/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Only repositories and events visible/i)).toBeInTheDocument();
 
     // Blur closes tooltip
     fireEvent.blur(button);
@@ -69,12 +65,7 @@ describe("Accessible InfoTip Component", () => {
   });
 
   it("closes tooltip when user presses Escape key", () => {
-    render(
-      <InfoTip
-        term="Test Term"
-        content="Press Escape to dismiss this info popover."
-      />
-    );
+    render(<InfoTip term="Test Term" content="Press Escape to dismiss this info popover." />);
 
     const button = screen.getByRole("button");
     fireEvent.click(button);

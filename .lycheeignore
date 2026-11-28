@@ -1,0 +1,17 @@
+# One regular expression per line, matched against the full URL.
+# Add a short reason above every entry.
+
+# The Markdown headings in README.md start with an emoji. GitHub keeps the
+# invisible variation selector (U+FE0F) in the generated anchor, so the table of
+# contents links look like #%EF%B8%8F-screenshots and do work on GitHub (checked
+# against the HTML GitHub renders for README.md). lychee removes the selector
+# when it builds the heading ids, so it wrongly reports these as missing.
+%EF%B8%8F
+
+# GitHub answers 404 to anonymous requests for /stargazers on every repository
+# (also on cli/cli), so the badge link in README.md can't be checked here.
+^https://github\.com/Muskankr/OpenSourceMate/stargazers$
+
+# platform.openai.com sits behind a bot filter and answers 403 to automated
+# requests. The page itself is public.
+^https://platform\.openai\.com/$

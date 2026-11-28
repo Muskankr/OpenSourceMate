@@ -43,9 +43,9 @@ The project is being developed with a focus on making open-source contribution d
 - [📡 API Endpoints & Error Handling](#-api-endpoints--error-handling)
   - [Health Check](#health-check)
   - [Unified Error Format](#unified-error-format)
-- [🔐 Environment Variables](#-environment-variables)
+- [Environment Variables](#environment-variables)
   - [Key Guidelines](#key-guidelines)
-  - [Template Setup Instructions](#template-setup-instructions)
+  - [Setup Instructions](#setup-instructions)
   - [Supported Environment Variables](#supported-environment-variables)
 - [🧩 How It Works](#-how-it-works)
 - [🧹 Code Quality, Linting & Pre-Commit](#-code-quality-linting--pre-commit)
@@ -205,6 +205,24 @@ You can develop OpenSourceMate entirely in your browser or through VS Code with 
 
 ---
 
+### Develop with Docker (One Command)
+
+You can run both the frontend and backend with a single command using Docker and Docker Compose with zero local toolchain dependencies:
+
+```bash
+docker compose up --build
+```
+
+- **Frontend**: `http://localhost:3000`
+- **Backend API**: `http://localhost:8000`
+- **Health check (Liveness)**: `http://localhost:8000/health`
+- **Readiness check (Upstream GitHub)**: `http://localhost:8000/ready`
+- **Interactive OpenAPI docs**: `http://localhost:8000/docs`
+
+Containers run safely as non-root users and automatically wire environment variables from `.env.example`.
+
+---
+
 ### Prerequisites
 
 Make sure you have the following installed:
@@ -318,6 +336,8 @@ http://localhost:8000
 
 Interactive OpenAPI documentation (Swagger UI) is accessible at `http://localhost:8000/docs`.
 
+For automated schema-based property testing, see [API Contract Testing with Schemathesis](docs/schemathesis-api-contract-testing.md).
+
 For curl, Python and JavaScript examples of every endpoint, plus a Bruno request collection, see [API Usage Examples](docs/api-usage-examples.md).
 
 ### Run the backend tests
@@ -329,9 +349,68 @@ pip install -r requirements-dev.txt
 pytest --cov=app --cov-report=term-missing
 ```
 
+Run property-based OpenAPI contract tests:
+
+```bash
+pytest tests/test_schemathesis_contract.py -v
+```
+
 A minimum 80% coverage threshold is enforced by CI.
 
 > Backend setup is currently evolving. More detailed setup instructions and environment configuration will be documented as the project develops.
+
+---
+
+## 💻 Terminal CLI Interface
+
+OpenSourceMate includes an installable command-line interface (CLI) to query recommendations directly from the terminal or automate discovery in scripts and workflows.
+
+### Installation
+
+Install the package in editable mode from the `backend/` directory:
+
+```bash
+cd backend
+pip install -e .
+```
+
+### Usage
+
+Run recommendations using either the console script `opensourcemate` or the module execution `python -m opensourcemate`:
+
+```bash
+# Recommended issues formatted as an aligned terminal table
+opensourcemate recommend <username>
+# or
+python -m opensourcemate recommend <username>
+```
+
+#### Options & Flags
+
+| Flag | Description | Default |
+|---|---|---|
+| `--limit, -n <int>` | Maximum number of top recommendations to display | `10` |
+| `--language, -l <string>` | Filter recommendations by programming language (e.g. `python`, `typescript`) | None |
+| `--json` | Output results in structured JSON format | `false` |
+| `--token <string>` | GitHub Personal Access Token (can also be provided via `GITHUB_TOKEN` env var) | None |
+
+#### Examples
+
+```bash
+# Retrieve top 5 matches for a user
+opensourcemate recommend octocat --limit 5
+
+# Filter for Python issues
+opensourcemate recommend octocat --language Python
+
+# Output as valid JSON (piped to jq or files)
+opensourcemate recommend octocat --json > recommendations.json
+
+# Provide a personal GitHub token to avoid rate limits
+GITHUB_TOKEN=ghp_yourToken opensourcemate recommend octocat
+```
+
+> 🔒 **Security Notice**: Tokens are read securely from the environment or flag and are never printed or leaked in output or error messages.
 
 ---
 
@@ -382,6 +461,32 @@ GET /api/health/diagnostics
 
 Returns detailed diagnostic metrics including GitHub API connectivity and cache performance.
 
+### Structured Logging & Metrics (Issue #452)
+
+- **Request ID Tracking**: Every HTTP request receives or preserves an `X-Request-ID` header. The request ID is passed through ContextVars to every log line emitted during the request's lifecycle.
+- **Structured JSON Logs**: When `LOG_JSON_FORMAT=true` (default), all logs are output as machine-readable JSON containing timestamp, log level, logger name, module/line number, message, request ID, and sanitized structured metadata.
+- **Sensitive Data Redaction**: Tokens (e.g. `ghp_*`, `Bearer *`, `github_token`, passwords) are masked as `[REDACTED_TOKEN]` or `[REDACTED]` and never printed in standard or error output.
+- **Metrics Endpoint (`/metrics`)**: Disabled by default. When enabled via `METRICS_ENABLED=true`, provides aggregated runtime metrics:
+  ```json
+  {
+    "requests": {
+      "total": 128,
+      "by_status": { "200": 124, "404": 4 },
+      "by_endpoint": { "GET /api/health": 40, "GET /api/v1/matching/users/octocat/issues": 88 },
+      "latency_ms": { "average": 42.15, "min": 1.2, "max": 240.5 }
+    },
+    "github": {
+      "requests_total": 52,
+      "errors_total": 0,
+      "rate_limit_errors": 0,
+      "timeouts": 0,
+      "upstream_5xx_errors": 0,
+      "average_latency_ms": 115.3,
+      "last_rate_limit_remaining": 4948
+    }
+  }
+  ```
+
 ### Unified Error Format
 
 All error responses across all API endpoints return a standardized JSON structure with machine-readable error codes and human-readable messages:
@@ -405,6 +510,16 @@ Common error codes:
 - `VALIDATION_ERROR` (HTTP 422): Request parameters or body payload failed schema validation.
 - `RATE_LIMIT_EXCEEDED` (HTTP 429): Upstream GitHub rate limit reached; includes `reset_at` timestamp.
 - `INTERNAL_SERVER_ERROR` (HTTP 500): Unhandled exception during processing.
+
+---
+
+## ⚡ Performance & Bundle Budgets (Issue #454)
+
+Continuous integration runs automated checks to protect application performance and prevent silent bundle bloat:
+
+- **Lighthouse CI**: Audits performance, accessibility, and best practices for the homepage and results view (`frontend/lighthouserc.json`).
+- **JavaScript Bundle Size Check**: Fails the build if any page's generated script payload exceeds the size threshold configured in `frontend/bundle-budget.json`.
+- **Updating Budgets**: See [docs/PERFORMANCE_BUDGETS.md](docs/PERFORMANCE_BUDGETS.md) for how to run audits locally and update budgets.
 
 ---
 
@@ -458,6 +573,9 @@ To configure your local environment:
 | `GEMINI_API_KEY` | `backend/.env` | Dev: No, Prod: No | Optional Google Gemini API key supported by `AISettings`. Safe default: empty. |
 | `OSM_MAX_EXPLANATION_WORDS` | `backend/.env` | Dev: No, Prod: No | Maximum word count for AI-generated issue match explanations. Safe default: `50`. |
 | `OSM_USE_EMBEDDINGS` | `backend/.env` | Dev: No, Prod: No | Flag (`true`/`false`) to enable optional semantic sentence-transformers embeddings for issue matching. Safe default: `false`. |
+| `LOG_LEVEL` | `backend/.env` | Dev: No, Prod: No | Logging level threshold (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`). Safe default: `INFO`. |
+| `LOG_JSON_FORMAT` | `backend/.env` | Dev: No, Prod: No | Format log entries as machine-readable JSON lines carrying consistent `request_id` context. Safe default: `true`. |
+| `METRICS_ENABLED` | `backend/.env` | Dev: No, Prod: No | Enable `/metrics` endpoint exposing request counts, latencies, and GitHub error counters. Safe default: `false`. |
 | `NEXT_PUBLIC_API_URL` | `frontend/.env.local` | Dev: No, Prod: **Yes** | Base URL of the FastAPI backend server accessed by the Next.js frontend. Safe default: `http://localhost:8000`. In production, set to your deployed backend API URL. |
 
 > **Framework & Dev/Prod Notes:**

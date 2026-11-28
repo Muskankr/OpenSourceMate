@@ -1,6 +1,8 @@
 # Security Scanning
 
-The **Security** workflow (`.github/workflows/security.yml`) runs on every pull request to `main`, on every push to `main`, every Monday at 05:00 UTC, and on demand from the Actions tab (**Run workflow**).
+The **Security** workflow (`.github/workflows/security.yml`) runs on every pull request to `main`, on every push to `main`, every Monday at 05:00 UTC, and on demand from the Actions tab (**Run workflow**). It runs independently from `.github/workflows/ci.yml` so security and CodeQL scans do not slow down the main CI checks.
+
+Dependabot (`.github/dependabot.yml`) is also enabled for `/frontend` (`npm`), `/backend` (`pip`), and `/` (`github-actions`) with weekly grouped update pull requests every Monday at 06:00 UTC.
 
 ## What runs
 
@@ -37,7 +39,12 @@ The jobs only fail. To actually stop a merge, a maintainer has to mark the jobs 
 4. **CodeQL**
    - Open the alert under **Security > Code scanning** and read the data flow shown for it.
    - Fix real problems. If the alert is a false positive, dismiss it in the alert page with the reason "false positive" or "won't fix" and a note. Do not dismiss an alert without a note.
-5. **Real vulnerabilities in the project itself**: do not discuss exploitable details in a public issue or pull request. Follow [SECURITY.md](../SECURITY.md).
+5. **Dependabot alerts & weekly grouped PRs**
+   - Review weekly grouped PRs every Monday for `frontend` (`npm`), `backend` (`pip`), and `github-actions` (`/`).
+   - Verify CI (`ci.yml`) and Security (`security.yml`) checks pass before merging grouped minor/patch updates.
+   - For major version bumps or high/critical Dependabot security alerts under **Security > Dependabot**, check breaking changes in release notes, run local tests, and prioritize patching production dependencies first.
+   - If a Dependabot alert is a false positive or unreachable in OpenSourceMate's runtime, dismiss it with a clear explanatory comment and link any follow-up tracking issue.
+6. **Real vulnerabilities in the project itself**: do not discuss exploitable details in a public issue or pull request. Follow [SECURITY.md](../SECURITY.md).
 
 Findings that are not fixed in the same pull request must be tracked in an issue, so they do not silently pile up.
 

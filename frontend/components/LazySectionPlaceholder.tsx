@@ -46,9 +46,7 @@ export const LazySectionPlaceholder = memo(function LazySectionPlaceholder({
         />
       </div>
       <p className="text-sm font-semibold tracking-wide">{title}</p>
-      {description && (
-        <p className="mt-1 text-xs opacity-70">{description}</p>
-      )}
+      {description && <p className="mt-1 text-xs opacity-70">{description}</p>}
       <span className="sr-only">Loading content</span>
     </div>
   );

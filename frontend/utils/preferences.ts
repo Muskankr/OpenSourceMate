@@ -3,22 +3,13 @@
  */
 
 export type ContributionGoal =
-  | "learn"
-  | "portfolio"
-  | "gsoc"
-  | "hacktoberfest"
-  | "mentorship"
-  | "general";
+  "learn" | "portfolio" | "gsoc" | "hacktoberfest" | "mentorship" | "general";
 
-export type PreferredDifficulty =
-  | "any"
-  | "good-first-issue"
-  | "intermediate"
-  | "advanced";
+export type PreferredDifficulty = "any" | "good-first-issue" | "intermediate" | "advanced";
 
 export type TimeAvailability =
-  | "casual"     // 1-3 hours/week
-  | "regular"    // 4-8 hours/week
+  | "casual" // 1-3 hours/week
+  | "regular" // 4-8 hours/week
   | "dedicated"; // 10+ hours/week
 
 export interface UserPreferences {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { buildErrorDiagnostics } from "../utils/errorDiagnostics";
 
 export default function ErrorBoundary({
   error,
@@ -11,11 +12,23 @@ export default function ErrorBoundary({
   reset: () => void;
 }) {
   const [showDetails, setShowDetails] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    // Optionally log error in client telemetry / dev reporting
-    // console.error("Segment Error Boundary caught:", error);
+    if (process.env.NODE_ENV === "development") {
+      console.error("Segment Error Boundary caught:", error);
+    }
   }, [error]);
+
+  const handleCopyDiagnostics = async () => {
+    try {
+      await navigator.clipboard.writeText(buildErrorDiagnostics(error));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API unavailable
+    }
+  };
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden bg-[#05070d] text-white px-4 sm:px-6 py-16">
@@ -52,6 +65,15 @@ export default function ErrorBoundary({
             className="w-full sm:w-auto rounded-xl bg-white px-6 py-3 text-sm font-semibold text-black transition-colors hover:bg-gray-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
           >
             ↻ Try Again
+          </button>
+
+          <button
+            type="button"
+            onClick={handleCopyDiagnostics}
+            data-testid="copy-diagnostics-button"
+            className="w-full sm:w-auto rounded-xl border border-white/10 bg-white/5 px-6 py-3 text-sm font-medium text-gray-200 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+          >
+            {copied ? "Diagnostics copied!" : "Copy diagnostics"}
           </button>
 
           <Link

@@ -100,3 +100,32 @@ curl -sI http://localhost:8000/api/health | grep -iE "content-security|x-content
    contribute pages, and switch the theme. There should be no `Content-Security-Policy` errors, and fonts,
    avatars and API results should load.
 3. Open `<backend>/docs` and check that Swagger UI still loads.
+
+
+---
+
+## OWASP Secure Headers Benchmark Checklist
+
+| Security Header | Frontend (Next.js) | Backend API (FastAPI) | OWASP Recommended | Threat Mitigated |
+| :--- | :--- | :--- | :--- | :--- |
+| `Content-Security-Policy` | Restrictive whitelist + sha/self | `default-src 'none'; frame-ancestors 'none'` | Mandatory | XSS, data injection, malicious script execution |
+| `X-Content-Type-Options` | `nosniff` | `nosniff` | Mandatory | MIME confusion / drive-by executable attacks |
+| `X-Frame-Options` | `DENY` | `DENY` | Mandatory | Clickjacking / UI redressing |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | `no-referrer` | Mandatory | Sensitive parameter and user URL leakage |
+| `Strict-Transport-Security` | `max-age=63072000; includeSubDomains` | `max-age=31536000` (prod default) | Mandatory (HTTPS) | Man-in-the-middle (MITM) & SSL-stripping |
+| `Cross-Origin-Opener-Policy` | `same-origin` | `same-origin` | Recommended | Spectre-class side-channel attacks & tabnabbing |
+| `Permissions-Policy` | Disables camera, mic, geo, payment, etc. | N/A (headless JSON API) | Recommended | Unauthorized browser hardware access |
+
+---
+
+## Automated Verification Tool
+
+You can run the repository's internal verification scanner against any environment:
+
+```bash
+# Scan local backend API:
+python scripts/verify_security_headers.py --url http://localhost:8000/api/health
+
+# Scan production frontend:
+python scripts/verify_security_headers.py --url https://open-source-mate-tawny.vercel.app
+```

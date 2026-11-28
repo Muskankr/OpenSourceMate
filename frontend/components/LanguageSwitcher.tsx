@@ -21,9 +21,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
         {t("common.language.select", "Language")}
       </label>
       <svg
-        className={`w-4 h-4 pointer-events-none ${
-          isDark ? "text-slate-400" : "text-slate-600"
-        }`}
+        className={`w-4 h-4 pointer-events-none flex-shrink-0 ${isDark ? "text-slate-400" : "text-slate-600"}`}
         fill="none"
         viewBox="0 0 24 24"
         stroke="currentColor"
@@ -40,10 +38,11 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
         id="language-select"
         value={locale}
         onChange={(e) => setLocale(e.target.value as Locale)}
-        className={`appearance-none text-xs font-semibold rounded-lg pl-2 pr-6 py-1 border transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-emerald-400 ${
+        aria-label={t("common.language.select", "Language")}
+        className={`appearance-none text-xs font-semibold rounded-lg pl-2 pr-6 py-1.5 border transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-purple-400 ${
           isDark
-            ? "bg-slate-900 border-slate-800 text-slate-300 hover:border-slate-700"
-            : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 shadow-xs"
+            ? "bg-[#05070d]/90 border-white/10 text-slate-300 hover:border-white/20"
+            : "bg-white border-slate-200 text-slate-700 hover:border-slate-300 shadow-sm"
         }`}
       >
         <option value="en">English</option>

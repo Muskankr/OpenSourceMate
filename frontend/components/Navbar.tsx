@@ -1,12 +1,15 @@
 import React, { useRef, useEffect } from "react";
 import Link from "next/link";
 import GitHubLink from "./GitHubLink";
-import ThemeToggle from "./ThemeToggle";
+import ThemeToggle, { ThemeSegmentedToggle } from "./ThemeToggle";
 import BuildVersionBadge from "./BuildVersionBadge";
+import type { ThemePreference } from "../utils/theme";
 
 export interface NavbarProps {
   theme: "dark" | "light";
   onToggleTheme: () => void;
+  themePreference?: ThemePreference;
+  onChangePreference?: (preference: ThemePreference) => void;
   mobileMenuOpen: boolean;
   onToggleMobileMenu: () => void;
   onNavigateSection?: (sectionId: string) => void;
@@ -16,6 +19,8 @@ export interface NavbarProps {
 export const Navbar: React.FC<NavbarProps> = ({
   theme,
   onToggleTheme,
+  themePreference,
+  onChangePreference,
   mobileMenuOpen,
   onToggleMobileMenu,
   onNavigateSection,
@@ -53,9 +58,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   return (
     <nav
       className={`sticky top-0 z-50 backdrop-blur-md border-b transition-colors duration-200 ${
-        isDark
-          ? "bg-slate-950/80 border-slate-800"
-          : "bg-white/80 border-slate-200"
+        isDark ? "bg-slate-950/80 border-slate-800" : "bg-white/80 border-slate-200"
       }`}
       aria-label="Main Navigation"
     >
@@ -91,8 +94,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     ? "text-emerald-400"
                     : "text-emerald-600"
                   : isDark
-                  ? "text-slate-400 hover:text-slate-200"
-                  : "text-slate-600 hover:text-slate-900"
+                    ? "text-slate-400 hover:text-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
               }`}
             >
               Profile Analyzer
@@ -109,8 +112,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     ? "text-emerald-400"
                     : "text-emerald-600"
                   : isDark
-                  ? "text-slate-400 hover:text-slate-200"
-                  : "text-slate-600 hover:text-slate-900"
+                    ? "text-slate-400 hover:text-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
               }`}
             >
               How It Works
@@ -147,8 +150,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                     ? "text-emerald-400"
                     : "text-emerald-600"
                   : isDark
-                  ? "text-slate-400 hover:text-slate-200"
-                  : "text-slate-600 hover:text-slate-900"
+                    ? "text-slate-400 hover:text-slate-200"
+                    : "text-slate-600 hover:text-slate-900"
               }`}
             >
               FAQ
@@ -157,7 +160,15 @@ export const Navbar: React.FC<NavbarProps> = ({
 
           {/* Right actions: Theme toggle and GitHub Link */}
           <div className="flex items-center gap-3">
-            <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
+            {onChangePreference ? (
+              <ThemeSegmentedToggle
+                preference={themePreference}
+                resolvedTheme={theme}
+                onChangePreference={onChangePreference}
+              />
+            ) : (
+              <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
+            )}
 
             <GitHubLink theme={theme} />
 
@@ -264,6 +275,19 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             FAQ
           </a>
+
+          <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
+            <span className="text-xs text-slate-400">Theme</span>
+            {onChangePreference ? (
+              <ThemeSegmentedToggle
+                preference={themePreference}
+                resolvedTheme={theme}
+                onChangePreference={onChangePreference}
+              />
+            ) : (
+              <ThemeToggle theme={theme} onToggleTheme={onToggleTheme} />
+            )}
+          </div>
         </div>
       )}
     </nav>

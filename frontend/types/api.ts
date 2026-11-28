@@ -23,6 +23,14 @@ export interface GitHubUserProfile {
 
 export type ProficiencyLevel = "Learning" | "Comfortable" | "Strong";
 
+export interface SkillEvidenceRepository {
+  name: string;
+  url?: string | null;
+  bytes?: number | null;
+  share?: number | null;
+  last_updated?: string | null;
+}
+
 export interface SkillItem {
   name: string;
   repository_count: number;
@@ -33,6 +41,7 @@ export interface SkillItem {
   proficiency_score?: number;
   proficiency_reason?: string;
   group?: string | null;
+  evidence?: SkillEvidenceRepository[];
 }
 
 export interface UserSkillsResponse {
@@ -40,6 +49,19 @@ export interface UserSkillsResponse {
   skills: SkillItem[];
   total_repositories_analyzed: number;
   analyzed_at?: string;
+}
+
+export interface ContributorProgram {
+  id: string;
+  name: string;
+  description?: string;
+  labels: string[];
+  topics: string[];
+  website?: string;
+}
+
+export interface ProgramsResponse {
+  programs: ContributorProgram[];
 }
 
 export interface IssueRecommendation {
@@ -63,13 +85,25 @@ export interface IssueRecommendation {
   is_mock?: boolean;
   is_learning_mode?: boolean;
   learning_skill?: string;
+  topics?: string[];
+  programs?: string[];
+}
+
+export interface AuthUserStatus {
+  authenticated: boolean;
+  username?: string | null;
+  avatar_url?: string | null;
+  using_visitor_token: boolean;
 }
 
 export interface MatchedIssuesResponse {
   username: string;
   skills?: string[];
+  program?: string;
   recommendations: IssueRecommendation[];
   total?: number;
+  next_cursor?: number | null;
+  limit?: number;
 }
 
 export interface RepositoryItem {
@@ -115,7 +149,6 @@ export interface CompleteAnalysisResult {
   issues?: MatchedIssuesResponse;
 }
 
-
 /**
  * Type-level utility guards and assertion helpers for strict typing (Issue #139).
  */
@@ -127,7 +160,10 @@ export type Maybe<T> = T | null | undefined;
 /**
  * Asserts that a value is non-null and non-undefined.
  */
-export function assertNonNull<T>(val: Maybe<T>, message = "Value cannot be null or undefined"): asserts val is T {
+export function assertNonNull<T>(
+  val: Maybe<T>,
+  message = "Value cannot be null or undefined"
+): asserts val is T {
   if (val === null || val === undefined) {
     throw new TypeError(message);
   }

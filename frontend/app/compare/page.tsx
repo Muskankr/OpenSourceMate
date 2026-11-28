@@ -1,10 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import ProfileComparison from "../../components/ProfileComparison";
 import BuildVersionBadge from "../../components/BuildVersionBadge";
+import { ThemeSegmentedToggle } from "../../components/ThemeToggle";
+import { useTheme } from "../../hooks/useTheme";
 
 function CompareContent() {
   const searchParams = useSearchParams();
@@ -12,26 +14,7 @@ function CompareContent() {
   const initialUser1 = searchParams.get("a") || searchParams.get("user1") || "";
   const initialUser2 = searchParams.get("b") || searchParams.get("user2") || "";
 
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      const savedTheme = localStorage.getItem("theme");
-      if (savedTheme === "light" || savedTheme === "dark") {
-        setTheme(savedTheme);
-      } else {
-        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        setTheme(prefersDark ? "dark" : "light");
-      }
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
-
-  const toggleTheme = () => {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    localStorage.setItem("theme", next);
-  };
+  const { theme, themePreference, setThemePreference } = useTheme();
 
   const handleUsernamesChange = (u1: string, u2: string) => {
     if (typeof window !== "undefined") {
@@ -47,7 +30,9 @@ function CompareContent() {
       else params.delete("b");
 
       const queryStr = params.toString();
-      const newUrl = queryStr ? `${window.location.pathname}?${queryStr}` : window.location.pathname;
+      const newUrl = queryStr
+        ? `${window.location.pathname}?${queryStr}`
+        : window.location.pathname;
       window.history.replaceState(null, "", newUrl);
     }
   };
@@ -85,9 +70,7 @@ function CompareContent() {
               >
                 ✦
               </div>
-              <span className="text-lg font-semibold tracking-tight">
-                OpenSourceMate
-              </span>
+              <span className="text-lg font-semibold tracking-tight">OpenSourceMate</span>
             </Link>
             <span
               className={`rounded-md px-2 py-0.5 text-xs font-semibold ${
@@ -108,18 +91,11 @@ function CompareContent() {
               &larr; Back to Analyzer
             </Link>
 
-            <button
-              type="button"
-              onClick={toggleTheme}
-              aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
-              className={`flex h-9 w-9 items-center justify-center rounded-xl border transition ${
-                isDark
-                  ? "border-white/10 bg-white/5 text-yellow-400 hover:bg-white/10"
-                  : "border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              {isDark ? "☼" : "☽"}
-            </button>
+            <ThemeSegmentedToggle
+              preference={themePreference}
+              resolvedTheme={theme}
+              onChangePreference={setThemePreference}
+            />
           </div>
         </nav>
       </header>
@@ -141,9 +117,7 @@ function CompareContent() {
         }`}
       >
         <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-4">
-          <p>
-            OpenSourceMate Developer Comparison • Built with Next.js &amp; Tailwind CSS
-          </p>
+          <p>OpenSourceMate Developer Comparison • Built with Next.js &amp; Tailwind CSS</p>
           <span className="hidden sm:inline">•</span>
           <BuildVersionBadge theme={theme} />
         </div>

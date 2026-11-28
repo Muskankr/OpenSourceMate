@@ -1,31 +1,129 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import type { ThemePreference, ResolvedTheme } from "../utils/theme";
 
 export interface ThemeToggleProps {
   theme?: "dark" | "light";
+  preference?: ThemePreference;
+  onChangePreference?: (preference: ThemePreference) => void;
   onToggleTheme?: () => void;
   className?: string;
   id?: string;
   showTextLabel?: boolean;
+  variant?: "switch" | "segmented";
+}
+
+/**
+ * Segmented 3-mode toggle: Light | Dark | System
+ */
+export function ThemeSegmentedToggle({
+  preference = "system",
+  resolvedTheme = "dark",
+  onChangePreference,
+  className = "",
+  id = "theme-segmented-toggle",
+}: {
+  preference?: ThemePreference;
+  resolvedTheme?: ResolvedTheme;
+  onChangePreference?: (pref: ThemePreference) => void;
+  className?: string;
+  id?: string;
+}) {
+  const isDark = resolvedTheme === "dark";
+
+  return (
+    <div
+      id={id}
+      role="group"
+      aria-label="Theme preference"
+      data-testid="theme-toggle-segmented"
+      className={`inline-flex items-center rounded-xl p-1 border text-xs font-medium transition-colors ${
+        isDark ? "border-white/10 bg-white/5" : "border-gray-300 bg-gray-100"
+      } ${className}`}
+    >
+      {/* Light Option */}
+      <button
+        type="button"
+        aria-label="Switch to light mode"
+        aria-pressed={preference === "light"}
+        data-testid="theme-option-light"
+        onClick={() => onChangePreference?.("light")}
+        className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
+          preference === "light"
+            ? isDark
+              ? "bg-purple-600 text-white shadow-sm font-semibold"
+              : "bg-white text-gray-900 shadow-sm font-semibold ring-1 ring-gray-200"
+            : isDark
+              ? "text-gray-400 hover:text-white"
+              : "text-gray-600 hover:text-gray-900"
+        }`}
+      >
+        <span aria-hidden="true">☀️</span>
+        <span>Light</span>
+      </button>
+
+      {/* Dark Option */}
+      <button
+        type="button"
+        aria-label="Switch to dark mode"
+        aria-pressed={preference === "dark"}
+        data-testid="theme-option-dark"
+        onClick={() => onChangePreference?.("dark")}
+        className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
+          preference === "dark"
+            ? isDark
+              ? "bg-purple-600 text-white shadow-sm font-semibold"
+              : "bg-white text-gray-900 shadow-sm font-semibold ring-1 ring-gray-200"
+            : isDark
+              ? "text-gray-400 hover:text-white"
+              : "text-gray-600 hover:text-gray-900"
+        }`}
+      >
+        <span aria-hidden="true">🌙</span>
+        <span>Dark</span>
+      </button>
+
+      {/* System Option */}
+      <button
+        type="button"
+        aria-label="Switch to system theme"
+        aria-pressed={preference === "system"}
+        data-testid="theme-option-system"
+        onClick={() => onChangePreference?.("system")}
+        className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
+          preference === "system"
+            ? isDark
+              ? "bg-purple-600 text-white shadow-sm font-semibold"
+              : "bg-white text-gray-900 shadow-sm font-semibold ring-1 ring-gray-200"
+            : isDark
+              ? "text-gray-400 hover:text-white"
+              : "text-gray-600 hover:text-gray-900"
+        }`}
+      >
+        <span aria-hidden="true">💻</span>
+        <span>System</span>
+      </button>
+    </div>
+  );
 }
 
 /**
  * An accessible theme toggle switch component.
  *
- * Implements WCAG 2.1 AA compliant keyboard and screen reader accessibility:
- * - Proper `role="switch"` and `aria-checked={isDark}`
- * - Explicit `aria-label` stating action ("Switch to light mode" / "Switch to dark mode")
- * - Keyboard support: space / enter toggle, plus visible focus ring
- * - Decorative icons marked with `aria-hidden="true"`
- * - Tooltip / live announcement support
+ * Supports both:
+ * 1. 2-state accessible switch (`variant="switch"`), complying with WCAG 2.1 AA `role="switch"`
+ * 2. 3-state segmented control (`variant="segmented"`), supporting Light, Dark, and System preferences
  */
 export default function ThemeToggle({
   theme = "dark",
+  preference,
+  onChangePreference,
   onToggleTheme,
   className = "",
   id = "theme-toggle-switch",
   showTextLabel = false,
+  variant,
 }: ThemeToggleProps) {
   const [mounted, setMounted] = useState(false);
   const isDark = theme === "dark";
@@ -33,6 +131,19 @@ export default function ThemeToggle({
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // If explicitly requested segmented or preference was provided with onChangePreference
+  if (variant === "segmented" || (preference && onChangePreference && variant !== "switch")) {
+    return (
+      <ThemeSegmentedToggle
+        id={id}
+        preference={preference}
+        resolvedTheme={theme}
+        onChangePreference={onChangePreference}
+        className={className}
+      />
+    );
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
     if (e.key === " " || e.key === "Enter") {

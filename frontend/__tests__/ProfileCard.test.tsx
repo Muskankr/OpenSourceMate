@@ -134,9 +134,7 @@ describe("ProfileCard Component Edge Cases", () => {
     expect(screen.getByText("@torvalds")).toBeInTheDocument();
 
     // Bio
-    expect(
-      screen.getByText("Creator of Linux and Git. Open source advocate.")
-    ).toBeInTheDocument();
+    expect(screen.getByText("Creator of Linux and Git. Open source advocate.")).toBeInTheDocument();
 
     // Metadata
     expect(screen.getByText("Portland, OR")).toBeInTheDocument();

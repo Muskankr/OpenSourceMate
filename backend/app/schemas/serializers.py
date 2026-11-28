@@ -61,6 +61,35 @@ class HealthResponseSerializer(BaseModel):
     )
 
 
+class ReadinessResponseSerializer(BaseModel):
+    """Readiness probe response serializer checking upstream dependencies (Issue #425)."""
+
+    status: str = Field(
+        ...,
+        description="Current service readiness status: ready or not_ready",
+        json_schema_extra={"example": "ready"},
+    )
+    service: str = Field(
+        default="OpenSourceMate API",
+        description="Service identifier",
+        json_schema_extra={"example": "OpenSourceMate API"},
+    )
+    version: str = Field(
+        default="0.1.0",
+        description="API version",
+        json_schema_extra={"example": "0.1.0"},
+    )
+    github_reachable: bool = Field(
+        ...,
+        description="Whether upstream GitHub API is reachable within short timeout",
+        json_schema_extra={"example": True},
+    )
+    details: Any = Field(
+        default=None,
+        description="Optional diagnostic or error details",
+    )
+
+
 class HealthDiagnosticsSerializer(BaseModel):
     """Diagnostics payload with upstream service connectivity and cache metrics."""
 
@@ -168,6 +197,22 @@ class TopRepositoriesResponseSerializer(BaseModel):
 
 
 # ---------------------------------------------------------
+class SkillEvidenceRepository(BaseModel):
+    """Repository contributing evidence toward a detected skill (Issue #480)."""
+
+    name: str = Field(..., description="Repository full name or name")
+    url: str | None = Field(default=None, description="GitHub repository HTML URL")
+    bytes: int | None = Field(
+        default=None, description="Bytes of code in this language/skill if known"
+    )
+    share: float | None = Field(
+        default=None, description="Approximate percentage share of bytes or repository count"
+    )
+    last_updated: str | None = Field(
+        default=None, description="ISO timestamp of when this repository was last updated"
+    )
+
+
 # Skill Analysis Serializers
 # ---------------------------------------------------------
 class SkillItemSerializer(BaseModel):
@@ -203,6 +248,10 @@ class SkillItemSerializer(BaseModel):
     proficiency_reason: str | None = Field(
         default=None,
         description="Explanation of how the proficiency estimate was computed (Issue #131)",
+    )
+    evidence: list[SkillEvidenceRepository] = Field(
+        default_factory=list,
+        description="Top contributing repositories explaining why this skill was detected (Issue #480)",
     )
 
 
@@ -293,6 +342,16 @@ class MatchedIssuesResponseSerializer(BaseModel):
     )
     recommendations: list[MatchedIssueRecommendationSerializer] = Field(
         default_factory=list, description="Ranked list of recommended issues"
+    )
+    total: int = Field(
+        default=0, description="Total count of matching recommendations before pagination (Issue #481)"
+    )
+    next_cursor: int | None = Field(
+        default=None,
+        description="Offset cursor to request the next page of recommendations, or null if no more items (Issue #481)",
+    )
+    limit: int = Field(
+        default=20, description="Pagination page limit applied (Issue #481)"
     )
 
 

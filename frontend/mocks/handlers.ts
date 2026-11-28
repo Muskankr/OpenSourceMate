@@ -2,6 +2,7 @@ import { generateMockUserProfile } from "./fixtures/users";
 import { generateMockSkills } from "./fixtures/skills";
 import { generateMockRepositories } from "./fixtures/repositories";
 import { generateMockMatchedIssues } from "./fixtures/issues";
+import { getProgramsConfig } from "../utils/programs";
 
 export interface MockRequest {
   url: string;
@@ -127,11 +128,51 @@ export function handleMockApiRequest(url: string, method?: string): MockResponse
     const mockCheck = checkSpecialMockConditions(rawUsername);
     if (mockCheck) return mockCheck;
 
-    const issues = generateMockMatchedIssues(rawUsername);
+    const skillsParams = urlObj.searchParams.getAll("skills");
+    const programParam = urlObj.searchParams.get("program") || undefined;
+    let explicitSkills: string[] | undefined = undefined;
+
+    if (skillsParams.length > 0 || urlObj.searchParams.has("skills")) {
+      explicitSkills = [];
+      for (const s of skillsParams) {
+        const parts = s
+          .split(",")
+          .map((p) => p.trim())
+          .filter(Boolean);
+        for (const p of parts) {
+          if (!/^[a-zA-Z0-9+#.\- ]{1,50}$/.test(p)) {
+            return {
+              status: 400,
+              headers: { "Content-Type": "application/json" },
+              body: { error: { code: "BAD_REQUEST", message: `Invalid skill: '${p}'` } },
+            };
+          }
+          if (!explicitSkills.includes(p)) {
+            explicitSkills.push(p);
+          }
+        }
+      }
+    }
+
+    const issues = generateMockMatchedIssues(rawUsername, explicitSkills, programParam);
     return {
       status: 200,
       headers: { "Content-Type": "application/json" },
       body: issues,
+    };
+  }
+
+  // 6. Contributor Programs: /api/matching/programs or /api/programs
+  if (
+    pathname === "/api/matching/programs" ||
+    pathname === "/api/programs" ||
+    pathname === "/api/v1/programs" ||
+    pathname === "/api/v1/matching/programs"
+  ) {
+    return {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+      body: { programs: getProgramsConfig() },
     };
   }
 

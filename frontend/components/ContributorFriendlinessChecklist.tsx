@@ -93,9 +93,7 @@ export const ContributorFriendlinessChecklist: React.FC<ContributorFriendlinessP
       } ${className}`}
     >
       <div className="mb-4">
-        <h3 className="text-lg font-bold tracking-tight">
-          Contributor-Friendliness Check
-        </h3>
+        <h3 className="text-lg font-bold tracking-tight">Contributor-Friendliness Check</h3>
         <p className={`text-xs sm:text-sm mt-1 ${isDark ? "text-slate-400" : "text-slate-600"}`}>
           Paste any open-source repository to verify whether it welcomes new contributors.
         </p>
@@ -176,8 +174,8 @@ export const ContributorFriendlinessChecklist: React.FC<ContributorFriendlinessP
                           ? "border-emerald-500/20 bg-emerald-500/5"
                           : "border-emerald-200 bg-emerald-50/50"
                         : isDark
-                        ? "border-slate-800 bg-slate-950/40"
-                        : "border-slate-200 bg-slate-50"
+                          ? "border-slate-800 bg-slate-950/40"
+                          : "border-slate-200 bg-slate-50"
                     }`}
                   >
                     <div className="mt-0.5 shrink-0">
@@ -193,7 +191,9 @@ export const ContributorFriendlinessChecklist: React.FC<ContributorFriendlinessP
                     </div>
                     <div>
                       <h5 className="text-sm font-semibold">{check.label}</h5>
-                      <p className={`text-xs mt-0.5 leading-relaxed ${isDark ? "text-slate-300" : "text-slate-600"}`}>
+                      <p
+                        className={`text-xs mt-0.5 leading-relaxed ${isDark ? "text-slate-300" : "text-slate-600"}`}
+                      >
                         {check.explanation}
                       </p>
                     </div>

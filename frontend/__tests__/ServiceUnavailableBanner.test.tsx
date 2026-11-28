@@ -12,9 +12,7 @@ describe("ServiceUnavailableBanner Component", () => {
     expect(alert).toHaveAttribute("aria-live", "assertive");
     expect(alert).toHaveAttribute("aria-atomic", "true");
 
-    expect(
-      screen.getByText(/Service Temporarily Unavailable/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Service Temporarily Unavailable/i)).toBeInTheDocument();
     expect(
       screen.getByText(/We couldn't reach the OpenSourceMate backend service/i)
     ).toBeInTheDocument();
@@ -31,9 +29,7 @@ describe("ServiceUnavailableBanner Component", () => {
     );
 
     expect(screen.getByText("Backend Gateway Timeout")).toBeInTheDocument();
-    expect(
-      screen.getByText("The upstream server did not respond in time.")
-    ).toBeInTheDocument();
+    expect(screen.getByText("The upstream server did not respond in time.")).toBeInTheDocument();
     expect(screen.getByText("Status 504")).toBeInTheDocument();
   });
 
@@ -60,8 +56,7 @@ describe("ServiceUnavailableBanner Component", () => {
   });
 
   it("renders report problem link pointing to GitHub Issues", () => {
-    const customReportUrl =
-      "https://github.com/Muskankr/OpenSourceMate/issues/new?title=Custom";
+    const customReportUrl = "https://github.com/Muskankr/OpenSourceMate/issues/new?title=Custom";
     render(<ServiceUnavailableBanner reportUrl={customReportUrl} />);
 
     const reportLink = screen.getByRole("link", { name: /Report Problem/i });
@@ -93,18 +88,14 @@ describe("ServiceUnavailableBanner Component", () => {
   });
 
   it("renders in light mode theme with appropriate classes", () => {
-    const { container } = render(
-      <ServiceUnavailableBanner theme="light" statusCode={503} />
-    );
+    const { container } = render(<ServiceUnavailableBanner theme="light" statusCode={503} />);
 
     const banner = container.querySelector("[data-testid='service-unavailable-banner']");
     expect(banner).toHaveClass("bg-amber-50/95");
   });
 
   it("renders in dark mode theme with glowing border styles", () => {
-    const { container } = render(
-      <ServiceUnavailableBanner theme="dark" statusCode={500} />
-    );
+    const { container } = render(<ServiceUnavailableBanner theme="dark" statusCode={500} />);
 
     const banner = container.querySelector("[data-testid='service-unavailable-banner']");
     expect(banner).toHaveClass("border-amber-500/30");
@@ -117,7 +108,11 @@ describe("ServiceUnavailableBanner Component", () => {
 
     render(
       <ServiceUnavailableBanner
-        message={rawTrace.includes("ECONNREFUSED") ? "The backend service is temporarily offline." : rawTrace}
+        message={
+          rawTrace.includes("ECONNREFUSED")
+            ? "The backend service is temporarily offline."
+            : rawTrace
+        }
       />
     );
 

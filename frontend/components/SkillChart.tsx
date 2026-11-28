@@ -381,15 +381,27 @@ export default function SkillChart({
 
         {/* Legend Panel */}
         <div
-          className="w-full lg:max-w-xs rounded-2xl border p-4 bg-black/20 border-white/5"
+          className={`w-full lg:max-w-xs rounded-2xl border p-4 ${
+            theme === "dark" ? "bg-black/20 border-white/5" : "bg-gray-50 border-gray-200"
+          }`}
           role="region"
           aria-label="Skill chart legend"
         >
-          <div className="flex items-center justify-between border-b pb-2 mb-3 border-white/5">
-            <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+          <div
+            className={`flex items-center justify-between border-b pb-2 mb-3 ${
+              theme === "dark" ? "border-white/5" : "border-gray-200"
+            }`}
+          >
+            <span
+              className={`text-xs font-semibold uppercase tracking-wider ${
+                theme === "dark" ? "text-gray-400" : "text-gray-600"
+              }`}
+            >
               Skill Legend
             </span>
-            <span className="text-xs text-gray-500">{displaySkills.length} items</span>
+            <span className={`text-xs ${theme === "dark" ? "text-gray-500" : "text-gray-500"}`}>
+              {displaySkills.length} items
+            </span>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-2.5">
@@ -403,7 +415,13 @@ export default function SkillChart({
                   onMouseEnter={() => setActiveSkill(skill)}
                   onMouseLeave={() => setActiveSkill(null)}
                   className={`flex items-center justify-between rounded-xl px-2.5 py-1.5 text-xs transition-colors text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 ${
-                    isHovered ? "bg-white/10 ring-1 ring-white/20" : "hover:bg-white/5"
+                    isHovered
+                      ? theme === "dark"
+                        ? "bg-white/10 ring-1 ring-white/20"
+                        : "bg-gray-200/80 ring-1 ring-gray-300"
+                      : theme === "dark"
+                        ? "hover:bg-white/5"
+                        : "hover:bg-gray-100"
                   }`}
                   aria-pressed={isHovered}
                   aria-label={`Highlight ${skill.name} in chart`}
@@ -418,7 +436,13 @@ export default function SkillChart({
                     <span className="truncate font-medium">{skill.name}</span>
                   </div>
 
-                  <span className="font-semibold text-gray-400 ml-2">{skill.percentage}%</span>
+                  <span
+                    className={`font-semibold ml-2 ${
+                      theme === "dark" ? "text-gray-400" : "text-gray-600"
+                    }`}
+                  >
+                    {skill.percentage}%
+                  </span>
                 </button>
               );
             })}
@@ -427,7 +451,9 @@ export default function SkillChart({
       </div>
 
       {/* Accessible Table Fallback (WCAG 2.1 AA Compliance) */}
-      <div className="mt-6 border-t pt-4 border-white/5">
+      <div
+        className={`mt-6 border-t pt-4 ${theme === "dark" ? "border-white/5" : "border-gray-200"}`}
+      >
         <button
           type="button"
           aria-label={
@@ -451,7 +477,9 @@ export default function SkillChart({
         {showTable && (
           <div
             id={`accessible-table-${chartId}`}
-            className="mt-3 overflow-x-auto rounded-xl border border-white/10"
+            className={`mt-3 overflow-x-auto rounded-xl border ${
+              theme === "dark" ? "border-white/10" : "border-gray-200"
+            }`}
           >
             <table className="w-full text-left text-xs">
               <caption className="sr-only">

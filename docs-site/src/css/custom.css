@@ -1,0 +1,30 @@
+:root {
+  --ifm-color-primary: #059669;
+  --ifm-color-primary-dark: #047857;
+  --ifm-color-primary-darker: #065f46;
+  --ifm-color-primary-darkest: #064e3b;
+  --ifm-color-primary-light: #10b981;
+  --ifm-color-primary-lighter: #34d399;
+  --ifm-color-primary-lightest: #6ee7b7;
+  --ifm-code-font-size: 95%;
+}
+
+[data-theme="dark"] {
+  --ifm-color-primary: #34d399;
+  --ifm-color-primary-dark: #10b981;
+  --ifm-color-primary-darker: #059669;
+  --ifm-color-primary-darkest: #047857;
+  --ifm-color-primary-light: #6ee7b7;
+  --ifm-color-primary-lighter: #a7f3d0;
+  --ifm-color-primary-lightest: #d1fae5;
+}
+
+.heroBanner {
+  padding: 4rem 0;
+  text-align: center;
+}
+
+.heroBanner p {
+  margin: 0 auto 1.5rem;
+  max-width: 42rem;
+}

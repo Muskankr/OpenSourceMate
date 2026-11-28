@@ -25,15 +25,23 @@ export function usePrefersReducedMotion(): boolean {
 
     if (typeof mediaQueryList.addEventListener === "function") {
       mediaQueryList.addEventListener("change", listener);
-    } else if (typeof (mediaQueryList as unknown as { addListener: (l: unknown) => void }).addListener === "function") {
+    } else if (
+      typeof (mediaQueryList as unknown as { addListener: (l: unknown) => void }).addListener ===
+      "function"
+    ) {
       (mediaQueryList as unknown as { addListener: (l: unknown) => void }).addListener(listener);
     }
 
     return () => {
       if (typeof mediaQueryList.removeEventListener === "function") {
         mediaQueryList.removeEventListener("change", listener);
-      } else if (typeof (mediaQueryList as unknown as { removeListener: (l: unknown) => void }).removeListener === "function") {
-        (mediaQueryList as unknown as { removeListener: (l: unknown) => void }).removeListener(listener);
+      } else if (
+        typeof (mediaQueryList as unknown as { removeListener: (l: unknown) => void })
+          .removeListener === "function"
+      ) {
+        (mediaQueryList as unknown as { removeListener: (l: unknown) => void }).removeListener(
+          listener
+        );
       }
     };
   }, []);
@@ -46,7 +54,10 @@ export function usePrefersReducedMotion(): boolean {
  */
 export function getMotionSafeClass(
   standardClass: string,
-  reducedClass = "transition-none transform-none animate-none"
+  customReduced?: string
 ): string {
-  return `${standardClass} motion-reduce:${reducedClass}`;
+  if (customReduced) {
+    return `${standardClass} motion-reduce:${customReduced}`;
+  }
+  return `${standardClass} motion-reduce:transition-none motion-reduce:transform-none motion-reduce:animate-none`;
 }

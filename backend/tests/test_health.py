@@ -127,7 +127,10 @@ def test_health_diagnostics_token_masked():
 
 def test_cache_stats():
     cache = TTLCache(max_entries=5)
-    assert cache.stats() == {"active_entries": 0, "total_keys": 0, "max_entries": 5}
+    stats = cache.stats()
+    assert stats["active_entries"] == 0
+    assert stats["total_keys"] == 0
+    assert stats["max_entries"] == 5
 
     cache.set("a", 1, ttl=60)
     cache.set("b", 2, ttl=60)

@@ -58,7 +58,8 @@ export const MOCK_RECOMMENDED_ISSUES: IssueRecommendation[] = [
     repository: "vercel/next.js",
     url: "https://github.com/vercel/next.js/issues/1001",
     state: "open",
-    labels: ["good first issue", "accessibility", "frontend"],
+    labels: ["good first issue", "accessibility", "frontend", "hacktoberfest"],
+    topics: ["hacktoberfest"],
     comments: 4,
     created_at: "2026-10-15T10:00:00Z",
     updated_at: "2026-10-28T14:30:00Z",
@@ -80,7 +81,8 @@ export const MOCK_RECOMMENDED_ISSUES: IssueRecommendation[] = [
     repository: "tiangolo/fastapi",
     url: "https://github.com/tiangolo/fastapi/issues/1002",
     state: "open",
-    labels: ["help wanted", "enhancement", "pydantic-v2"],
+    labels: ["help wanted", "enhancement", "pydantic-v2", "nsoc"],
+    topics: ["nsoc", "nwoc"],
     comments: 12,
     created_at: "2026-10-18T08:15:00Z",
     updated_at: "2026-10-29T11:20:00Z",
@@ -169,17 +171,24 @@ export const MOCK_RECOMMENDED_ISSUES: IssueRecommendation[] = [
   },
 ];
 
+import { filterIssuesByProgram } from "../utils/programs";
+
 export interface MockIssuesOptions {
   learningMode?: boolean;
   targetSkills?: string[];
+  filterBySkills?: boolean;
+  program?: string;
 }
 
 /**
- * Returns mock recommended issues filtered or prioritized by user skills.
+ * Returns mock recommended issues filtered or prioritized by user skills and optional program.
  * Falls back to the full mock set if no skills match.
  *
  * When options.learningMode is true with chosen targetSkills, ranks
  * beginner-friendly issues in the chosen skills higher.
+ *
+ * When options.program is specified (e.g. "hacktoberfest", "nsoc"), filters to only
+ * issues carrying that program's labels or topics.
  */
 export function getMockRecommendedIssues(
   skills?: string[] | SkillItem[] | null,
@@ -217,6 +226,10 @@ export function getMockRecommendedIssues(
     });
 
     baseList = scored.sort((a, b) => (b.match_score ?? 0) - (a.match_score ?? 0));
+  }
+
+  if (options?.program) {
+    baseList = filterIssuesByProgram(baseList, options.program);
   }
 
   if (options?.learningMode && options?.targetSkills && options.targetSkills.length > 0) {

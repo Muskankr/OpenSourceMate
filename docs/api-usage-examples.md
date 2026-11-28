@@ -499,6 +499,10 @@ Analyses the user's skills, searches good first issues for their top skills and 
 | Query parameter | Type | Default | Description |
 |---|---|---|---|
 | `exclude_stale` | bool | `false` | Leave out issues inactive for more than 60 days |
+| `skills` | list[str] | `null` | Optional explicit comma-separated skills to match against |
+| `program` | string | `null` | Optional contributor program identifier filter (e.g. `nsoc`, `hacktoberfest`) |
+| `limit` | int | `20` | Maximum recommendations per page (min 1, max 100) (Issue #481) |
+| `cursor` | int | `0` | Offset cursor for pagination (min 0) (Issue #481) |
 
 ```bash
 curl "http://localhost:8000/api/v1/matching/users/octocat/issues?exclude_stale=true"

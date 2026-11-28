@@ -49,27 +49,27 @@ We use the [pre-commit](https://pre-commit.com/) framework to run automated sani
 - `ruff`: Lints Python files with auto-fixing enabled (`--fix`).
 - `ruff-format`: Formats Python code adhering to standard PEP 8 88-character column line lengths.
 - `prettier`: Formats frontend JavaScript, TypeScript, JSX, TSX, CSS, JSON, and Markdown files.
+- `eslint`: Lints staged frontend JavaScript and TypeScript files using `frontend/eslint.config.mjs`.
 
 ---
 
 ## 3. Backend Code Quality Commands
 
-All backend checks can be run directly using Ruff within the backend environment:
+All backend checks can be run directly using Ruff or `backend/Makefile` within the backend environment:
 
 ```bash
 # Navigate to backend
 cd backend
 
-# Run linter
+# Using Makefile shortcuts
+make lint
+make format
+make format-check
+
+# Or directly with Ruff
 ruff check .
-
-# Automatically apply safe lint fixes
 ruff check --fix .
-
-# Check formatting compliance (dry run)
 ruff format --check .
-
-# Auto-format all Python code
 ruff format .
 
 # Run test suite

@@ -1,4 +1,5 @@
 import type { MatchedIssuesResponse } from "../../types/api";
+import { filterIssuesByProgram } from "../../utils/programs";
 
 export const MOCK_MATCHED_ISSUES: Record<string, MatchedIssuesResponse> = {
   octocat: {
@@ -11,16 +12,14 @@ export const MOCK_MATCHED_ISSUES: Record<string, MatchedIssuesResponse> = {
         repository: "github/docs",
         url: "https://github.com/github/docs/issues/201",
         state: "open",
-        labels: ["good first issue", "accessibility", "frontend"],
+        labels: ["good first issue", "accessibility", "frontend", "hacktoberfest"],
+        topics: ["hacktoberfest"],
         comments: 3,
         created_at: "2026-10-14T09:00:00Z",
         updated_at: "2026-10-25T11:20:00Z",
         language: "JavaScript",
         match_score: 93,
-        match_reasons: [
-          "Matched skill: JavaScript & CSS",
-          "Tagged good first issue",
-        ],
+        match_reasons: ["Matched skill: JavaScript & CSS", "Tagged good first issue"],
         explanation:
           "Great introductory issue for improving GitHub docs accessibility contrast ratios.",
         difficulty: "Beginner",
@@ -31,18 +30,15 @@ export const MOCK_MATCHED_ISSUES: Record<string, MatchedIssuesResponse> = {
         repository: "rails/rails",
         url: "https://github.com/rails/rails/issues/202",
         state: "open",
-        labels: ["activerecord", "help wanted"],
+        labels: ["activerecord", "help wanted", "nsoc"],
+        topics: ["nsoc", "nwoc"],
         comments: 14,
         created_at: "2026-10-10T14:15:00Z",
         updated_at: "2026-10-29T16:45:00Z",
         language: "Ruby",
         match_score: 87,
-        match_reasons: [
-          "Matched primary skill: Ruby",
-          "Active Record architectural improvement",
-        ],
-        explanation:
-          "Refactors internal callback lifecycle events to clean event notifications.",
+        match_reasons: ["Matched primary skill: Ruby", "Active Record architectural improvement"],
+        explanation: "Refactors internal callback lifecycle events to clean event notifications.",
         difficulty: "Intermediate",
       },
     ],
@@ -58,7 +54,8 @@ export const MOCK_MATCHED_ISSUES: Record<string, MatchedIssuesResponse> = {
         repository: "torvalds/linux",
         url: "https://github.com/torvalds/linux/issues/301",
         state: "open",
-        labels: ["arch/x86", "performance", "kernel"],
+        labels: ["arch/x86", "performance", "kernel", "gsoc"],
+        topics: ["gsoc"],
         comments: 26,
         created_at: "2026-09-18T10:00:00Z",
         updated_at: "2026-10-30T12:00:00Z",
@@ -68,8 +65,7 @@ export const MOCK_MATCHED_ISSUES: Record<string, MatchedIssuesResponse> = {
           "Exact match for primary language: C",
           "Kernel memory architecture alignment",
         ],
-        explanation:
-          "High-performance low-level page table caching enhancement for hypervisors.",
+        explanation: "High-performance low-level page table caching enhancement for hypervisors.",
         difficulty: "Advanced",
       },
     ],
@@ -77,13 +73,12 @@ export const MOCK_MATCHED_ISSUES: Record<string, MatchedIssuesResponse> = {
   },
 };
 
-export function generateMockMatchedIssues(username: string): MatchedIssuesResponse {
+export function generateMockMatchedIssues(
+  username: string,
+  explicitSkills?: string[]
+): MatchedIssuesResponse {
   const normalized = username.toLowerCase().trim();
-  if (MOCK_MATCHED_ISSUES[normalized]) {
-    return MOCK_MATCHED_ISSUES[normalized];
-  }
-
-  return {
+  const baseData: MatchedIssuesResponse = MOCK_MATCHED_ISSUES[normalized] || {
     username,
     skills: ["TypeScript", "Python", "React"],
     recommendations: [
@@ -93,16 +88,14 @@ export function generateMockMatchedIssues(username: string): MatchedIssuesRespon
         repository: "vercel/next.js",
         url: "https://github.com/vercel/next.js/issues/101",
         state: "open",
-        labels: ["good first issue", "typescript"],
+        labels: ["good first issue", "typescript", "hacktoberfest"],
+        topics: ["hacktoberfest"],
         comments: 2,
         created_at: "2026-10-12T10:00:00Z",
         updated_at: "2026-10-20T14:00:00Z",
         language: "TypeScript",
         match_score: 95,
-        match_reasons: [
-          "Matched primary skill: TypeScript",
-          "Beginner friendly issue",
-        ],
+        match_reasons: ["Matched primary skill: TypeScript", "Beginner friendly issue"],
         explanation: "Enhance type safety in the command-line options parser.",
         difficulty: "Beginner",
       },
@@ -112,21 +105,73 @@ export function generateMockMatchedIssues(username: string): MatchedIssuesRespon
         repository: "tiangolo/fastapi",
         url: "https://github.com/tiangolo/fastapi/issues/102",
         state: "open",
-        labels: ["help wanted", "enhancement"],
+        labels: ["help wanted", "enhancement", "nsoc"],
+        topics: ["nsoc", "nwoc"],
         comments: 6,
         created_at: "2026-10-15T11:00:00Z",
         updated_at: "2026-10-26T16:30:00Z",
         language: "Python",
         match_score: 88,
-        match_reasons: [
-          "Matched skill: Python",
-          "Async client architecture",
-        ],
+        match_reasons: ["Matched skill: Python", "Async client architecture"],
         explanation: "Robust retry handling for dropped database connections.",
         difficulty: "Intermediate",
       },
+      {
+        id: 103,
+        title: "Implement zero-copy memory mapped file reader in Rust",
+        repository: "BurntSushi/ripgrep",
+        url: "https://github.com/BurntSushi/ripgrep/issues/103",
+        state: "open",
+        labels: ["good first issue", "rust", "gsoc"],
+        topics: ["gsoc"],
+        comments: 2,
+        created_at: "2026-10-18T10:00:00Z",
+        updated_at: "2026-10-28T14:00:00Z",
+        language: "Rust",
+        match_score: 92,
+        match_reasons: ["Matched skill: Rust", "Fast file system utilities"],
+        explanation: "High performance memory mapping in ripgrep.",
+        difficulty: "Beginner",
+      },
     ],
-    total: 2,
+    total: 3,
+  };
+
+  let recs = baseData.recommendations;
+  let activeSkills = baseData.skills;
+
+  if (explicitSkills !== undefined) {
+    if (explicitSkills.length === 0) {
+      return {
+        username,
+        skills: [],
+        program,
+        recommendations: [],
+        total: 0,
+      };
+    }
+
+    const explicitLower = new Set(explicitSkills.map((s) => s.toLowerCase().trim()));
+    recs = recs.filter((rec) => {
+      const langMatch = rec.language && explicitLower.has(rec.language.toLowerCase());
+      const labelMatch = rec.labels?.some((lbl) => explicitLower.has(lbl.toLowerCase()));
+      const titleMatch = explicitSkills.some((s) =>
+        rec.title.toLowerCase().includes(s.toLowerCase())
+      );
+      return langMatch || labelMatch || titleMatch;
+    });
+    activeSkills = explicitSkills;
+  }
+
+  if (program) {
+    recs = filterIssuesByProgram(recs, program);
+  }
+
+  return {
+    username,
+    skills: activeSkills,
+    program,
+    recommendations: recs,
+    total: recs.length,
   };
 }
-

@@ -7,6 +7,8 @@ export interface ExportMenuProps {
   onExport: (format: ExportFormat) => void;
   disabled?: boolean;
   className?: string;
+  label?: string;
+  ariaLabel?: string;
 }
 
 interface FormatOption {
@@ -102,6 +104,8 @@ export default function ExportMenu({
   onExport,
   disabled = false,
   className = "",
+  label = "Export",
+  ariaLabel,
 }: ExportMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
@@ -109,13 +113,13 @@ export default function ExportMenu({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
+  const effectiveAriaLabel =
+    ariaLabel || (label && label !== "Export" ? `Export ${label.toLowerCase()} as JSON, CSV or Markdown` : "Export analysis results as JSON, CSV or Markdown");
+
   // Close menu on click outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsOpen(false);
         setFocusedIndex(-1);
       }
@@ -134,11 +138,7 @@ export default function ExportMenu({
     if (disabled) return;
 
     if (!isOpen) {
-      if (
-        event.key === "ArrowDown" ||
-        event.key === "Enter" ||
-        event.key === " "
-      ) {
+      if (event.key === "ArrowDown" || event.key === "Enter" || event.key === " ") {
         event.preventDefault();
         setIsOpen(true);
         setFocusedIndex(0);
@@ -159,9 +159,7 @@ export default function ExportMenu({
         break;
       case "ArrowUp":
         event.preventDefault();
-        setFocusedIndex((prev) =>
-          prev <= 0 ? FORMAT_OPTIONS.length - 1 : prev - 1
-        );
+        setFocusedIndex((prev) => (prev <= 0 ? FORMAT_OPTIONS.length - 1 : prev - 1));
         break;
       case "Home":
         event.preventDefault();
@@ -207,13 +205,13 @@ export default function ExportMenu({
         onClick={() => setIsOpen((prev) => !prev)}
         aria-haspopup="menu"
         aria-expanded={isOpen}
-        aria-label="Export analysis results as JSON, CSV or Markdown"
+        aria-label={effectiveAriaLabel}
         className={`inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-medium transition-all duration-200 border shadow-xs ${
           disabled
             ? "opacity-50 cursor-not-allowed bg-slate-800 text-slate-400 border-slate-700"
             : isOpen
-            ? "bg-slate-800 text-white border-blue-500/50 shadow-blue-500/10 ring-2 ring-blue-500/20"
-            : "bg-slate-900/80 text-slate-200 border-slate-700/80 hover:bg-slate-800 hover:text-white hover:border-slate-600"
+              ? "bg-slate-800 text-white border-blue-500/50 shadow-blue-500/10 ring-2 ring-blue-500/20"
+              : "bg-slate-900/80 text-slate-200 border-slate-700/80 hover:bg-slate-800 hover:text-white hover:border-slate-600"
         }`}
       >
         <svg
@@ -230,7 +228,7 @@ export default function ExportMenu({
             d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
           />
         </svg>
-        <span>Export</span>
+        <span>{label}</span>
         <svg
           className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
             isOpen ? "rotate-180 text-blue-400" : ""
@@ -240,12 +238,7 @@ export default function ExportMenu({
           viewBox="0 0 24 24"
           aria-hidden="true"
         >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M19 9l-7 7-7-7"
-          />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
@@ -261,9 +254,7 @@ export default function ExportMenu({
             <p className="text-xs font-semibold text-slate-300 uppercase tracking-wider">
               Download Analysis Report
             </p>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Select your preferred export format
-            </p>
+            <p className="text-xs text-slate-400 mt-0.5">Select your preferred export format</p>
           </div>
 
           <div className="space-y-1">
@@ -288,9 +279,7 @@ export default function ExportMenu({
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-semibold text-slate-200">
-                        {opt.label}
-                      </span>
+                      <span className="text-xs font-semibold text-slate-200">{opt.label}</span>
                       <span className="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-400 border border-slate-700/60">
                         {opt.badge}
                       </span>

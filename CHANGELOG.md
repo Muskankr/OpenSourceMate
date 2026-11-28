@@ -7,6 +7,14 @@ All notable changes to OpenSourceMate are recorded here. The format follows
 
 ### Added
 
+- Frontend & i18n: Hindi internationalization (i18n) support with English fallback. Moved visible text across navigation, hero, profile analysis, skills, recommendations, how-it-works, offline banner, and footer into translation dictionaries (`frontend/messages/en.json` and `frontend/messages/hi.json`). Added an accessible `LanguageSwitcher` in the navbar with instant zero-reload language switching, `localStorage` persistence under `preferred_locale`, automated `document.documentElement.lang` synchronization, layout safety against longer Hindi text, untranslated technical terms, and a step-by-step guide in `docs/internationalization-i18n.md` for adding further languages.
+
+- Frontend & PWA: Progressive Web App offline caching and service worker (`frontend/public/sw.js`) that caches application shell assets, static bundles, and GitHub profile/recommendation results. Features automatic cache version invalidation upon new deployment, auto-restoration of the last analysis when opening offline, an accessible `OfflineBanner` component, and timestamp badges showing when cached results were fetched.
+
+- DevOps & Infrastructure: Dockerfiles for backend (Python 3.12 slim, non-root user `appuser`, healthcheck) and frontend (Node 22 alpine, non-root user `node`), root `docker-compose.yml` for one-command startup, and `/health` (liveness) plus `/ready` (readiness with GitHub reachability check and short timeout) endpoints (#425).
+- Frontend: Light, Dark, and System theme toggle in the navbar, default system preference detection with OS change listener, synchronous inline blocking script to prevent theme flash (FOUC) on load, persistent choice across reloads, and readable contrast across all components and charts.
+- Frontend: Repository Friendliness Score and badge on recommended issues, computing a deterministic 0–100 score from community signals (CONTRIBUTING guide, Code of Conduct, issue templates, README length, recent merged PRs) with an interactive breakdown popover and client-side caching to respect GitHub rate limits.
+
 - Frontend: Learning mode toggle and target skills picker to recommend and prioritize beginner-friendly issues in skills the user wants to learn next, with dedicated card explanations (#Issue).
 - Data: curated directory of welcoming open-source projects in `data/curated-projects.json` tagged with student and mentorship programs (GSoC, Outreachy, Hacktoberfest, LFX Mentorship), verifiable proof links, JSON schema, and a validation script (#298).
 - Tooling & Development: devcontainer configuration in `.devcontainer/devcontainer.json` and `.devcontainer/post-create.sh` for one-click GitHub Codespaces cloud development with Python 3.12, Node.js 22, automatic port forwarding (3000, 8000), and "Open in Codespaces" badges in `README.md` and `README.hi.md` (#264).
@@ -33,6 +41,7 @@ All notable changes to OpenSourceMate are recorded here. The format follows
 - Tooling: ESLint, Prettier and pre-commit hooks, root development scripts, a welcome workflow for
   first-time contributors, a mock API (MSW) for the frontend, and a frontend test for the analyze flow.
 - Tooling: a PR title check that requires Conventional Commits titles (#176).
+- Tooling: a lychee link check for `README.md` and `docs/` on pull requests and weekly, with an ignore file (#185).
 - Tooling: a Security workflow (npm audit, pip-audit, Bandit and CodeQL) on pull requests and weekly, with a triage guide in `docs/security-scanning.md` (#198).
 - Tooling: a post-deployment smoke test workflow that checks the backend health endpoint and a profile and skill analysis, configured through repository variables (#199).
 - Backend: rule-based extraction of the skills an issue needs from its title, body and labels, driven by a keyword and alias dictionary in `app/data/issue_skill_keywords.json`, with hand-labelled `required_skills` in the evaluation set and a precision/recall script (#271).

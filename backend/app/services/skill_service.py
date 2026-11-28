@@ -265,6 +265,10 @@ def analyze_skills(
     languages: Counter[str] = Counter()
     frameworks: Counter[str] = Counter()
 
+    # Track contributing repositories per skill and group for evidence drill-down (Issue #480)
+    skill_evidence: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
+    group_evidence: defaultdict[str, list[dict[str, Any]]] = defaultdict(list)
+
     # Track distinct repository occurrences per group to avoid double-counting
     group_repo_counts: Counter[str] = Counter()
     group_subskills: defaultdict[str, set[str]] = defaultdict(set)
@@ -272,6 +276,8 @@ def analyze_skills(
     latest_update_by_skill: dict[str, str] = {}
 
     for repository in analyzed:
+        repo_name = repository.get("full_name") or repository.get("name") or "unknown"
+        repo_url = repository.get("html_url") or f"https://github.com/{repo_name}"
         repo_updated_at = repository.get("updated_at")
         details = repo_details.get(repository.get("full_name") or "", {})
         repo_languages = details.get("languages") or {}
@@ -279,11 +285,30 @@ def analyze_skills(
         # /languages knows about every language in the repo, not just the main one.
         current_repo_languages = set()
         if repo_languages:
-            for language in repo_languages:
+            repo_total_bytes = sum(b for b in repo_languages.values() if isinstance(b, (int, float)))
+            for language, byte_count in repo_languages.items():
                 if ignore_noise and is_noise_language(language):
                     continue
                 languages[language] += 1
                 current_repo_languages.add(language)
+
+                bytes_val = int(byte_count) if isinstance(byte_count, (int, float)) else None
+                share_pct = (
+                    round((bytes_val / repo_total_bytes) * 100, 1)
+                    if repo_total_bytes and bytes_val is not None
+                    else None
+                )
+
+                skill_evidence[language].append(
+                    {
+                        "name": repo_name,
+                        "url": repo_url,
+                        "bytes": bytes_val,
+                        "share": share_pct,
+                        "last_updated": str(repo_updated_at) if repo_updated_at else None,
+                    }
+                )
+
                 if repo_updated_at:
                     if (
                         language not in latest_update_by_skill
@@ -295,6 +320,15 @@ def analyze_skills(
             if not (ignore_noise and is_noise_language(lang)):
                 languages[lang] += 1
                 current_repo_languages.add(lang)
+                skill_evidence[lang].append(
+                    {
+                        "name": repo_name,
+                        "url": repo_url,
+                        "bytes": None,
+                        "share": 100.0,
+                        "last_updated": str(repo_updated_at) if repo_updated_at else None,
+                    }
+                )
                 if repo_updated_at:
                     if (
                         lang not in latest_update_by_skill
@@ -317,6 +351,15 @@ def analyze_skills(
         # A repo counts once per skill, even if both a dependency and a topic point at it.
         for skill in repo_skills:
             frameworks[skill] += 1
+            skill_evidence[skill].append(
+                {
+                    "name": repo_name,
+                    "url": repo_url,
+                    "bytes": None,
+                    "share": None,
+                    "last_updated": str(repo_updated_at) if repo_updated_at else None,
+                }
+            )
             if repo_updated_at:
                 if (
                     skill not in latest_update_by_skill
@@ -340,6 +383,15 @@ def analyze_skills(
 
         for grp in repo_groups_seen:
             group_repo_counts[grp] += 1
+            group_evidence[grp].append(
+                {
+                    "name": repo_name,
+                    "url": repo_url,
+                    "bytes": None,
+                    "share": None,
+                    "last_updated": str(repo_updated_at) if repo_updated_at else None,
+                }
+            )
 
     # Build active group dictionary for metadata
     for grp, members in group_subskills.items():
@@ -347,6 +399,26 @@ def analyze_skills(
 
     language_total = sum(languages.values())
     skills: list[dict[str, Any]] = []
+
+    def _build_capped_evidence(evidence_list: list[dict[str, Any]], max_items: int = 5) -> list[dict[str, Any]]:
+        """Sort and cap contributing repositories for payload efficiency (Issue #480)."""
+        # Deduplicate repositories by name if any duplicate references exist
+        seen_names = set()
+        unique_repos = []
+        for repo in evidence_list:
+            rname = repo.get("name")
+            if rname not in seen_names:
+                seen_names.add(rname)
+                unique_repos.append(repo)
+
+        # Sort primarily by bytes (descending) if available, then by last_updated (descending), then name
+        def sort_key(r: dict[str, Any]):
+            byte_val = r.get("bytes") or 0
+            ts_val = r.get("last_updated") or ""
+            return (byte_val, ts_val)
+
+        sorted_repos = sorted(unique_repos, key=sort_key, reverse=True)
+        return sorted_repos[:max_items]
 
     if group_related:
         # Grouped Mode: Replace constituent member languages with their consolidated group
@@ -367,6 +439,7 @@ def analyze_skills(
                 "percentage": pct,
                 "group": grp,
                 "subskills": subskills_list,
+                "evidence": _build_capped_evidence(group_evidence[grp]),
             }
             if compute_proficiency:
                 latest_sub_ts = max(
@@ -392,6 +465,7 @@ def analyze_skills(
                     "repository_count": count,
                     "percentage": pct,
                     "group": None,
+                    "evidence": _build_capped_evidence(skill_evidence[name]),
                 }
                 if compute_proficiency:
                     level, score, reason = calculate_proficiency(
@@ -412,6 +486,7 @@ def analyze_skills(
                     "repository_count": count,
                     "percentage": pct,
                     "group": None,
+                    "evidence": _build_capped_evidence(skill_evidence[name]),
                 }
                 if compute_proficiency:
                     level, score, reason = calculate_proficiency(
@@ -431,6 +506,7 @@ def analyze_skills(
                 "repository_count": count,
                 "percentage": pct,
                 "group": resolve_group_for_skill(name),
+                "evidence": _build_capped_evidence(skill_evidence[name]),
             }
             if compute_proficiency:
                 level, score, reason = calculate_proficiency(
@@ -449,6 +525,7 @@ def analyze_skills(
                 "repository_count": count,
                 "percentage": pct,
                 "group": resolve_group_for_skill(name),
+                "evidence": _build_capped_evidence(skill_evidence[name]),
             }
             if compute_proficiency:
                 level, score, reason = calculate_proficiency(

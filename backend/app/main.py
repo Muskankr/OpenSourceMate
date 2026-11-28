@@ -2,15 +2,19 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.routes.ai import router as ai_router
+from app.api.routes.auth import router as auth_router
+from app.api.routes.friendliness import router as friendliness_router
 from app.api.routes.github import router as github_router
 from app.api.routes.issues import router as issues_router
 from app.api.routes.matching import router as matching_router
-from app.api.routes.friendliness import router as friendliness_router
+from app.api.routes.text_skills import router as text_skills_router
 from app.config import get_settings
 from app.exceptions import APIException
 from app.schemas.openapi_serializers import (
@@ -19,6 +23,7 @@ from app.schemas.openapi_serializers import (
 from app.schemas.serializers import (
     HealthDiagnosticsSerializer,
     HealthResponseSerializer,
+    ReadinessResponseSerializer,
 )
 from app.services.github_service import (
     GitHubRateLimitError,
@@ -28,7 +33,6 @@ from app.services.github_service import (
     close_client,
     get_github_diagnostics,
 )
-from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 
 @asynccontextmanager
@@ -37,6 +41,7 @@ async def lifespan(app: FastAPI):
     await close_client()
 
 
+from app.middleware.auth_context import UserTokenContextMiddleware
 from app.middleware.logging import StructuredLoggingMiddleware
 from app.middleware.rate_limit import IPRateLimitMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
@@ -102,6 +107,7 @@ for backward compatibility.
     },
 )
 
+app.add_middleware(UserTokenContextMiddleware)
 app.add_middleware(IPRateLimitMiddleware)
 app.add_middleware(StructuredLoggingMiddleware)
 
@@ -182,15 +188,31 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     )
 
 
+def sanitize_validation_errors(obj: Any) -> Any:
+    """Recursively sanitize validation error structures, converting non-UTF8 bytes to safe strings."""
+    if isinstance(obj, bytes):
+        return obj.decode("utf-8", errors="replace")
+    if isinstance(obj, dict):
+        return {k: sanitize_validation_errors(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [sanitize_validation_errors(v) for v in obj]
+    return obj
+
+
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    raw_errors = exc.errors()
+    safe_errors = jsonable_encoder(sanitize_validation_errors(raw_errors))
     return JSONResponse(
         status_code=422,
-        content=format_error_content(
-            code="VALIDATION_ERROR",
-            message="Request validation failed.",
-            details=exc.errors(),
-        ),
+        content={
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "Request validation failed.",
+                "details": safe_errors,
+            },
+            "detail": safe_errors,
+        },
     )
 
 
@@ -296,6 +318,12 @@ async def api_version_directory():
 
 
 @app.get(
+    "/health",
+    response_model=HealthResponseSerializer,
+    tags=["Health"],
+    summary="Liveness check (root)",
+)
+@app.get(
     "/api/health",
     response_model=HealthResponseSerializer,
     tags=["Health"],
@@ -326,6 +354,42 @@ async def health_check():
         "service": "OpenSourceMate API",
         "version": "0.1.0",
     }
+
+
+@app.get(
+    "/ready",
+    response_model=ReadinessResponseSerializer,
+    tags=["Health"],
+    summary="Readiness check (root)",
+)
+@app.get(
+    "/api/ready",
+    response_model=ReadinessResponseSerializer,
+    tags=["Health"],
+    summary="Readiness check (api)",
+)
+@app.get(
+    "/api/v1/ready",
+    response_model=ReadinessResponseSerializer,
+    tags=["Health"],
+    summary="Readiness check (v1)",
+)
+async def readiness_check():
+    """Readiness check endpoint that verifies upstream GitHub API reachability within a short timeout (Issue #425).
+
+    Returns HTTP 200 when ready, or HTTP 503 when upstream dependencies are unreachable.
+    """
+    github_info = await get_github_diagnostics()
+    is_ready = bool(github_info.get("reachable", False))
+    payload = {
+        "status": "ready" if is_ready else "not_ready",
+        "service": "OpenSourceMate API",
+        "version": "0.1.0",
+        "github_reachable": is_ready,
+        "details": github_info,
+    }
+    status_code = 200 if is_ready else 503
+    return JSONResponse(status_code=status_code, content=payload)
 
 
 @app.get(
@@ -367,6 +431,46 @@ async def health_diagnostics():
     }
 
 
+@app.get("/api/programs", tags=["Matching"], summary="List contributor programs")
+@app.get(
+    "/api/v1/programs", tags=["Matching"], summary="List contributor programs (v1)"
+)
+async def get_programs_shortcut():
+    from app.services.program_service import get_all_programs
+
+    return {"programs": get_all_programs()}
+
+
+@app.get(
+    "/metrics",
+    tags=["Health"],
+    summary="Application and upstream service metrics (Issue #452)",
+)
+@app.get(
+    "/api/metrics",
+    tags=["Health"],
+    summary="Application metrics (api)",
+)
+@app.get(
+    "/api/v1/metrics",
+    tags=["Health"],
+    summary="Application metrics (v1)",
+)
+async def get_metrics():
+    """Optional metrics endpoint providing request counts, latencies, and GitHub error counts.
+
+    Disabled by default. Enabled by setting METRICS_ENABLED=true in the environment.
+    """
+    settings = get_settings()
+    if not settings.metrics_enabled:
+        raise HTTPException(
+            status_code=404,
+            detail="Metrics collection is disabled. Set METRICS_ENABLED=true to enable.",
+        )
+    from app.services.metrics_service import get_metrics_collector
+    return get_metrics_collector().get_metrics_snapshot()
+
+
 # ---------------------------------------------------------
 # Routers (Dual-mounted: /api/ and /api/v1/ for compatibility)
 # ---------------------------------------------------------
@@ -376,9 +480,14 @@ app.include_router(issues_router, prefix="/api/v1", include_in_schema=True)
 app.include_router(ai_router, prefix="/api/v1", include_in_schema=True)
 app.include_router(matching_router, prefix="/api/v1", include_in_schema=True)
 app.include_router(friendliness_router, prefix="/api/v1", include_in_schema=True)
+app.include_router(text_skills_router, prefix="/api/v1", include_in_schema=True)
+app.include_router(auth_router, prefix="/api/v1", include_in_schema=True)
 
 # Legacy /api/ Routers (Backward Compatibility)
 app.include_router(github_router, prefix="/api", include_in_schema=False)
 app.include_router(issues_router, prefix="/api", include_in_schema=False)
 app.include_router(ai_router, prefix="/api", include_in_schema=False)
 app.include_router(matching_router, prefix="/api", include_in_schema=False)
+app.include_router(friendliness_router, prefix="/api", include_in_schema=False)
+app.include_router(text_skills_router, prefix="/api", include_in_schema=False)
+app.include_router(auth_router, prefix="/api", include_in_schema=False)

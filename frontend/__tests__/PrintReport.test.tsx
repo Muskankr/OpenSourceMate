@@ -67,9 +67,7 @@ describe("PrintReportButton Component", () => {
 
   it("reverts document title back after printing completes", () => {
     const originalDocTitle = document.title;
-    render(
-      <PrintReportButton reportTitle="Temporary Custom Report Title" />
-    );
+    render(<PrintReportButton reportTitle="Temporary Custom Report Title" />);
 
     const button = screen.getByRole("button");
     fireEvent.click(button);

@@ -12,10 +12,7 @@ export interface BuildVersionBadgeProps {
  * Renders the active deployment build version (first 7 characters of commit hash)
  * linked directly to the commit on GitHub, or "dev" when running locally.
  */
-export function BuildVersionBadge({
-  className = "",
-  theme = "dark",
-}: BuildVersionBadgeProps) {
+export function BuildVersionBadge({ className = "", theme = "dark" }: BuildVersionBadgeProps) {
   const version = useMemo(() => getBuildVersionInfo(), []);
   const isDark = theme === "dark";
 

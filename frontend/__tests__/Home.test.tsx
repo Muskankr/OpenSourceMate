@@ -1,6 +1,18 @@
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import Home from "../app/page";
 
+jest.mock("../components/ContributorsWall", () => {
+  return function MockContributorsWall() {
+    return null;
+  };
+});
+
+jest.mock("../components/UserAuthButton", () => {
+  return function MockUserAuthButton() {
+    return null;
+  };
+});
+
 // Sample mock data matching backend responses
 const mockProfile = {
   username: "octocat",
@@ -65,12 +77,8 @@ describe("Analyze Flow - Home Component", () => {
         name: /Find the open-source issues/i,
       })
     ).toBeInTheDocument();
-    expect(
-      screen.getByPlaceholderText(/Enter your GitHub username/i)
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /Analyze Profile/i })
-    ).toBeInTheDocument();
+    expect(screen.getByPlaceholderText(/Enter your GitHub username/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Analyze Profile/i })).toBeInTheDocument();
   });
 
   it("shows an error when attempting to analyze an empty username", async () => {
@@ -79,9 +87,7 @@ describe("Analyze Flow - Home Component", () => {
     const analyzeBtn = screen.getByRole("button", { name: /Analyze Profile/i });
     fireEvent.click(analyzeBtn);
 
-    expect(
-      await screen.findByText(/Please enter a GitHub username\./i)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Please enter a GitHub username\./i)).toBeInTheDocument();
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
@@ -94,9 +100,7 @@ describe("Analyze Flow - Home Component", () => {
     fireEvent.change(input, { target: { value: "-invalid_name-" } });
     fireEvent.click(analyzeBtn);
 
-    expect(
-      await screen.findByText(/cannot begin with a hyphen/i)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/cannot begin with a hyphen/i)).toBeInTheDocument();
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
@@ -241,9 +245,7 @@ describe("Analyze Flow - Home Component", () => {
     fireEvent.change(input, { target: { value: "busyuser" } });
     fireEvent.click(screen.getByRole("button", { name: /Analyze Profile/i }));
 
-    expect(
-      await screen.findByText(/rate limit reached.*try again at/i)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/rate limit reached.*try again at/i)).toBeInTheDocument();
   });
 
   it("displays server unavailable message on 502/503 response", async () => {
@@ -275,9 +277,7 @@ describe("Analyze Flow - Home Component", () => {
     fireEvent.change(input, { target: { value: "offlineuser" } });
     fireEvent.click(screen.getByRole("button", { name: /Analyze Profile/i }));
 
-    expect(
-      await screen.findByText(/Unable to connect to (?:the )?server/i)
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/Unable to connect to (?:the )?server/i)).toBeInTheDocument();
 
     const retryBtn = screen.getByRole("button", { name: /Retry/i });
     expect(retryBtn).toBeInTheDocument();
@@ -362,7 +362,9 @@ describe("Analyze Flow - Home Component", () => {
     const banner = await screen.findByTestId("service-unavailable-banner");
     expect(banner).toBeInTheDocument();
 
-    expect(screen.getByText(/Unable to Connect to Server|Service Temporarily Unavailable/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Unable to Connect to Server|Service Temporarily Unavailable/i)
+    ).toBeInTheDocument();
     expect(screen.queryByText(/TypeError/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/ECONNREFUSED/i)).not.toBeInTheDocument();
 

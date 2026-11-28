@@ -172,8 +172,8 @@ export const MobileNavigationMenu: React.FC<MobileNavigationProps> = ({
                     ? "bg-emerald-500/10 text-emerald-400 font-semibold"
                     : "bg-emerald-50 text-emerald-600 font-semibold"
                   : isDark
-                  ? "text-slate-300 hover:bg-slate-800/60 hover:text-white"
-                  : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
+                    ? "text-slate-300 hover:bg-slate-800/60 hover:text-white"
+                    : "text-slate-700 hover:bg-slate-100 hover:text-slate-900"
               }`;
 
               if (item.isSection) {

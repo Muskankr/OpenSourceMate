@@ -110,8 +110,12 @@ class IPRateLimitMiddleware(BaseHTTPMiddleware):
             "/docs",
             "/redoc",
             "/openapi.json",
+            "/health",
+            "/ready",
             "/api/health",
+            "/api/ready",
             "/api/v1/health",
+            "/api/v1/ready",
             "/api/health/diagnostics",
             "/api/v1/health/diagnostics",
         ]

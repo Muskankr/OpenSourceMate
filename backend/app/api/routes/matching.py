@@ -12,8 +12,13 @@ from app.services.github_service import (
 )
 from app.services.issue_service import search_github_issues
 from app.services.matching_service import build_idf, calculate_issue_score
+from app.services.program_service import (
+    get_all_programs,
+    get_program_by_id_or_name,
+    issue_matches_program,
+)
 from app.services.skill_service import analyze_skills
-from app.utils.validation import validate_github_username
+from app.utils.validation import is_valid_skill, validate_github_username
 
 router = APIRouter(
     prefix="/matching",
@@ -22,6 +27,14 @@ router = APIRouter(
 
 ATOM_NS = "http://www.w3.org/2005/Atom"
 ElementTree.register_namespace("", ATOM_NS)
+
+
+@router.get("/programs", summary="List supported contributor programs (NSoC, Hacktoberfest, etc.)")
+async def list_contributor_programs():
+    """Returns the list of supported contributor programs from config."""
+    return {
+        "programs": get_all_programs(),
+    }
 
 
 def _atom_date(value: str | None) -> str:
@@ -39,12 +52,59 @@ def _atom_element(parent: ElementTree.Element, name: str, text: str) -> None:
     ElementTree.SubElement(parent, f"{{{ATOM_NS}}}{name}").text = text
 
 
-@router.get("/users/{username}/issues")
+@router.get(
+    "/users/{username}/issues",
+    summary="Get personalized issue recommendations (Issue #481)",
+    description=(
+        "Retrieve ranked issue matches tailored to developer skills. "
+        "Supports pagination via limit (default 20, max 100) and cursor (offset). "
+        "Returns next_cursor and total result count."
+    ),
+)
 async def get_matched_issues(
     username: str,
-    exclude_stale: bool = Query(default=False),
+    exclude_stale: bool = Query(default=False, description="Filter out stale issues older than 60 days"),
+    skills: list[str] | None = Query(default=None, description="Explicit skills to match against"),
+    program: str | None = Query(default=None, description="Optional contributor program filter"),
+    limit: int = Query(default=20, ge=1, le=100, description="Maximum number of recommendations to return (Issue #481)"),
+    cursor: int = Query(default=0, ge=0, description="Offset cursor for pagination (Issue #481)"),
 ):
     validated_username = validate_github_username(username)
+
+    program_config: dict[str, Any] | None = None
+    if program is not None and program.strip() and program.strip().lower() not in ("all", "none"):
+        program_config = get_program_by_id_or_name(program)
+        if not program_config:
+            available = ", ".join(p.get("id", "") for p in get_all_programs())
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid program: '{program}'. Available programs: {available}",
+            )
+
+    explicit_skills: list[str] | None = None
+    if skills is not None:
+        explicit_skills = []
+        for s in skills:
+            parts = [p.strip() for p in s.split(",") if p.strip()]
+            for p in parts:
+                if not is_valid_skill(p):
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Invalid skill: '{p}'. Skills must be 1-50 alphanumeric characters or standard symbols (+, #, ., -, space).",
+                    )
+                if p not in explicit_skills:
+                    explicit_skills.append(p)
+
+    if explicit_skills is not None and len(explicit_skills) == 0:
+        return {
+            "username": validated_username,
+            "skills": [],
+            "recommendations": [],
+            "total": 0,
+            "next_cursor": None,
+            "limit": limit,
+        }
+
     repositories = await get_user_repositories(validated_username)
 
     if repositories is None:
@@ -55,26 +115,39 @@ async def get_matched_issues(
 
     skill_data = analyze_skills(repositories)
 
-    user_skills = [skill["name"] for skill in skill_data["skills"]]
-
-    # Relative weight of each skill, so a main language counts for more than a side one.
-    max_count = max(
-        (skill["repository_count"] for skill in skill_data["skills"]),
-        default=1,
-    )
-    weighted_skills = [
-        {
-            "name": skill["name"],
-            "weight": skill["repository_count"] / max_count,
-        }
-        for skill in skill_data["skills"]
-    ]
+    if explicit_skills is not None:
+        user_skills = explicit_skills
+        repo_skill_map = {skill["name"].lower(): skill["repository_count"] for skill in skill_data["skills"]}
+        max_count = max(repo_skill_map.values(), default=1)
+        weighted_skills = [
+            {
+                "name": skill,
+                "weight": repo_skill_map.get(skill.lower(), max_count) / max_count,
+            }
+            for skill in user_skills
+        ]
+    else:
+        user_skills = [skill["name"] for skill in skill_data["skills"]]
+        max_count = max(
+            (skill["repository_count"] for skill in skill_data["skills"]),
+            default=1,
+        )
+        weighted_skills = [
+            {
+                "name": skill["name"],
+                "weight": skill["repository_count"] / max_count,
+            }
+            for skill in skill_data["skills"]
+        ]
 
     if not user_skills:
         return {
             "username": validated_username,
             "skills": [],
             "recommendations": [],
+            "total": 0,
+            "next_cursor": None,
+            "limit": limit,
         }
 
     found_issues = []
@@ -90,6 +163,19 @@ async def get_matched_issues(
 
             found_issues.extend(result["issues"])
 
+            # If program filter is active, also search issues tagged with program labels
+            if program_config:
+                for p_lbl in program_config.get("labels", [])[:2]:
+                    try:
+                        p_result = await search_github_issues(
+                            language=skill,
+                            label=p_lbl,
+                            per_page=10,
+                        )
+                        found_issues.extend(p_result["issues"])
+                    except Exception:
+                        continue
+
         except GitHubRateLimitError:
             # Every remaining search would fail too, so tell the caller.
             raise
@@ -98,6 +184,28 @@ async def get_matched_issues(
             # One failed language search should not
             # break the entire recommendation request.
             continue
+
+    if explicit_skills is not None:
+        user_skills_lower = {s.lower() for s in user_skills}
+        found_issues = [
+            iss
+            for iss in found_issues
+            if (iss.get("language") and iss["language"].lower() in user_skills_lower)
+            or any(
+                (lbl.get("name", "").lower() if isinstance(lbl, dict) else str(lbl).lower())
+                in user_skills_lower
+                for lbl in iss.get("labels", [])
+            )
+            or any(s in (iss.get("title") or "").lower() for s in user_skills_lower)
+        ]
+
+    # Filter by selected program: only retain issues carrying its labels or repository topics
+    if program_config is not None:
+        found_issues = [
+            iss
+            for iss in found_issues
+            if issue_matches_program(iss, program_config)
+        ]
 
     # IDF is computed over everything fetched, so a skill that every
     # result mentions counts for less than a rare one.
@@ -147,31 +255,46 @@ async def get_matched_issues(
             if not (iss.get("freshness") and iss["freshness"].get("is_stale"))
         ]
 
-    # Highest compatibility first.
+    # Highest compatibility first. Break ties deterministically by issue ID
     recommendations.sort(
-        key=lambda issue: issue["_raw_score"],
+        key=lambda issue: (issue["_raw_score"], issue.get("id", 0)),
         reverse=True,
     )
 
-    top_recommendations = recommendations[:20]
-    for issue in top_recommendations:
+    total_count = len(recommendations)
+    page_recommendations = recommendations[cursor : cursor + limit]
+    next_cursor = cursor + len(page_recommendations) if cursor + len(page_recommendations) < total_count else None
+
+    for issue in page_recommendations:
         issue.pop("_raw_score", None)
         explanation_data = await generate_issue_match_explanation(issue, user_skills)
         issue["explanation"] = explanation_data["explanation"]
         issue["is_ai_generated"] = explanation_data["is_ai_generated"]
         issue["why_it_matches"] = explanation_data["explanation"]
 
-    return {
+    response_data: dict[str, Any] = {
         "username": validated_username,
         "skills": user_skills,
-        "recommendations": top_recommendations,
+        "recommendations": page_recommendations,
+        "total": total_count,
+        "next_cursor": next_cursor,
+        "limit": limit,
     }
+    if program_config:
+        response_data["program"] = program_config["id"]
+
+    return response_data
 
 
 @router.get("/users/{username}/feed.atom", response_class=Response)
-async def get_matched_issues_feed(username: str, request: Request) -> Response:
+async def get_matched_issues_feed(
+    username: str,
+    request: Request,
+    skills: list[str] | None = Query(default=None),
+    program: str | None = Query(default=None),
+) -> Response:
     """Expose the same ranked matches as an Atom feed for feed readers."""
-    matches = await get_matched_issues(username, exclude_stale=False)
+    matches = await get_matched_issues(username, exclude_stale=False, skills=skills, program=program)
     recommendations = matches["recommendations"]
     feed = ElementTree.Element(f"{{{ATOM_NS}}}feed")
     _atom_element(feed, "id", str(request.url))

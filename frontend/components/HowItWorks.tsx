@@ -85,16 +85,14 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({ theme }) => {
           <Badge variant="purple" theme={theme}>
             Step-by-step
           </Badge>
-          <h2 className="text-3xl font-extrabold tracking-tight">
-            How OpenSourceMate Works
-          </h2>
+          <h2 className="text-3xl font-extrabold tracking-tight">How OpenSourceMate Works</h2>
           <p
             className={`max-w-2xl mx-auto text-sm sm:text-base ${
               isDark ? "text-slate-400" : "text-slate-600"
             }`}
           >
-            A three-stage intelligent pipeline that bridges your existing coding
-            experience with real open-source contribution opportunities.
+            A three-stage intelligent pipeline that bridges your existing coding experience with
+            real open-source contribution opportunities.
           </p>
         </div>
 
@@ -107,9 +105,7 @@ export const HowItWorks: React.FC<HowItWorksProps> = ({ theme }) => {
               className="relative overflow-hidden group"
             >
               <div className="flex items-center justify-between mb-4">
-                <span className="font-mono text-xs font-bold text-slate-500">
-                  {step.number}
-                </span>
+                <span className="font-mono text-xs font-bold text-slate-500">{step.number}</span>
                 <Badge variant="slate" theme={theme}>
                   {step.badge}
                 </Badge>

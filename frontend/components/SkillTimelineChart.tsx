@@ -1,10 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import {
-  type SkillTimelineData,
-  filterMinorLanguages,
-} from "../utils/skillTimeline";
+import { type SkillTimelineData, filterMinorLanguages } from "../utils/skillTimeline";
 
 export interface SkillTimelineChartProps {
   timeline: SkillTimelineData;
@@ -115,7 +112,9 @@ export default function SkillTimelineChart({
 
               {/* Stacked Progress Bar */}
               <div
-                className="flex h-5 w-full overflow-hidden rounded-lg bg-white/5"
+                className={`flex h-5 w-full overflow-hidden rounded-lg ${
+                  isDark ? "bg-white/5" : "bg-gray-200"
+                }`}
                 role="progressbar"
                 aria-valuenow={yearData.totalRepositories}
                 aria-label={`Repositories created in ${yearData.year}`}
@@ -137,7 +136,11 @@ export default function SkillTimelineChart({
           ))}
 
           {/* Palette Legend */}
-          <div className="flex flex-wrap gap-3 pt-3 border-t border-white/5 text-[11px]">
+          <div
+            className={`flex flex-wrap gap-3 pt-3 border-t text-[11px] ${
+              isDark ? "border-white/5" : "border-gray-200"
+            }`}
+          >
             {activeData.allLanguages.map((lang, idx) => (
               <div key={lang} className="flex items-center gap-1.5">
                 <span
@@ -155,17 +158,30 @@ export default function SkillTimelineChart({
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-white/10">
+              <tr
+                className={`border-b ${
+                  isDark ? "border-white/10 text-gray-300" : "border-gray-200 text-gray-700"
+                }`}
+              >
                 <th className="py-2 pr-4 font-semibold">Year</th>
                 {activeData.allLanguages.map((lang) => (
-                  <th key={lang} className="py-2 px-3 font-semibold">{lang}</th>
+                  <th key={lang} className="py-2 px-3 font-semibold">
+                    {lang}
+                  </th>
                 ))}
                 <th className="py-2 pl-4 font-semibold text-right">Total</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-white/5">
+            <tbody className={`divide-y ${isDark ? "divide-white/5" : "divide-gray-200"}`}>
               {activeData.growthByYear.map((row) => (
-                <tr key={row.year}>
+                <tr
+                  key={row.year}
+                  className={`border-b ${
+                    isDark
+                      ? "border-white/5 hover:bg-white/[0.02]"
+                      : "border-gray-100 hover:bg-gray-50"
+                  }`}
+                >
                   <td className="py-2 pr-4 font-bold">{row.year}</td>
                   {activeData.allLanguages.map((lang) => (
                     <td key={lang} className="py-2 px-3 opacity-80">

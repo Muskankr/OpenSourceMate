@@ -154,11 +154,7 @@ export interface ToastCardProps {
   prefersReducedMotion: boolean;
 }
 
-export const ToastCard: React.FC<ToastCardProps> = ({
-  toast,
-  onDismiss,
-  prefersReducedMotion,
-}) => {
+export const ToastCard: React.FC<ToastCardProps> = ({ toast, onDismiss, prefersReducedMotion }) => {
   const isError = toast.type === "error";
   const isSuccess = toast.type === "success";
 
@@ -178,7 +174,12 @@ export const ToastCard: React.FC<ToastCardProps> = ({
       iconColor: "text-rose-400",
       icon: (
         <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       ),
     },
@@ -187,7 +188,12 @@ export const ToastCard: React.FC<ToastCardProps> = ({
       iconColor: "text-cyan-400",
       icon: (
         <svg className="w-5 h-5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
         </svg>
       ),
     },
@@ -222,7 +228,12 @@ export const ToastCard: React.FC<ToastCardProps> = ({
         className="shrink-0 -mr-1 -mt-1 p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/80 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-400"
       >
         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M6 18L18 6M6 6l12 12"
+          />
         </svg>
       </button>
     </div>

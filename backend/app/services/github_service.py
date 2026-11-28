@@ -8,15 +8,14 @@ from typing import Any
 
 import httpx
 
-from app.cache import TTLCache
+from app.cache import TTLCache, cache
 from app.config import get_settings
+from app.services.metrics_service import get_metrics_collector
 from app.utils.logging import get_logger, sanitize_sensitive_data
 
 logger = get_logger("app.services.github")
 
 GITHUB_API_URL = "https://api.github.com"
-
-cache = TTLCache()
 
 _client: httpx.AsyncClient | None = None
 
@@ -115,9 +114,16 @@ def _is_rate_limited(response: httpx.Response) -> bool:
     )
 
 
-async def github_get(url: str, params: dict | None = None) -> httpx.Response:
-    """GET a GitHub API url with the shared client, handling timeouts, retries, and rate limits.
+async def github_get(
+    url: str,
+    params: dict | None = None,
+    use_etag: bool = True,
+) -> httpx.Response:
+    """GET a GitHub API url with the shared client, handling timeouts, retries, rate limits, and ETag conditional caching.
 
+    If use_etag=True and an ETag exists for the target resource, sends If-None-Match header.
+    When GitHub returns 304 Not Modified, constructs and returns a synthetic 200 response
+    from cached data without consuming user or IP rate-limit points.
     Retries transient 5xx errors and network drops with exponential backoff up to configured max retries.
     Raises GitHubRateLimitError when GitHub rate limits are hit.
     Raises GitHubTimeoutError when timeouts occur.
@@ -128,7 +134,24 @@ async def github_get(url: str, params: dict | None = None) -> httpx.Response:
     backoff_factor = settings.github_retry_backoff_factor
     client = get_client()
 
+    # Build cache key for ETag lookup based on url and params
+    param_str = "&".join(f"{k}={v}" for k, v in sorted((params or {}).items()))
+    etag_cache_key = f"{url}?{param_str}" if param_str else url
+
+    request_headers: dict[str, str] = {}
+    cached_etag_entry = cache.get_etag(etag_cache_key) if use_etag else None
+    if cached_etag_entry:
+        etag_val, cached_body = cached_etag_entry
+        request_headers["If-None-Match"] = etag_val
+
+    # Check if signed-in visitor token is active in request context (Issue #482)
+    from app.services.auth_service import get_current_user_token
+    user_token = get_current_user_token()
+    if user_token:
+        request_headers["Authorization"] = f"Bearer {user_token}"
+
     for attempt in range(1, max_retries + 1):
+        call_start = time.perf_counter()
         try:
             logger.debug(
                 f"Calling external GitHub API: {url} (attempt {attempt}/{max_retries})",
@@ -138,14 +161,81 @@ async def github_get(url: str, params: dict | None = None) -> httpx.Response:
                         "url": url,
                         "attempt": attempt,
                         "params": sanitize_sensitive_data(params or {}),
+                        "conditional": bool("If-None-Match" in request_headers),
                     }
                 },
             )
 
-            response = await client.get(url, params=params)
+            response = await client.get(
+                url,
+                params=params,
+                headers=request_headers if request_headers else None,
+            )
+            call_duration_ms = round((time.perf_counter() - call_start) * 1000, 2)
+            remaining_header = response.headers.get("X-RateLimit-Remaining")
+            remaining_val = int(remaining_header) if remaining_header and remaining_header.isdigit() else None
+
+            # Log GitHub response summary including duration and rate limit remaining
+            logger.info(
+                f"GitHub API {response.status_code} on {url} in {call_duration_ms}ms (remaining rate limit: {remaining_header})",
+                extra={
+                    "structured_data": {
+                        "event": "github_api_response",
+                        "url": url,
+                        "status_code": response.status_code,
+                        "duration_ms": call_duration_ms,
+                        "rate_limit_remaining": remaining_val,
+                    }
+                },
+            )
+
+            # Record call in metrics collector
+            get_metrics_collector().record_github_call(
+                duration_ms=call_duration_ms,
+                remaining_rate_limit=remaining_val,
+            )
+
+            # Handle 304 Not Modified: GitHub rate limit was NOT consumed!
+            if response.status_code == 304 and cached_etag_entry:
+                logger.info(
+                    f"GitHub API 304 Not Modified for {url}; serving cached payload to preserve rate limit",
+                    extra={
+                        "structured_data": {
+                            "event": "github_etag_cache_hit",
+                            "url": url,
+                            "etag": cached_etag_entry[0],
+                        }
+                    },
+                )
+                _, cached_data = cached_etag_entry
+                # Return a synthetic 200 response loaded with cached payload
+                content_bytes = (
+                    json.dumps(cached_data).encode("utf-8")
+                    if not isinstance(cached_data, (bytes, str))
+                    else (
+                        cached_data.encode("utf-8")
+                        if isinstance(cached_data, str)
+                        else cached_data
+                    )
+                )
+                return httpx.Response(
+                    status_code=200,
+                    content=content_bytes,
+                    headers={
+                        "content-type": "application/json",
+                        "ETag": cached_etag_entry[0],
+                        "X-Cache-Lookup": "HIT_ETAG_304",
+                    },
+                    request=response.request,
+                )
 
             # Check rate limiting first
             if _is_rate_limited(response):
+                get_metrics_collector().record_github_call(
+                    duration_ms=call_duration_ms,
+                    remaining_rate_limit=0,
+                    error_type="rate_limit",
+                )
                 logger.warning(
                     f"GitHub API rate limit exceeded on {url}",
                     extra={
@@ -157,6 +247,16 @@ async def github_get(url: str, params: dict | None = None) -> httpx.Response:
                     },
                 )
                 raise GitHubRateLimitError(_rate_limit_reset(response))
+
+            # If request succeeded (200), store ETag if header present
+            if response.status_code == 200 and use_etag:
+                response_etag = response.headers.get("ETag") or response.headers.get("etag")
+                if response_etag:
+                    try:
+                        parsed_json = response.json()
+                        cache.set_etag(etag_cache_key, response_etag, parsed_json)
+                    except Exception:
+                        pass
 
             # If 5xx transient error and we have retry attempts left, backoff and retry
             if response.status_code in {500, 502, 503, 504}:
@@ -186,6 +286,10 @@ async def github_get(url: str, params: dict | None = None) -> httpx.Response:
                             }
                         },
                     )
+                    get_metrics_collector().record_github_call(
+                        duration_ms=round((time.perf_counter() - call_start) * 1000, 2),
+                        error_type="upstream_5xx",
+                    )
                     raise GitHubUpstreamError(url, response.status_code, response.text)
 
             return response
@@ -205,6 +309,10 @@ async def github_get(url: str, params: dict | None = None) -> httpx.Response:
                 delay = backoff_factor * (2 ** (attempt - 1))
                 await asyncio.sleep(delay)
                 continue
+            get_metrics_collector().record_github_call(
+                duration_ms=round((time.perf_counter() - call_start) * 1000, 2),
+                error_type="timeout",
+            )
             raise GitHubTimeoutError(url, settings.github_read_timeout) from exc
 
         except httpx.NetworkError as exc:
@@ -476,25 +584,58 @@ async def get_repository_details(
     repositories: list[dict],
     limit: int = MAX_DETAIL_REPOSITORIES,
     refresh: bool = False,
+    concurrency_limit: int | None = None,
 ) -> dict[str, dict]:
     """Languages and dependencies for the most recently updated non-fork repos.
 
+    Fetches repositories in parallel bounded by an asyncio.Semaphore concurrency limit
+    to reduce overall latency while preventing GitHub secondary rate limiting.
     Only `limit` repos are looked at so a large profile stays inside the GitHub
     rate limit. Anything that fails is skipped; the skill list then falls back to
     the main language and topics for that repo.
     """
     candidates = [r for r in repositories if not r.get("fork") and r.get("full_name")]
     candidates.sort(key=lambda r: r.get("updated_at") or "", reverse=True)
+    target_repos = candidates[:limit]
 
-    details = {}
+    if not target_repos:
+        return {}
 
-    for repository in candidates[:limit]:
-        try:
-            details[repository["full_name"]] = await _fetch_repo_details(
-                repository["full_name"], refresh=refresh
-            )
-        except (GitHubRateLimitError, httpx.HTTPError):
-            continue
+    settings = get_settings()
+    max_concurrency = max(
+        1,
+        concurrency_limit
+        if concurrency_limit is not None
+        else getattr(settings, "github_concurrency_limit", 5),
+    )
+    semaphore = asyncio.Semaphore(max_concurrency)
+
+    async def _fetch_with_semaphore(repo: dict) -> tuple[str, dict | None]:
+        full_name = repo["full_name"]
+        async with semaphore:
+            try:
+                repo_details = await _fetch_repo_details(full_name, refresh=refresh)
+                return full_name, repo_details
+            except (GitHubRateLimitError, httpx.HTTPError, Exception) as exc:
+                logger.warning(
+                    f"Failed to fetch repository details for {full_name}: {exc}",
+                    extra={
+                        "structured_data": {
+                            "event": "repo_detail_fetch_failed",
+                            "repo": full_name,
+                            "error": str(exc),
+                        }
+                    },
+                )
+                return full_name, None
+
+    tasks = [_fetch_with_semaphore(repo) for repo in target_repos]
+    results = await asyncio.gather(*tasks, return_exceptions=False)
+
+    details: dict[str, dict] = {}
+    for full_name, repo_details in results:
+        if repo_details is not None:
+            details[full_name] = repo_details
 
     return details
 
@@ -594,8 +735,12 @@ async def fetch_merged_external_pull_requests(
         "order": "desc",
     }
 
+    from app.services.auth_service import get_current_user_token
+    user_token = get_current_user_token()
+    req_headers = {"Authorization": f"Bearer {user_token}"} if user_token else None
+
     try:
-        response = await client.get(url, params=params)
+        response = await client.get(url, params=params, headers=req_headers)
     except httpx.RequestError as exc:
         logger.error(
             "Failed network call fetching merged PRs for %s: %s", clean_user, exc

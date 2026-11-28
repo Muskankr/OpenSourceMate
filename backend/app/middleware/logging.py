@@ -6,6 +6,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+from app.services.metrics_service import get_metrics_collector
 from app.utils.logging import (
     request_id_ctx,
     sanitize_sensitive_data,
@@ -35,6 +36,7 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
         logger.info(
             f"Incoming request {method} {url_path}",
             extra={
+                "request_id": request_id,
                 "structured_data": {
                     "event": "request_started",
                     "http_method": method,
@@ -49,12 +51,21 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             duration_ms = round((time.perf_counter() - start_time) * 1000, 2)
 
+            # Record in metrics collector
+            get_metrics_collector().record_request(
+                method=method,
+                path=url_path,
+                status_code=response.status_code,
+                duration_ms=duration_ms,
+            )
+
             # Attach request id to response header
             response.headers["X-Request-ID"] = request_id
 
             logger.info(
                 f"Completed {method} {url_path} with status {response.status_code} in {duration_ms}ms",
                 extra={
+                    "request_id": request_id,
                     "structured_data": {
                         "event": "request_completed",
                         "http_method": method,
@@ -71,6 +82,7 @@ class StructuredLoggingMiddleware(BaseHTTPMiddleware):
                 f"Unhandled error on {method} {url_path}: {exc}",
                 exc_info=True,
                 extra={
+                    "request_id": request_id,
                     "structured_data": {
                         "event": "request_failed",
                         "http_method": method,
