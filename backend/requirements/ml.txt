@@ -5,4 +5,4 @@ sentence-transformers==3.0.1
 torch>=2.15.0,<3
 numpy>=2.5.5,<3
 scikit-learn>=1.9.1,<2
-transformers>=5.23.0,<6
+transformers>=5.24.1,<6
