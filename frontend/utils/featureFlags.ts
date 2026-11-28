@@ -38,18 +38,20 @@ export const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
  * Parses an environment variable or string into a strict boolean.
  */
 export function parseFlagValue(val: string | undefined, defaultValue = false): boolean {
-  if (val === undefined || val === null || val === '') {
+  if (val === undefined || val === null || val === "") {
     return defaultValue;
   }
   const normalized = val.trim().toLowerCase();
-  return normalized === '1' || normalized === 'true' || normalized === 'yes' || normalized === 'on';
+  return normalized === "1" || normalized === "true" || normalized === "yes" || normalized === "on";
 }
 
 /**
  * Resolves current feature flags based on environment variables and defaults.
  */
-export function getFeatureFlags(env: Record<string, string | undefined> = process.env): FeatureFlags {
-  const isDevOrTest = env.NODE_ENV === 'development' || env.NODE_ENV === 'test';
+export function getFeatureFlags(
+  env: Record<string, string | undefined> = process.env
+): FeatureFlags {
+  const isDevOrTest = env.NODE_ENV === "development" || env.NODE_ENV === "test";
 
   return {
     pastedTextAnalysis: parseFlagValue(

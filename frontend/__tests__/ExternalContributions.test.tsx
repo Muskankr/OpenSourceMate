@@ -3,9 +3,7 @@
  */
 
 import { render, screen } from "@testing-library/react";
-import ExternalContributions, {
-  type ExternalPrHistory,
-} from "../components/ExternalContributions";
+import ExternalContributions, { type ExternalPrHistory } from "../components/ExternalContributions";
 
 describe("ExternalContributions Component (Issue #192)", () => {
   it("renders encouraging zero-state when total_merged_prs is 0", () => {

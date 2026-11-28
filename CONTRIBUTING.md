@@ -419,13 +419,13 @@ We enforce automated code formatting and static analysis using pre-commit, Ruff 
    pre-commit run --all-files
    ```
 
-Pre-commit runs automatically before each commit, checking for trailing whitespace, newline endings, valid YAML, Ruff linting/formatting, and Prettier formatting.
+Pre-commit runs automatically before each commit, checking for trailing whitespace, newline endings, valid YAML, Ruff linting/formatting, Prettier formatting, and ESLint checks on staged frontend files.
 
 ### Backend (Python / FastAPI)
 
-- **Linter & Formatter**: [Ruff](https://docs.astral.sh/ruff/) configured in `pyproject.toml`.
-- Run linter: `ruff check backend` (or `ruff check --fix backend`)
-- Run formatter: `ruff format backend` (or `ruff format --check backend`)
+- **Linter & Formatter**: [Ruff](https://docs.astral.sh/ruff/) configured in `pyproject.toml` and exposed via `backend/Makefile`.
+- Run linter: `cd backend && make lint` (or `ruff check backend`)
+- Run formatter: `cd backend && make format` (or `ruff format backend`)
 - Run tests: `pytest`
 
 ### Frontend (Next.js / TypeScript)
@@ -446,6 +446,10 @@ For full details, refer to the [Linting and Formatting Guide](docs/linting-and-f
 - **Python**: Follow [PEP 8](https://peps.python.org/pep-0008/) style guidelines. Use type hints where appropriate.
 - **TypeScript / React**: Use functional components with TypeScript types. Ensure code passes `npm run lint` with zero errors.
 - **Tailwind CSS**: Follow mobile-first responsive utilities and adhere to the project's dark theme palette.
+- **Accessibility & Motion (WCAG 2.2 Criterion 2.3.3)**:
+  - Respect the user's motion preferences (`prefers-reduced-motion`).
+  - Never introduce animations, spinning loaders, keyframe movements, or transitions without providing a reduced-motion fallback. Use Tailwind's `motion-reduce:*` variants (e.g. `motion-reduce:transition-none`, `motion-reduce:animate-none`, `motion-reduce:transform-none`) or wrap animations in `@media (prefers-reduced-motion: no-preference)`.
+  - For JavaScript programmatic scrolling (`window.scrollTo` or `element.scrollIntoView`), always check `window.matchMedia("(prefers-reduced-motion: reduce)").matches` and set `behavior: "auto"` when reduced motion is preferred.
 
 ---
 

@@ -46,9 +46,7 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify(mockRes.body, null, 2));
 
     const duration = Date.now() - startTime;
-    console.log(
-      `[MOCK ${mockRes.status}] ${method} ${url} (${duration}ms)`
-    );
+    console.log(`[MOCK ${mockRes.status}] ${method} ${url} (${duration}ms)`);
   } else {
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(
@@ -80,4 +78,3 @@ server.listen(PORT, HOST, () => {
   console.log(`   GET /api/matching/users/:username/issues`);
   console.log(`======================================================\n`);
 });
-

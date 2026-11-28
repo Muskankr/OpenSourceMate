@@ -12,6 +12,7 @@ import {
   type ApiErrorResponse,
   type CompleteAnalysisResult,
   type ProgramsResponse,
+  type AuthUserStatus,
 } from "../types/api";
 
 export interface RequestOptions extends RequestInit {
@@ -168,6 +169,7 @@ export async function typedRequest<T>(endpoint: string, options: RequestOptions 
 
     try {
       const response = await fetch(url, {
+        credentials: "include",
         ...fetchOptions,
         signal: internalController.signal,
       });
@@ -290,12 +292,15 @@ export async function fetchUserSkills(
 export interface FetchMatchedIssuesOptions extends RequestOptions {
   skills?: string[];
   program?: string;
+  limit?: number;
+  cursor?: number;
 }
 
 /**
  * Fetches open-source issue recommendations matching a user's skills.
  * Optionally accepts an explicit skills array to customize matched technologies,
- * and a program identifier to filter for program-specific issues (e.g. NSoC, Hacktoberfest).
+ * a program identifier to filter for program-specific issues (e.g. NSoC, Hacktoberfest),
+ * and pagination parameters (limit, cursor) (Issue #481).
  */
 export async function fetchMatchedIssues(
   username: string,
@@ -312,6 +317,12 @@ export async function fetchMatchedIssues(
   }
   if (options?.program) {
     query.append("program", options.program);
+  }
+  if (options?.limit !== undefined) {
+    query.append("limit", options.limit.toString());
+  }
+  if (options?.cursor !== undefined) {
+    query.append("cursor", options.cursor.toString());
   }
   const queryString = query.toString() ? `?${query.toString()}` : "";
   return typedRequest<MatchedIssuesResponse>(
@@ -372,4 +383,21 @@ export async function searchUser(
   }
 
   return { profile, skills, issues };
+}
+
+/**
+ * Fetches current OAuth authentication status of the visitor (Issue #482).
+ */
+export async function fetchAuthStatus(options?: RequestOptions): Promise<AuthUserStatus> {
+  return typedRequest<AuthUserStatus>("/api/auth/me", options);
+}
+
+/**
+ * Signs out of the current visitor session, clearing the HttpOnly cookie (Issue #482).
+ */
+export async function logoutUser(options?: RequestOptions): Promise<{ authenticated: boolean }> {
+  return typedRequest<{ authenticated: boolean }>("/api/auth/logout", {
+    method: "POST",
+    ...options,
+  });
 }

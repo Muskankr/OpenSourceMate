@@ -52,12 +52,22 @@ def _atom_element(parent: ElementTree.Element, name: str, text: str) -> None:
     ElementTree.SubElement(parent, f"{{{ATOM_NS}}}{name}").text = text
 
 
-@router.get("/users/{username}/issues")
+@router.get(
+    "/users/{username}/issues",
+    summary="Get personalized issue recommendations (Issue #481)",
+    description=(
+        "Retrieve ranked issue matches tailored to developer skills. "
+        "Supports pagination via limit (default 20, max 100) and cursor (offset). "
+        "Returns next_cursor and total result count."
+    ),
+)
 async def get_matched_issues(
     username: str,
-    exclude_stale: bool = Query(default=False),
-    skills: list[str] | None = Query(default=None),
-    program: str | None = Query(default=None),
+    exclude_stale: bool = Query(default=False, description="Filter out stale issues older than 60 days"),
+    skills: list[str] | None = Query(default=None, description="Explicit skills to match against"),
+    program: str | None = Query(default=None, description="Optional contributor program filter"),
+    limit: int = Query(default=20, ge=1, le=100, description="Maximum number of recommendations to return (Issue #481)"),
+    cursor: int = Query(default=0, ge=0, description="Offset cursor for pagination (Issue #481)"),
 ):
     validated_username = validate_github_username(username)
 
@@ -90,6 +100,9 @@ async def get_matched_issues(
             "username": validated_username,
             "skills": [],
             "recommendations": [],
+            "total": 0,
+            "next_cursor": None,
+            "limit": limit,
         }
 
     repositories = await get_user_repositories(validated_username)
@@ -132,6 +145,9 @@ async def get_matched_issues(
             "username": validated_username,
             "skills": [],
             "recommendations": [],
+            "total": 0,
+            "next_cursor": None,
+            "limit": limit,
         }
 
     found_issues = []
@@ -239,14 +255,17 @@ async def get_matched_issues(
             if not (iss.get("freshness") and iss["freshness"].get("is_stale"))
         ]
 
-    # Highest compatibility first.
+    # Highest compatibility first. Break ties deterministically by issue ID
     recommendations.sort(
-        key=lambda issue: issue["_raw_score"],
+        key=lambda issue: (issue["_raw_score"], issue.get("id", 0)),
         reverse=True,
     )
 
-    top_recommendations = recommendations[:20]
-    for issue in top_recommendations:
+    total_count = len(recommendations)
+    page_recommendations = recommendations[cursor : cursor + limit]
+    next_cursor = cursor + len(page_recommendations) if cursor + len(page_recommendations) < total_count else None
+
+    for issue in page_recommendations:
         issue.pop("_raw_score", None)
         explanation_data = await generate_issue_match_explanation(issue, user_skills)
         issue["explanation"] = explanation_data["explanation"]
@@ -256,7 +275,10 @@ async def get_matched_issues(
     response_data: dict[str, Any] = {
         "username": validated_username,
         "skills": user_skills,
-        "recommendations": top_recommendations,
+        "recommendations": page_recommendations,
+        "total": total_count,
+        "next_cursor": next_cursor,
+        "limit": limit,
     }
     if program_config:
         response_data["program"] = program_config["id"]

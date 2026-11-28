@@ -23,10 +23,6 @@ export const metadata: Metadata = {
   },
 };
 
-export default function CompareLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function CompareLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

@@ -33,4 +33,3 @@ export interface IssueRecommendation {
   match_score: number;
   match_reasons?: string[];
 }
-

@@ -127,12 +127,7 @@ describe("ProfileComparison Component", () => {
       throw new apiClient.ApiClientError("GitHub user not found.", 404, "NOT_FOUND");
     });
 
-    render(
-      <ProfileComparison
-        initialUser1="invalid-nonexistent-user"
-        initialUser2="bob"
-      />
-    );
+    render(<ProfileComparison initialUser1="invalid-nonexistent-user" initialUser2="bob" />);
 
     // User 1 error should be displayed in User 1's column
     await waitFor(() => {
@@ -157,12 +152,7 @@ describe("ProfileComparison Component", () => {
       throw new apiClient.ApiClientError("GitHub user not found.", 404, "NOT_FOUND");
     });
 
-    render(
-      <ProfileComparison
-        initialUser1="alice"
-        initialUser2="invalid-second-user"
-      />
-    );
+    render(<ProfileComparison initialUser1="alice" initialUser2="invalid-second-user" />);
 
     await waitFor(() => {
       expect(screen.getByText("Alice Developer")).toBeInTheDocument();

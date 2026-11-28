@@ -1,8 +1,6 @@
 import React from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react";
-import RefreshAnalysisButton, {
-  formatLocalTimestamp,
-} from "../components/RefreshAnalysisButton";
+import RefreshAnalysisButton, { formatLocalTimestamp } from "../components/RefreshAnalysisButton";
 
 describe("RefreshAnalysisButton Component", () => {
   beforeEach(() => {
@@ -33,17 +31,10 @@ describe("RefreshAnalysisButton Component", () => {
   describe("Component Rendering and Interaction", () => {
     it("renders analyzed at timestamp and refresh button", () => {
       const onRefresh = jest.fn();
-      render(
-        <RefreshAnalysisButton
-          analyzedAt="2026-11-03T10:30:00Z"
-          onRefresh={onRefresh}
-        />
-      );
+      render(<RefreshAnalysisButton analyzedAt="2026-11-03T10:30:00Z" onRefresh={onRefresh} />);
 
       expect(screen.getByText(/Analyzed at:/i)).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /Refresh analysis/i })
-      ).toBeEnabled();
+      expect(screen.getByRole("button", { name: /Refresh analysis/i })).toBeEnabled();
     });
 
     it("triggers onRefresh and activates 30s rate-limit cooldown upon click", () => {

@@ -84,3 +84,31 @@ When testing URLs with card validators (Twitter Card Validator, Facebook Sharing
 - [x] Add alternative text, mime-type, and resolution metadata.
 - [x] Add unit tests in `frontend/__tests__/openGraphImage.test.ts`.
 - [x] Validate aspect ratio with standard social network debuggers.
+
+---
+
+## 6. Dynamic User Profile Open Graph Image (Issue #479)
+
+When sharing developer-specific result links (`/u/[username]`), a personalized 1200x630 Open Graph preview is dynamically rendered.
+
+### Capabilities & Specifications
+- **Routes**:
+  - Open Graph: `/u/[username]/opengraph-image` (`frontend/app/u/[username]/opengraph-image.tsx`)
+  - Twitter Card: `/u/[username]/twitter-image` (`frontend/app/u/[username]/twitter-image.tsx`)
+- **Card Format**: `summary_large_image` (1200 x 630 pixels, PNG, `edge` runtime)
+- **Visual Elements**:
+  - OpenSourceMate brand pill and header.
+  - Large avatar circle highlighting the developer's initial letter.
+  - Clean `@username` heading.
+  - Top 3 analyzed technical skills rendered as glowing pill badges.
+- **Cached Analysis Data Only**:
+  - Uses cached skills analysis (`next: { revalidate: 3600 }`) with a fast timeout (2.5s).
+  - Never forces a refresh, avoiding rate limit exhaustion.
+- **Resilience & Fallback Rules**:
+  - If a user is unknown (404), rate-limited (429), or has an invalid username, it renders the fallback default OpenSourceMate branding banner.
+  - Result page metadata (`generateMetadata` in `frontend/app/u/[username]/page.tsx`) defaults to `/opengraph-image` and `/twitter-image` for invalid usernames.
+- **Security & Caching**:
+  - Dynamic user and skill texts are escaped (`escapeText`) to prevent layout breakage or XSS.
+  - Responses carry `Cache-Control: public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400`.
+
+

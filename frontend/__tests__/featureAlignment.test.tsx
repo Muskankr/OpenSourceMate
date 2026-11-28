@@ -17,9 +17,7 @@ describe("Landing Page Copywriting & Feature Alignment (Issue #189)", () => {
   it("marks Step 3 contribution discovery with a Roadmap badge", () => {
     render(<Home />);
     expect(screen.getByText("Roadmap")).toBeInTheDocument();
-    expect(
-      screen.getByText(/Discover contribution opportunities/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Discover contribution opportunities/i)).toBeInTheDocument();
     expect(
       screen.getByText(/issue matching engine currently in active development/i)
     ).toBeInTheDocument();
@@ -36,27 +34,26 @@ describe("Landing Page Copywriting & Feature Alignment (Issue #189)", () => {
   });
 });
 
-
-  describe("Hero and Analyzer Expectations", () => {
-    it("ensures public profile privacy disclaimer is prominently displayed", () => {
-      render(<Home />);
-      expect(
-        screen.getByText(/No GitHub login required • Public profile data only/i)
-      ).toBeInTheDocument();
-    });
-
-    it("verifies accurate labeling on the analyze button", () => {
-      render(<Home />);
-      const buttons = screen.getAllByRole("button", { name: /Analyze/i });
-      expect(buttons.length).toBeGreaterThanOrEqual(1);
-    });
+describe("Hero and Analyzer Expectations", () => {
+  it("ensures public profile privacy disclaimer is prominently displayed", () => {
+    render(<Home />);
+    expect(
+      screen.getByText(/No GitHub login required • Public profile data only/i)
+    ).toBeInTheDocument();
   });
 
-  describe("Feature Status Guardrails", () => {
-    it("confirms roadmap badge has accessible styling contrast", () => {
-      render(<Home />);
-      const badge = screen.getByText("Roadmap");
-      expect(badge).toHaveClass("uppercase");
-      expect(badge).toHaveClass("text-[10px]");
-    });
+  it("verifies accurate labeling on the analyze button", () => {
+    render(<Home />);
+    const buttons = screen.getAllByRole("button", { name: /Analyze/i });
+    expect(buttons.length).toBeGreaterThanOrEqual(1);
   });
+});
+
+describe("Feature Status Guardrails", () => {
+  it("confirms roadmap badge has accessible styling contrast", () => {
+    render(<Home />);
+    const badge = screen.getByText("Roadmap");
+    expect(badge).toHaveClass("uppercase");
+    expect(badge).toHaveClass("text-[10px]");
+  });
+});

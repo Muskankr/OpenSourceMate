@@ -43,18 +43,15 @@ describe("SkillsToLearn Component", () => {
   });
 
   it("renders section header and suggestion cards when skills are present", () => {
-    render(
-      <SkillsToLearn
-        skills={["Python"]}
-        customMapping={mockCustomMapping}
-      />
-    );
+    render(<SkillsToLearn skills={["Python"]} customMapping={mockCustomMapping} />);
 
     expect(screen.getByRole("region", { name: /Skills to learn next/i })).toBeInTheDocument();
     expect(screen.getByText("Skills to learn next")).toBeInTheDocument();
     expect(screen.getByText(/LEARNING PATHS/i)).toBeInTheDocument();
     expect(
-      screen.getByText(/Recommended companion technologies to broaden your open-source opportunities/i)
+      screen.getByText(
+        /Recommended companion technologies to broaden your open-source opportunities/i
+      )
     ).toBeInTheDocument();
 
     // Verify suggestions
@@ -68,12 +65,7 @@ describe("SkillsToLearn Component", () => {
   });
 
   it("shows the detected skill context 'Pairs with Python'", () => {
-    render(
-      <SkillsToLearn
-        skills={["Python"]}
-        customMapping={mockCustomMapping}
-      />
-    );
+    render(<SkillsToLearn skills={["Python"]} customMapping={mockCustomMapping} />);
 
     const pairsWithTags = screen.getAllByText(/Pairs with/i);
     expect(pairsWithTags.length).toBe(5);
@@ -82,11 +74,7 @@ describe("SkillsToLearn Component", () => {
 
   it("shows count badge matching number of suggestions", () => {
     render(
-      <SkillsToLearn
-        skills={["Python"]}
-        customMapping={mockCustomMapping}
-        maxSuggestions={3}
-      />
+      <SkillsToLearn skills={["Python"]} customMapping={mockCustomMapping} maxSuggestions={3} />
     );
 
     expect(screen.getByText("3 suggestions")).toBeInTheDocument();
@@ -102,12 +90,7 @@ describe("SkillsToLearn Component", () => {
       },
     ];
 
-    render(
-      <SkillsToLearn
-        skills={userSkills}
-        customMapping={mockCustomMapping}
-      />
-    );
+    render(<SkillsToLearn skills={userSkills} customMapping={mockCustomMapping} />);
 
     expect(screen.getByText("Next.js")).toBeInTheDocument();
     expect(screen.getByText("Tailwind CSS")).toBeInTheDocument();
@@ -116,11 +99,7 @@ describe("SkillsToLearn Component", () => {
 
   it("renders properly in light theme without errors", () => {
     const { container } = render(
-      <SkillsToLearn
-        skills={["React"]}
-        theme="light"
-        customMapping={mockCustomMapping}
-      />
+      <SkillsToLearn skills={["React"]} theme="light" customMapping={mockCustomMapping} />
     );
 
     const section = container.querySelector("section");
@@ -130,11 +109,7 @@ describe("SkillsToLearn Component", () => {
 
   it("renders properly in dark theme without errors", () => {
     const { container } = render(
-      <SkillsToLearn
-        skills={["React"]}
-        theme="dark"
-        customMapping={mockCustomMapping}
-      />
+      <SkillsToLearn skills={["React"]} theme="dark" customMapping={mockCustomMapping} />
     );
 
     const section = container.querySelector("section");

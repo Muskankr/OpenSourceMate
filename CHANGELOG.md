@@ -7,6 +7,8 @@ All notable changes to OpenSourceMate are recorded here. The format follows
 
 ### Added
 
+- Frontend & i18n: Hindi internationalization (i18n) support with English fallback. Moved visible text across navigation, hero, profile analysis, skills, recommendations, how-it-works, offline banner, and footer into translation dictionaries (`frontend/messages/en.json` and `frontend/messages/hi.json`). Added an accessible `LanguageSwitcher` in the navbar with instant zero-reload language switching, `localStorage` persistence under `preferred_locale`, automated `document.documentElement.lang` synchronization, layout safety against longer Hindi text, untranslated technical terms, and a step-by-step guide in `docs/internationalization-i18n.md` for adding further languages.
+
 - Frontend & PWA: Progressive Web App offline caching and service worker (`frontend/public/sw.js`) that caches application shell assets, static bundles, and GitHub profile/recommendation results. Features automatic cache version invalidation upon new deployment, auto-restoration of the last analysis when opening offline, an accessible `OfflineBanner` component, and timestamp badges showing when cached results were fetched.
 
 - DevOps & Infrastructure: Dockerfiles for backend (Python 3.12 slim, non-root user `appuser`, healthcheck) and frontend (Node 22 alpine, non-root user `node`), root `docker-compose.yml` for one-command startup, and `/health` (liveness) plus `/ready` (readiness with GitHub reachability check and short timeout) endpoints (#425).

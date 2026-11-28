@@ -1,8 +1,4 @@
-import OpenGraphImage, {
-  alt,
-  size,
-  contentType,
-} from "./opengraph-image";
+import OpenGraphImage, { alt, size, contentType } from "./opengraph-image";
 
 export const runtime = "nodejs";
 

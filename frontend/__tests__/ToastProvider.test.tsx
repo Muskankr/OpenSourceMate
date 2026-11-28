@@ -8,9 +8,7 @@ const TestToastConsumer: React.FC = () => {
 
   return (
     <div>
-      <button
-        onClick={() => toast.success("Username copied successfully!", { title: "Copied" })}
-      >
+      <button onClick={() => toast.success("Username copied successfully!", { title: "Copied" })}>
         Trigger Success
       </button>
       <button
@@ -18,9 +16,7 @@ const TestToastConsumer: React.FC = () => {
       >
         Trigger Error
       </button>
-      <button
-        onClick={() => toast.info("Profile exported as markdown.", { duration: 1000 })}
-      >
+      <button onClick={() => toast.info("Profile exported as markdown.", { duration: 1000 })}>
         Trigger Info
       </button>
       <button onClick={() => toast.clearToasts()}>Clear All</button>

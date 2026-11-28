@@ -55,12 +55,16 @@ const generatedTs = generateTypeScriptTypes(rawSchema);
 
 if (isCheckMode) {
   if (!fs.existsSync(OUTPUT_PATH)) {
-    console.error(`Error: Generated types file missing at ${OUTPUT_PATH}. Run 'npm run codegen:types'`);
+    console.error(
+      `Error: Generated types file missing at ${OUTPUT_PATH}. Run 'npm run codegen:types'`
+    );
     process.exit(1);
   }
   const existingTs = fs.readFileSync(OUTPUT_PATH, "utf-8");
   if (existingTs.trim() !== generatedTs.trim()) {
-    console.error(`Error: Generated TypeScript types are out of date with OpenAPI schema! Run 'npm run codegen:types'`);
+    console.error(
+      `Error: Generated TypeScript types are out of date with OpenAPI schema! Run 'npm run codegen:types'`
+    );
     process.exit(1);
   }
   console.log("✓ TypeScript types are up to date with OpenAPI schema.");

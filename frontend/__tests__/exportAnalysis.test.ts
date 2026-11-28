@@ -240,4 +240,45 @@ describe("exportAnalysis utils", () => {
       expect(removeChildSpy).toHaveBeenCalledTimes(3);
     });
   });
+
+  describe("recommended issues export (Issue #443)", () => {
+    const payloadWithIssues: ExportPayload = {
+      ...samplePayload,
+      recommendedIssues: [
+        {
+          repository: "vercel/next.js",
+          title: 'Fix "hydration" mismatch, part 1\nwith details | edge case',
+          url: "https://github.com/vercel/next.js/issues/1001",
+        },
+        {
+          repository: "tiangolo/fastapi",
+          title: "Add Pydantic v2 docs",
+          url: "https://github.com/tiangolo/fastapi/issues/1002",
+        },
+      ],
+    };
+
+    it("includes recommended issues with repository, title, and link in CSV and escapes commas, quotes, and line breaks", () => {
+      const csv = generateCsvReport(payloadWithIssues);
+      expect(csv).toContain("Repository,Issue Title,Link");
+      expect(csv).toContain(
+        'vercel/next.js,"Fix ""hydration"" mismatch, part 1\nwith details | edge case",https://github.com/vercel/next.js/issues/1001'
+      );
+      expect(csv).toContain(
+        "tiangolo/fastapi,Add Pydantic v2 docs,https://github.com/tiangolo/fastapi/issues/1002"
+      );
+    });
+
+    it("includes recommended issues table in Markdown and escapes pipes and line breaks", () => {
+      const md = generateMarkdownReport(payloadWithIssues);
+      expect(md).toContain("## Recommended Issues");
+      expect(md).toContain("| Repository | Title | Link |");
+      expect(md).toContain(
+        '| vercel/next.js | Fix "hydration" mismatch, part 1 with details \\| edge case | [View Issue](https://github.com/vercel/next.js/issues/1001) |'
+      );
+      expect(md).toContain(
+        "| tiangolo/fastapi | Add Pydantic v2 docs | [View Issue](https://github.com/tiangolo/fastapi/issues/1002) |"
+      );
+    });
+  });
 });

@@ -4,6 +4,9 @@ export const metadata: Metadata = {
   title: "Contribute to OpenSourceMate | Good First Issues",
   description:
     "Explore open beginner-friendly good-first-issues and contribute to OpenSourceMate. Find frontend, backend, and documentation issues ready for contributors.",
+  alternates: {
+    canonical: "/contribute",
+  },
   openGraph: {
     title: "Contribute to OpenSourceMate | Good First Issues",
     description:
@@ -20,10 +23,6 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ContributeLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function ContributeLayout({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }

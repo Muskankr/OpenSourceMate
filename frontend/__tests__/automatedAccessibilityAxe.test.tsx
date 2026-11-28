@@ -63,12 +63,7 @@ describe("Automated Accessibility Suite (axe) (#266)", () => {
   });
 
   it("verifies ServiceUnavailableBanner error state passes accessibility checks", async () => {
-    const { container } = render(
-      <ServiceUnavailableBanner
-        theme="dark"
-        onRetry={jest.fn()}
-      />
-    );
+    const { container } = render(<ServiceUnavailableBanner theme="dark" onRetry={jest.fn()} />);
 
     await assertNoSeriousA11yViolations(container);
   });
@@ -107,10 +102,7 @@ describe("Automated Accessibility Suite (axe) (#266)", () => {
     ];
 
     const { container } = render(
-      <TopRepositoriesDisplay
-        theme="dark"
-        repositories={sampleRepos}
-      />
+      <TopRepositoriesDisplay theme="dark" repositories={sampleRepos} />
     );
 
     await assertNoSeriousA11yViolations(container);

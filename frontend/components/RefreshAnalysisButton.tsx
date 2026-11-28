@@ -129,9 +129,7 @@ export default function RefreshAnalysisButton({
       </div>
 
       <div
-        className={`hidden h-3 w-px sm:block ${
-          theme === "dark" ? "bg-white/10" : "bg-gray-300"
-        }`}
+        className={`hidden h-3 w-px sm:block ${theme === "dark" ? "bg-white/10" : "bg-gray-300"}`}
         aria-hidden="true"
       />
 

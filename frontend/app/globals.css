@@ -42,8 +42,16 @@
   --font-mono: var(--font-geist-mono);
 }
 
-html {
-  scroll-behavior: smooth;
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Ensure anchor navigation has comfortable offset below the sticky navigation bar */
@@ -118,7 +126,7 @@ button {
     transform: none !important;
   }
 
-  /* Keep essential opacity transitions instant rather than animated */
+  /* Disable CSS and Tailwind animation utility classes entirely */
   .animate-spin,
   .animate-ping,
   .animate-pulse,
@@ -210,7 +218,12 @@ button {
   }
 
   /* Headings typography and break hygiene */
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     page-break-after: avoid !important;
     break-after: avoid !important;
     color: #111827 !important;

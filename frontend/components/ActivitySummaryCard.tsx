@@ -33,10 +33,7 @@ export const ActivitySummaryCard = memo(function ActivitySummaryCard({
 
   if (!summary) return null;
 
-  const maxWeeklyCount = Math.max(
-    1,
-    ...summary.weeklyBuckets.map((b) => b.count)
-  );
+  const maxWeeklyCount = Math.max(1, ...summary.weeklyBuckets.map((b) => b.count));
 
   const levelBadgeColors = {
     Active: isDark
@@ -115,15 +112,16 @@ export const ActivitySummaryCard = memo(function ActivitySummaryCard({
                         ? "bg-white/5"
                         : "bg-gray-200"
                       : isDark
-                      ? "bg-purple-500 hover:bg-purple-400"
-                      : "bg-purple-600 hover:bg-purple-700"
+                        ? "bg-purple-500 hover:bg-purple-400"
+                        : "bg-purple-600 hover:bg-purple-700"
                   }`}
                   aria-label={`Week of ${bucket.startDate}: ${bucket.count} events`}
                 />
 
                 {/* Tooltip on hover */}
                 <div className="pointer-events-none absolute bottom-full mb-1 hidden group-hover:block z-20 rounded bg-black px-2 py-1 text-[10px] text-white whitespace-nowrap shadow-lg">
-                  {bucket.startDate}: {bucket.count} events ({bucket.pushes} pushes, {bucket.pullRequests} PRs)
+                  {bucket.startDate}: {bucket.count} events ({bucket.pushes} pushes,{" "}
+                  {bucket.pullRequests} PRs)
                 </div>
               </div>
             );
@@ -138,7 +136,8 @@ export const ActivitySummaryCard = memo(function ActivitySummaryCard({
 
       {summary.totalEvents90d === 0 && (
         <p className={`mt-4 text-xs text-center ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-          No public events recorded in the last 90 days. User may be working in private repositories or taking a break.
+          No public events recorded in the last 90 days. User may be working in private repositories
+          or taking a break.
         </p>
       )}
     </div>

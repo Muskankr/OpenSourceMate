@@ -1,10 +1,13 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import type { IssueRecommendation } from "../types/api";
 import { inferIssueDifficulty, type IssueDifficulty } from "../data/mockIssues";
+import { getLabelExplanation, LABEL_GLOSSARY } from "../data/labelGlossary";
 import ResponsivenessBadge from "./ResponsivenessBadge";
 import FriendlinessBadge from "./FriendlinessBadge";
+import FirstPrChecklistPanel from "./FirstPrChecklistPanel";
+import { KNOWN_REPO_FRIENDLINESS } from "../utils/repoFriendliness";
 
 export interface IssueCardProps {
   issue: IssueRecommendation;
@@ -26,6 +29,7 @@ export default function IssueCard({
   onRestore,
 }: IssueCardProps) {
   const isDark = theme === "dark";
+  const [showLabelHelp, setShowLabelHelp] = useState(false);
 
   const isGoodFirst = issue.labels?.some((l) => l.toLowerCase().includes("good first"));
   const isHelpWanted = issue.labels?.some((l) => l.toLowerCase().includes("help wanted"));
@@ -174,13 +178,14 @@ export default function IssueCard({
             </a>
           </h4>
 
-          {/* Labels List */}
+          {/* Labels List with Accessible Newcomer Tooltips (Issue #476) */}
           {issue.labels && issue.labels.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5" aria-label="Issue labels">
-              {issue.labels.slice(0, 6).map((label, idx) => (
-                <span
-                  key={idx}
-                  className={`rounded-md px-2 py-0.5 text-[11px] font-medium ${
+            <div className="mt-3">
+              <div className="flex flex-wrap items-center gap-1.5" aria-label="Issue labels">
+                {issue.labels.slice(0, 6).map((label, idx) => {
+                  const explanation = getLabelExplanation(label);
+                  const tooltipId = `label-tooltip-${issue.id}-${idx}`;
+                  const badgeClasses = `rounded-md px-2 py-0.5 text-[11px] font-medium ${
                     isGoodFirst && label.toLowerCase().includes("good first")
                       ? "border border-emerald-400/30 bg-emerald-400/10 text-emerald-300"
                       : isHelpWanted && label.toLowerCase().includes("help wanted")
@@ -188,11 +193,72 @@ export default function IssueCard({
                         : isDark
                           ? "border border-white/10 bg-white/5 text-gray-300"
                           : "border border-gray-300 bg-white text-gray-700"
+                  }`;
+
+                  if (!explanation) {
+                    return (
+                      <span key={idx} className={badgeClasses}>
+                        {label}
+                      </span>
+                    );
+                  }
+
+                  return (
+                    <span key={idx} className="group relative inline-flex">
+                      <button
+                        type="button"
+                        aria-describedby={tooltipId}
+                        title={explanation}
+                        className={`${badgeClasses} cursor-help focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400`}
+                      >
+                        {label}
+                      </button>
+                      <span
+                        id={tooltipId}
+                        role="tooltip"
+                        className={`pointer-events-none absolute bottom-full left-0 z-40 mb-1.5 hidden w-60 rounded-lg border p-2 text-[11px] leading-snug shadow-lg group-hover:block group-focus-within:block ${
+                          isDark
+                            ? "border-white/15 bg-slate-900 text-gray-200"
+                            : "border-gray-200 bg-white text-gray-800"
+                        }`}
+                      >
+                        {explanation}
+                      </span>
+                    </span>
+                  );
+                })}
+                <button
+                  type="button"
+                  onClick={() => setShowLabelHelp((prev) => !prev)}
+                  data-testid="label-glossary-help-link"
+                  aria-expanded={showLabelHelp}
+                  className={`ml-1 text-[11px] underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 rounded ${
+                    isDark ? "text-gray-400 hover:text-purple-300" : "text-gray-500 hover:text-purple-700"
                   }`}
                 >
-                  {label}
-                </span>
-              ))}
+                  What do these labels mean?
+                </button>
+              </div>
+
+              {showLabelHelp && (
+                <div
+                  data-testid="label-glossary-help-section"
+                  className={`mt-2.5 rounded-xl border p-3 text-[11px] ${
+                    isDark
+                      ? "border-white/10 bg-black/25 text-gray-300"
+                      : "border-gray-200 bg-gray-50 text-gray-700"
+                  }`}
+                >
+                  <p className="font-semibold text-purple-400">Common GitHub Labels</p>
+                  <ul className="mt-1.5 space-y-1">
+                    {LABEL_GLOSSARY.slice(0, 6).map((entry) => (
+                      <li key={entry.label}>
+                        <span className="font-semibold">{entry.label}:</span> {entry.explanation}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
 
@@ -259,6 +325,13 @@ export default function IssueCard({
               </ul>
             </div>
           )}
+
+          {/* First Pull Request Checklist (Issue #475) */}
+          <FirstPrChecklistPanel
+            issue={issue}
+            theme={theme}
+            hasContributing={KNOWN_REPO_FRIENDLINESS[issue.repository]?.hasContributing !== false}
+          />
         </div>
 
         {/* Right Action / Score Column */}

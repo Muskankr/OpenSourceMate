@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { formatFetchedAt, formatRelativeTime } from "../utils/offlineStorage";
+import { useI18n } from "../utils/i18n";
 
 export interface OfflineBannerProps {
   isOnline: boolean;
@@ -21,6 +22,7 @@ export default function OfflineBanner({
   onRetryConnection,
 }: OfflineBannerProps) {
   const [checking, setChecking] = useState(false);
+  const { t } = useI18n();
 
   // If online and not viewing cached results, no banner needed
   if (isOnline && !isViewingCached) {
@@ -63,8 +65,10 @@ export default function OfflineBanner({
                 d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 0a5 5 0 01-.707-.707m-2.122 2.122a9 9 0 010-12.728M3 3l18 18"
               />
             </svg>
-            <div>
-              <span className="font-semibold">You are currently offline.</span>{" "}
+            <div className="break-words min-w-0">
+              <span className="font-semibold">
+                {t("common.offline.title", "You are currently offline.")}
+              </span>{" "}
               {isViewingCached && cachedFetchedAt ? (
                 <span>
                   Viewing cached results
@@ -79,8 +83,10 @@ export default function OfflineBanner({
                 </span>
               ) : (
                 <span>
-                  Connect to the internet to analyze GitHub profiles and discover new
-                  recommendations.
+                  {t(
+                    "common.offline.offlineDescription",
+                    "Connect to the internet to analyze GitHub profiles and discover new recommendations."
+                  )}
                 </span>
               )}
             </div>
@@ -115,10 +121,10 @@ export default function OfflineBanner({
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     />
                   </svg>
-                  <span>Checking...</span>
+                  <span>{t("common.offline.checking", "Checking...")}</span>
                 </>
               ) : (
-                <span>Retry Connection</span>
+                <span>{t("common.offline.retryConnection", "Retry Connection")}</span>
               )}
             </button>
           </div>
@@ -151,8 +157,8 @@ export default function OfflineBanner({
               d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
             />
           </svg>
-          <div>
-            <span className="font-semibold">Back Online!</span>{" "}
+          <div className="break-words min-w-0">
+            <span className="font-semibold">{t("common.offline.backOnline", "Back Online!")}</span>{" "}
             {cachedFetchedAt && (
               <span>
                 Displaying cached results
@@ -173,7 +179,7 @@ export default function OfflineBanner({
           <button
             type="button"
             onClick={onRefresh}
-            className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-md bg-sky-600/10 hover:bg-sky-600/20 text-sky-900 dark:text-sky-200 border border-sky-600/30 transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500"
+            className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-md bg-sky-600/10 hover:bg-sky-600/20 text-sky-900 dark:text-sky-200 border border-sky-600/30 transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 flex-shrink-0"
           >
             <svg
               className="w-3.5 h-3.5"
@@ -189,7 +195,7 @@ export default function OfflineBanner({
                 d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
               />
             </svg>
-            <span>Refresh Live Data</span>
+            <span>{t("common.offline.refreshLive", "Refresh Live Data")}</span>
           </button>
         )}
       </div>

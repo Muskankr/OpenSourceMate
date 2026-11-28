@@ -35,25 +35,23 @@ describe("LazySectionPlaceholder Component (Issue #177)", () => {
   });
 });
 
+it("verifies theme-based styling contrast", () => {
+  const { rerender } = render(<LazySectionPlaceholder theme="dark" />);
+  expect(screen.getByRole("status")).toHaveClass("border-white/10");
 
-  it("verifies theme-based styling contrast", () => {
-    const { rerender } = render(<LazySectionPlaceholder theme="dark" />);
-    expect(screen.getByRole("status")).toHaveClass("border-white/10");
+  rerender(<LazySectionPlaceholder theme="light" />);
+  expect(screen.getByRole("status")).toHaveClass("border-gray-200");
+});
 
-    rerender(<LazySectionPlaceholder theme="light" />);
-    expect(screen.getByRole("status")).toHaveClass("border-gray-200");
-  });
+it("respects custom height classes for CLS reservation", () => {
+  const { rerender } = render(<LazySectionPlaceholder heightClass="h-48" />);
+  expect(screen.getByRole("status")).toHaveClass("h-48");
 
-  it("respects custom height classes for CLS reservation", () => {
-    const { rerender } = render(<LazySectionPlaceholder heightClass="h-48" />);
-    expect(screen.getByRole("status")).toHaveClass("h-48");
+  rerender(<LazySectionPlaceholder heightClass="h-72" />);
+  expect(screen.getByRole("status")).toHaveClass("h-72");
+});
 
-    rerender(<LazySectionPlaceholder heightClass="h-72" />);
-    expect(screen.getByRole("status")).toHaveClass("h-72");
-  });
-
-
-  it("handles empty description gracefully", () => {
-    render(<LazySectionPlaceholder description="" />);
-    expect(screen.queryByText("Preparing performance-optimized view...")).not.toBeInTheDocument();
-  });
+it("handles empty description gracefully", () => {
+  render(<LazySectionPlaceholder description="" />);
+  expect(screen.queryByText("Preparing performance-optimized view...")).not.toBeInTheDocument();
+});

@@ -26,3 +26,12 @@ repos:
       - id: prettier
         types_or: [javascript, jsx, ts, tsx, json, css, markdown]
         exclude: ^(frontend/\.next/|package-lock\.json|frontend/package-lock\.json|\.git/)
+
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint (frontend)
+        entry: npx --prefix frontend eslint --no-warn-ignored
+        language: system
+        files: ^frontend/.*\.(js|jsx|ts|tsx|mjs)$
+        exclude: ^frontend/(\.next|node_modules|coverage|out|build)/

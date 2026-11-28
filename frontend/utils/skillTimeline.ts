@@ -129,9 +129,10 @@ export function filterMinorLanguages(
 
   return {
     ...timeline,
-    allLanguages: majorLanguages.includes("Other") || filteredGrowth.some((g) => g.languages["Other"])
-      ? [...majorLanguages.filter((l) => l !== "Other"), "Other"]
-      : majorLanguages,
+    allLanguages:
+      majorLanguages.includes("Other") || filteredGrowth.some((g) => g.languages["Other"])
+        ? [...majorLanguages.filter((l) => l !== "Other"), "Other"]
+        : majorLanguages,
     growthByYear: filteredGrowth,
   };
 }

@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +10,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.routes.ai import router as ai_router
+from app.api.routes.auth import router as auth_router
 from app.api.routes.friendliness import router as friendliness_router
 from app.api.routes.github import router as github_router
 from app.api.routes.issues import router as issues_router
@@ -17,6 +18,7 @@ from app.api.routes.matching import router as matching_router
 from app.api.routes.text_skills import router as text_skills_router
 from app.config import get_settings
 from app.exceptions import APIException
+from app.middleware.auth_context import UserTokenContextMiddleware
 from app.middleware.logging import StructuredLoggingMiddleware
 from app.middleware.rate_limit import IPRateLimitMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
@@ -112,6 +114,7 @@ for backward compatibility.
     },
 )
 
+app.add_middleware(UserTokenContextMiddleware)
 app.add_middleware(IPRateLimitMiddleware)
 app.add_middleware(StructuredLoggingMiddleware)
 
@@ -446,6 +449,37 @@ async def get_programs_shortcut():
     return {"programs": get_all_programs()}
 
 
+@app.get(
+    "/metrics",
+    tags=["Health"],
+    summary="Application and upstream service metrics (Issue #452)",
+)
+@app.get(
+    "/api/metrics",
+    tags=["Health"],
+    summary="Application metrics (api)",
+)
+@app.get(
+    "/api/v1/metrics",
+    tags=["Health"],
+    summary="Application metrics (v1)",
+)
+async def get_metrics():
+    """Optional metrics endpoint providing request counts, latencies, and GitHub error counts.
+
+    Disabled by default. Enabled by setting METRICS_ENABLED=true in the environment.
+    """
+    settings = get_settings()
+    if not settings.metrics_enabled:
+        raise HTTPException(
+            status_code=404,
+            detail="Metrics collection is disabled. Set METRICS_ENABLED=true to enable.",
+        )
+    from app.services.metrics_service import get_metrics_collector
+
+    return get_metrics_collector().get_metrics_snapshot()
+
+
 # ---------------------------------------------------------
 # Routers (Dual-mounted: /api/ and /api/v1/ for compatibility)
 # ---------------------------------------------------------
@@ -456,6 +490,7 @@ app.include_router(ai_router, prefix="/api/v1", include_in_schema=True)
 app.include_router(matching_router, prefix="/api/v1", include_in_schema=True)
 app.include_router(friendliness_router, prefix="/api/v1", include_in_schema=True)
 app.include_router(text_skills_router, prefix="/api/v1", include_in_schema=True)
+app.include_router(auth_router, prefix="/api/v1", include_in_schema=True)
 
 # Legacy /api/ Routers (Backward Compatibility)
 app.include_router(github_router, prefix="/api", include_in_schema=False)
@@ -464,3 +499,4 @@ app.include_router(ai_router, prefix="/api", include_in_schema=False)
 app.include_router(matching_router, prefix="/api", include_in_schema=False)
 app.include_router(friendliness_router, prefix="/api", include_in_schema=False)
 app.include_router(text_skills_router, prefix="/api", include_in_schema=False)
+app.include_router(auth_router, prefix="/api", include_in_schema=False)

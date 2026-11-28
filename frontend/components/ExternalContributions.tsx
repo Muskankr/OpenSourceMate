@@ -61,7 +61,8 @@ export const ExternalContributions = memo(function ExternalContributions({
           </span>
         </div>
         <p className={`text-xs ${isDark ? "text-gray-400" : "text-gray-600"}`}>
-          No merged pull requests detected in external repositories yet. OpenSourceMate can help you find beginner-friendly issues to make your very first open-source contribution!
+          No merged pull requests detected in external repositories yet. OpenSourceMate can help you
+          find beginner-friendly issues to make your very first open-source contribution!
         </p>
       </div>
     );
@@ -86,9 +87,7 @@ export const ExternalContributions = memo(function ExternalContributions({
           <span className="text-2xl font-bold tracking-tight text-purple-400">
             {data.total_merged_prs}
           </span>
-          <div className="text-[10px] uppercase font-semibold opacity-70">
-            Merged PRs
-          </div>
+          <div className="text-[10px] uppercase font-semibold opacity-70">Merged PRs</div>
         </div>
       </div>
 
@@ -111,9 +110,7 @@ export const ExternalContributions = memo(function ExternalContributions({
                 }`}
               >
                 {repo.repository}{" "}
-                <span className="text-[10px] text-purple-400 font-bold ml-1">
-                  ({repo.count})
-                </span>
+                <span className="text-[10px] text-purple-400 font-bold ml-1">({repo.count})</span>
               </a>
             ))}
           </div>

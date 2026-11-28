@@ -55,11 +55,13 @@ class StructuredJsonFormatter(logging.Formatter):
     """
 
     def format(self, record: logging.LogRecord) -> str:
+        raw_msg = record.getMessage()
+        sanitized_msg = sanitize_sensitive_data(raw_msg) if isinstance(raw_msg, str) else str(raw_msg)
         log_entry: dict[str, Any] = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "level": record.levelname,
             "logger": record.name,
-            "message": record.getMessage(),
+            "message": sanitized_msg,
         }
 
         # Include request ID if present in context or record
