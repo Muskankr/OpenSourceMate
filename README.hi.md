@@ -317,6 +317,8 @@ http://localhost:8000
 
 इंटरएक्टिव OpenAPI दस्तावेज़ीकरण (Swagger UI) `http://localhost:8000/docs` पर उपलब्ध है।
 
+Production में API documentation डिफ़ॉल्ट रूप से बंद है। उसे जानबूझकर उपलब्ध कराने के लिए `API_DOCS_ENABLED=true` सेट करें; `false` development में भी उसे बंद करता है। [Documentation policy और offline schema check](docs/api-v1-and-openapi-docs.md)।
+
 प्रत्येक एंडपॉइंट के curl, Python और JavaScript उदाहरणों और Bruno अनुरोध संग्रह के लिए [API Usage Examples](docs/api-usage-examples.md) देखें।
 
 ### बैकएंड टेस्ट चलाएं (Run the backend tests)
@@ -620,7 +622,7 @@ OpenSourceMate में योगदान देने वाले सभी 
 
 OpenSourceMate सेट करने, किसी समस्या को डिबग करने, या प्रोजेक्ट को समझने में सहायता चाहिए?
 
-- **प्रश्नोत्तर और चर्चाएं (Q&A & Discussions)**: [GitHub Discussions](https://github.com/Muskankr/OpenSourceMate/discussions) में प्रश्न पूछें, आर्किटेक्चर पर चर्चा करें, या विचार साझा करें।
+- **प्रश्नोत्तर और चर्चाएं (Q&A & Discussions)**: जब रिपॉज़िटरी का Discussions टैब सक्षम हो, तो उसमें प्रश्न पूछें, आर्किटेक्चर पर चर्चा करें, या विचार साझा करें। उपयुक्त चैनलों के लिए [सहायता दिशा-निर्देश](SUPPORT.md) देखें।
 - **बग रिपोर्ट (Bug Reports)**: पुनरुत्पादन चरणों और संवेदनशील जानकारी हटाए गए लॉग के साथ एक [GitHub Issue](https://github.com/Muskankr/OpenSourceMate/issues) खोलें।
 - **महत्वपूर्ण**: सार्वजनिक इश्यू या चर्चाओं में कभी भी API कुंजियाँ, एक्सेस टोकन या निजी पासवर्ड पोस्ट न करें।
 

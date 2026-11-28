@@ -1,4 +1,3 @@
-from typing import Any
 from pydantic import BaseModel, Field
 
 
@@ -7,9 +6,12 @@ class OpenApiMetadataSerializer(BaseModel):
 
     title: str = Field(description="Title of the API specification")
     version: str = Field(description="SemVer API version")
-    docs_url: str = Field(description="URL to interactive Swagger UI documentation")
-    redoc_url: str = Field(description="URL to ReDoc documentation")
-    openapi_url: str = Field(description="URL to raw OpenAPI JSON schema")
+    enabled: bool = Field(description="Whether HTTP API documentation is enabled")
+    docs_url: str | None = Field(description="Swagger UI URL, or null when disabled")
+    redoc_url: str | None = Field(description="ReDoc URL, or null when disabled")
+    openapi_url: str | None = Field(
+        description="OpenAPI JSON URL, or null when disabled"
+    )
     tags: list[str] = Field(description="List of primary categorized route tags")
 
 
@@ -19,7 +21,9 @@ class ApiEndpointInfoSerializer(BaseModel):
     prefix: str = Field(description="URL prefix for the API version")
     status: str = Field(description="Lifecycle status of this API version")
     is_default: bool = Field(description="Whether this prefix is the primary default")
-    resources: list[str] = Field(description="Available resource endpoints under this prefix")
+    resources: list[str] = Field(
+        description="Available resource endpoints under this prefix"
+    )
 
 
 class ApiVersionOverviewSerializer(BaseModel):

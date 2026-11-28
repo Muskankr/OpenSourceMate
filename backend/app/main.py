@@ -6,6 +6,7 @@ from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from app.api.routes.ai import router as ai_router
@@ -17,10 +18,15 @@ from app.api.routes.matching import router as matching_router
 from app.api.routes.text_skills import router as text_skills_router
 from app.config import get_settings
 from app.exceptions import APIException
+from app.middleware.auth_context import UserTokenContextMiddleware
+from app.middleware.logging import StructuredLoggingMiddleware
+from app.middleware.rate_limit import IPRateLimitMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.schemas.openapi_serializers import (
     ApiVersionOverviewSerializer,
 )
 from app.schemas.serializers import (
+    ErrorResponseSerializer,
     HealthDiagnosticsSerializer,
     HealthResponseSerializer,
     ReadinessResponseSerializer,
@@ -33,6 +39,7 @@ from app.services.github_service import (
     close_client,
     get_github_diagnostics,
 )
+from app.utils.logging import setup_structured_logging
 
 
 @asynccontextmanager
@@ -40,12 +47,6 @@ async def lifespan(app: FastAPI):
     yield
     await close_client()
 
-
-from app.middleware.auth_context import UserTokenContextMiddleware
-from app.middleware.logging import StructuredLoggingMiddleware
-from app.middleware.rate_limit import IPRateLimitMiddleware
-from app.middleware.security_headers import SecurityHeadersMiddleware
-from app.utils.logging import setup_structured_logging
 
 settings = get_settings()
 setup_structured_logging(level=settings.log_level)
@@ -91,10 +92,16 @@ for backward compatibility.
 * **OpenAPI Specification:** [/openapi.json](/openapi.json)
     """,
     version="1.0.0",
-    docs_url="/docs",
-    redoc_url="/redoc",
-    openapi_url="/openapi.json",
+    docs_url="/docs" if settings.api_docs_enabled else None,
+    redoc_url="/redoc" if settings.api_docs_enabled else None,
+    openapi_url="/openapi.json" if settings.api_docs_enabled else None,
     openapi_tags=tags_metadata,
+    responses={
+        "default": {
+            "model": ErrorResponseSerializer,
+            "description": "Unified error envelope for non-success HTTP responses.",
+        }
+    },
     debug=bool(settings.debug),
     lifespan=lifespan,
     contact={
@@ -162,8 +169,8 @@ async def api_exception_handler(request: Request, exc: APIException):
     )
 
 
-@app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request, exc: HTTPException):
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
     detail_msg = exc.detail if isinstance(exc.detail, str) else str(exc.detail)
     code_map = {
         400: "BAD_REQUEST",
@@ -309,9 +316,10 @@ async def api_version_directory():
         "documentation": {
             "title": "OpenSourceMate API",
             "version": "1.0.0",
-            "docs_url": "/docs",
-            "redoc_url": "/redoc",
-            "openapi_url": "/openapi.json",
+            "enabled": bool(settings.api_docs_enabled),
+            "docs_url": app.docs_url,
+            "redoc_url": app.redoc_url,
+            "openapi_url": app.openapi_url,
             "tags": [t["name"] for t in tags_metadata],
         },
     }
@@ -468,6 +476,7 @@ async def get_metrics():
             detail="Metrics collection is disabled. Set METRICS_ENABLED=true to enable.",
         )
     from app.services.metrics_service import get_metrics_collector
+
     return get_metrics_collector().get_metrics_snapshot()
 
 

@@ -336,6 +336,8 @@ http://localhost:8000
 
 Interactive OpenAPI documentation (Swagger UI) is accessible at `http://localhost:8000/docs`.
 
+API documentation defaults off in production. Set `API_DOCS_ENABLED=true` only when you intend to expose it; `false` also disables it in development. [Documentation policy and offline schema check](docs/api-v1-and-openapi-docs.md).
+
 For automated schema-based property testing, see [API Contract Testing with Schemathesis](docs/schemathesis-api-contract-testing.md).
 
 For curl, Python and JavaScript examples of every endpoint, plus a Bruno request collection, see [API Usage Examples](docs/api-usage-examples.md).
@@ -739,7 +741,7 @@ For larger changes, please submit an [RFC Proposal](.github/ISSUE_TEMPLATE/propo
 
 Need help setting up OpenSourceMate, debugging an issue, or understanding the project?
 
-- **Q&A & Discussions**: Ask questions, discuss architectures, or share ideas in [GitHub Discussions](https://github.com/Muskankr/OpenSourceMate/discussions).
+- **Q&A & Discussions**: When the repository’s Discussions tab is enabled, use it to ask questions, discuss architectures, or share ideas. See [support guidance](SUPPORT.md) for the appropriate channels.
 - **Bug Reports**: Open a [GitHub Issue](https://github.com/Muskankr/OpenSourceMate/issues) with reproduction steps and sanitized logs.
 - **Important**: Never post API keys, access tokens, or private secrets in public issues or discussions.
 

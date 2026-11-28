@@ -47,6 +47,7 @@ All notable changes to OpenSourceMate are recorded here. The format follows
 
 ### Changed
 
+- API documentation now requires opt-in in production, and request errors match the documented response schema (#440).
 - Improved GitHub profile card and username form validation.
 - TypeScript strict mode is on for the frontend.
 - Responsive layout and accessibility fixes across the app.
